@@ -435,6 +435,142 @@
         .hidden {
             display: none !important;
         }
+        
+        /* 桥段素材库面板样式 */
+        .trope-panel {
+            width: 0;
+            min-width: 0;
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        
+        .trope-panel.active {
+            width: 380px;
+            min-width: 380px;
+            opacity: 1;
+        }
+        
+        .trope-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        .trope-panel-header h3 {
+            font-size: 16px;
+            color: #00d4ff;
+        }
+        
+        .trope-panel-body {
+            padding: 15px;
+            height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+        
+        .trope-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .trope-cat-tag {
+            padding: 6px 12px;
+            background: #1a1a2e;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .trope-cat-tag:hover {
+            background: #0f3460;
+            color: #fff;
+        }
+        
+        .trope-cat-tag.active {
+            background: #e94560;
+            color: #fff;
+            border-color: #e94560;
+        }
+        
+        .trope-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .trope-item {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #0f3460;
+            transition: all 0.2s;
+        }
+        
+        .trope-item:hover {
+            border-color: #00d4ff;
+            transform: translateX(-2px);
+        }
+        
+        .trope-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .trope-item-type {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border-radius: 10px;
+        }
+        
+        .trope-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        
+        .trope-item-content {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .trope-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid #0f3460;
+        }
+        
+        .btn-copy {
+            padding: 4px 12px;
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-copy:hover {
+            background: #00d4ff;
+        }
     </style>
 </head>
 <body>
@@ -1032,6 +1168,48 @@
         }
         
         // ==================== 情节大纲 ====================
+        
+        // 桥段素材库数据
+        const tropesData = {
+            categories: [
+                { id: 'identity', name: '身份类', subTypes: ['扮猪吃老虎', '身份揭露/认亲', '重生/穿越', '马甲掉落', '假死脱身', '替身梗', '双面间谍'] },
+                { id: 'conflict', name: '冲突类', subTypes: ['装逼打脸', '退婚流', '复仇流', '越级反杀', '绝境翻盘', '快意恩仇', '杀鸡儆猴'] },
+                { id: 'ability', name: '能力类', subTypes: ['废材逆袭', '金手指/系统流', '升级流', '顿悟突破', '底牌爆发', '破而后立'] },
+                { id: 'scene', name: '场景类', subTypes: ['拍卖会', '秘境探险', '宗门大比', '学院流', '副本闯关', '天梯赛'] },
+                { id: 'emotion', name: '情感类', subTypes: ['英雄救美', '追妻火葬场', '双向奔赴', '久别重逢', '欢喜冤家', '救赎文学'] },
+                { id: 'intelligence', name: '智斗类', subTypes: ['运筹帷幄', '借刀杀人', '信息差碾压', '精准预判', '计中计', '连环计'] },
+                { id: 'resource', name: '资源类', subTypes: ['捡漏', '夺宝', '炼丹', '闷声发大财', '天降机缘', '截胡机缘'] },
+                { id: 'relationship', name: '关系类', subTypes: ['师徒羁绊', '兄弟情深', '护短名场面', '宿敌对决'] },
+                { id: 'special', name: '特殊类', subTypes: ['重生复仇', '穿书自救', '快穿任务', '无限流副本'] }
+            ],
+            tropes: [
+                { id: 'trope_001', category: 'conflict', subType: '装逼打脸', title: '三年之约', content: '天才少年一朝陨落，被未婚妻当众羞辱退婚。少年立下三年之约，届时上门讨回尊严。', book: '斗破苍穹', author: '天蚕土豆', tags: ['玄幻', '逆袭', '热血'] },
+                { id: 'trope_002', category: 'ability', subType: '金手指/系统流', title: '戒指里的老爷爷', content: '主角意外获得一枚神秘戒指，里面藏着一位远古强者的灵魂，从此开启修行之路。', book: '斗破苍穹', author: '天蚕土豆', tags: ['玄幻', '金手指', '传承'] },
+                { id: 'trope_003', category: 'conflict', subType: '装逼打脸', title: '测试震惊全场', content: '主角参加宗门测试，众人以为他是废物，结果测出天灵根/满级天赋，全场震惊。', book: '凡人修仙传', author: '忘语', tags: ['仙侠', '测试', '天赋'] },
+                { id: 'trope_004', category: 'identity', subType: '扮猪吃老虎', title: '废品炼丹师', content: '主角炼丹水平极高，却伪装成一品炼丹师，在炼丹大会上让对手轻敌后惨败。', book: '武炼巅峰', author: '莫默', tags: ['玄幻', '炼丹', '伪装'] },
+                { id: 'trope_005', category: 'intelligence', subType: '借刀杀人', title: '借刀杀人', content: '主角实力不足以对抗强敌，巧妙设局让两个敌对势力互相残杀，自己坐收渔利。', book: '雪中悍刀行', author: '烽火戏诸侯', tags: ['武侠', '谋略', '权谋'] },
+                { id: 'trope_006', category: 'identity', subType: '身份揭露/认亲', title: '废物竟是绝世高手', content: '门派中的扫地僧/外门弟子一直被当成废物，直到宗门大难才显露真实修为。', book: '一念永恒', author: '耳根', tags: ['仙侠', '隐藏', '强者'] },
+                { id: 'trope_007', category: 'ability', subType: '越级挑战', title: '越级秒杀', content: '筑基期主角遭遇金丹期对手，底牌尽出，以弱胜强完成越级反杀。', book: '仙逆', author: '耳根', tags: ['仙侠', '战斗', '底牌'] },
+                { id: 'trope_008', category: 'ability', subType: '顿悟突破', title: '绝境突破', content: '主角被逼入绝境，濒死之际突破瓶颈，不仅伤势痊愈，修为更是暴涨。', book: '完美世界', author: '辰东', tags: ['玄幻', '突破', '反杀'] },
+                { id: 'trope_009', category: 'resource', subType: '闷声发大财', title: '不经意间露富', content: '主角随手拿出的普通物品其实是绝世珍品，众人震惊而主角一脸茫然。', book: '从前有座灵剑山', author: '国王陛下', tags: ['仙侠', '搞笑', '装逼'] },
+                { id: 'trope_010', category: 'scene', subType: '拍卖会', title: '拍卖会竞价', content: '反派嘲讽主角没钱，结果主角直接加价十倍，用财力碾压后揭露身份。', book: '斗罗大陆', author: '唐家三少', tags: ['玄幻', '拍卖会', '财富'] },
+                { id: 'trope_011', category: 'identity', subType: '扮猪吃老虎', title: '傻子人设伪装', content: '主角顶着傻子名号让对手放松警惕，实则暗中布局，关键时刻一击致命。', book: '各类爽文', author: '通用', tags: ['都市', '伪装', '复仇'] },
+                { id: 'trope_012', category: 'intelligence', subType: '运筹帷幄', title: '草船借箭', content: '主角利用敌人资源为己所用，通过智慧而非武力获取所需。', book: '三国演义', author: '罗贯中', tags: ['谋略', '借势', '经典'] },
+                { id: 'trope_013', category: 'emotion', subType: '英雄救美', title: '英雄救美', content: '女主角遭遇危险，千钧一发之际主角挺身而出，结下情缘或让对方改观。', book: '各类网文', author: '通用', tags: ['情感', '邂逅', '经典'] },
+                { id: 'trope_014', category: 'emotion', subType: '追妻火葬场', title: '追妻火葬场', content: '男主前期对女主冷漠/伤害，失去后才追悔莫及，开启疯狂追妻模式。', book: '各类言情', author: '通用', tags: ['言情', '虐恋', '后悔'] },
+                { id: 'trope_015', category: 'relationship', subType: '师徒羁绊', title: '师徒诀别', content: '师父为救主角燃烧生命施展禁术，临终前将毕生修为传给主角。', book: '诛仙', author: '萧鼎', tags: ['仙侠', '师徒', '传承'] },
+                { id: 'trope_016', category: 'resource', subType: '捡漏', title: '废物鉴宝', content: '众人眼中的废物却能看出别人看不出的宝物价值，以极低价格捡漏珍品。', book: '遮天', author: '辰东', tags: ['玄幻', '鉴宝', '眼力'] },
+                { id: 'trope_017', category: 'scene', subType: '学院流', title: '低调炫技', content: '主角故意隐藏修为，在朋友遇险时恰好展现实力救人，装逼于无形。', book: '天道图书馆', author: '横扫天涯', tags: ['玄幻', '装逼', '教学'] },
+                { id: 'trope_018', category: 'special', subType: '重生复仇', title: '重生复仇', content: '主角带着前世记忆重生，利用先知优势改变命运，手撕前世仇人。', book: '各类重生文', author: '通用', tags: ['重生', '复仇', '爽文'] },
+                { id: 'trope_019', category: 'ability', subType: '金手指/系统流', title: '系统绑定', content: '主角平凡无奇，意外绑定系统，从此可以通过完成任务获得奖励。', book: '最强反套路系统', author: '太上布衣', tags: ['系统', '搞笑', '无敌'] },
+                { id: 'trope_020', category: 'conflict', subType: '装逼打脸', title: '多底牌爆发', content: '主角面对强敌，一张底牌接一张底牌掀开，让对手从嚣张到绝望。', book: '各类爽文', author: '通用', tags: ['战斗', '底牌', '惊喜'] }
+            ]
+        };
+
+        let currentTropeFilter = 'all';
+        let tropeSearchQuery = '';
+        let showTropePanel = false;
+        
         async function renderPlot(container, volume = 1) {
             const plots = await db.getAll('plots', 'volume', volume);
             plots.sort((a, b) => a.chapter - b.chapter);
@@ -1039,51 +1217,165 @@
             container.innerHTML = `
                 <div class="header">
                     <h2>📖 情节大纲</h2>
-                    <button class="btn btn-primary" onclick="openPlotModal(null, ${volume})">➕ 添加章节</button>
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-secondary" onclick="toggleTropePanel()">🎭 桥段素材库</button>
+                        <button class="btn btn-primary" onclick="openPlotModal(null, ${volume})">➕ 添加章节</button>
+                    </div>
                 </div>
                 
-                <div class="tabs">
-                    ${[1,2,3,4,5,6,7].map(v => `
-                        <div class="tab ${volume === v ? 'active' : ''}" onclick="renderPlot(document.getElementById('mainContent'), ${v})">第${v}卷</div>
-                    `).join('')}
+                <div style="display:flex;gap:20px;">
+                    <!-- 左侧：章节列表 -->
+                    <div style="flex:1;">
+                        <div class="tabs">
+                            ${[1,2,3,4,5,6,7].map(v => `
+                                <div class="tab ${volume === v ? 'active' : ''}" onclick="renderPlot(document.getElementById('mainContent'), ${v})">第${v}卷</div>
+                            `).join('')}
+                        </div>
+                        
+                        ${plots.length === 0 ? `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📖</div>
+                                <h3>第${volume}卷暂无章节</h3>
+                                <p>点击右上角按钮添加</p>
+                            </div>
+                        ` : `
+                            <div class="list-view">
+                                ${plots.map(plot => {
+                                    const statusColors = {
+                                        'draft': '#888',
+                                        'writing': '#ffa500',
+                                        'completed': '#4ade80'
+                                    };
+                                    const statusText = {
+                                        'draft': '草稿',
+                                        'writing': '写作中',
+                                        'completed': '已完成'
+                                    };
+                                    return `
+                                        <div class="list-item">
+                                            <div class="list-item-info">
+                                                <h4>第${plot.chapter}章：${plot.title}</h4>
+                                                <p>${plot.summary?.substring(0, 100) || '暂无概要'}${plot.summary?.length > 100 ? '...' : ''}</p>
+                                            </div>
+                                            <div class="list-item-actions">
+                                                <span style="color:${statusColors[plot.status] || '#888'};font-size:12px;margin-right:10px">${statusText[plot.status] || plot.status}</span>
+                                                <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="editPlot(${plot.id})">编辑</button>
+                                                <button class="btn btn-danger" style="padding:6px 12px;font-size:12px" onclick="deletePlot(${plot.id}, '${plot.title}')">删除</button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `}
+                    </div>
+                    
+                    <!-- 右侧：桥段素材库面板 -->
+                    <div id="tropePanel" class="trope-panel ${showTropePanel ? 'active' : ''}">
+                        <div class="trope-panel-header">
+                            <h3>🎭 桥段素材库</h3>
+                            <button onclick="toggleTropePanel()" style="background:none;border:none;color:#888;cursor:pointer;font-size:20px;">&times;</button>
+                        </div>
+                        <div class="trope-panel-body">
+                            <div class="search-box" style="margin-bottom:15px;">
+                                <input type="text" id="tropeSearch" placeholder="搜索桥段..." oninput="searchTropes()" style="padding-left:15px;">
+                            </div>
+                            <div class="trope-categories">
+                                <div class="trope-cat-tag ${currentTropeFilter === 'all' ? 'active' : ''}" onclick="filterTropes('all')">全部</div>
+                                ${tropesData.categories.map(cat => `
+                                    <div class="trope-cat-tag ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropes('${cat.id}')">${cat.name}</div>
+                                `).join('')}
+                            </div>
+                            <div class="trope-list">
+                                ${renderTropeItems()}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                ${plots.length === 0 ? `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <h3>第${volume}卷暂无章节</h3>
-                        <p>点击右上角按钮添加</p>
-                    </div>
-                ` : `
-                    <div class="list-view">
-                        ${plots.map(plot => {
-                            const statusColors = {
-                                'draft': '#888',
-                                'writing': '#ffa500',
-                                'completed': '#4ade80'
-                            };
-                            const statusText = {
-                                'draft': '草稿',
-                                'writing': '写作中',
-                                'completed': '已完成'
-                            };
-                            return `
-                                <div class="list-item">
-                                    <div class="list-item-info">
-                                        <h4>第${plot.chapter}章：${plot.title}</h4>
-                                        <p>${plot.summary?.substring(0, 100) || '暂无概要'}${plot.summary?.length > 100 ? '...' : ''}</p>
-                                    </div>
-                                    <div class="list-item-actions">
-                                        <span style="color:${statusColors[plot.status] || '#888'};font-size:12px;margin-right:10px">${statusText[plot.status] || plot.status}</span>
-                                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="editPlot(${plot.id})">编辑</button>
-                                        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px" onclick="deletePlot(${plot.id}, '${plot.title}')">删除</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `}
             `;
+        }
+        
+        function toggleTropePanel() {
+            showTropePanel = !showTropePanel;
+            const panel = document.getElementById('tropePanel');
+            if (panel) {
+                panel.classList.toggle('active', showTropePanel);
+            } else {
+                renderPlot(document.getElementById('mainContent'));
+            }
+        }
+        
+        function filterTropes(category) {
+            currentTropeFilter = category;
+            renderPlot(document.getElementById('mainContent'));
+        }
+        
+        function searchTropes() {
+            tropeSearchQuery = document.getElementById('tropeSearch')?.value || '';
+            renderPlot(document.getElementById('mainContent'));
+        }
+        
+        function renderTropeItems() {
+            let filtered = tropesData.tropes;
+            
+            if (currentTropeFilter !== 'all') {
+                filtered = filtered.filter(t => t.category === currentTropeFilter);
+            }
+            
+            if (tropeSearchQuery) {
+                const q = tropeSearchQuery.toLowerCase();
+                filtered = filtered.filter(t => 
+                    t.title.toLowerCase().includes(q) ||
+                    t.content.toLowerCase().includes(q) ||
+                    t.subType.toLowerCase().includes(q)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
+            }
+            
+            return filtered.map(trope => {
+                const category = tropesData.categories.find(c => c.id === trope.category);
+                return `
+                    <div class="trope-item">
+                        <div class="trope-item-header">
+                            <span class="trope-item-type">${category?.name || trope.category}</span>
+                            <span style="font-size:11px;color:#888;">${trope.subType}</span>
+                        </div>
+                        <div class="trope-item-title">${trope.title}</div>
+                        <div class="trope-item-content">${trope.content}</div>
+                        <div class="trope-item-footer">
+                            <span style="font-size:11px;color:#666;">《${trope.book}》${trope.author}</span>
+                            <button class="btn-copy" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function copyTropeContent(title, content) {
+            const text = `${title}：${content}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('桥段已复制到剪贴板');
+            });
+        }
+        
+        function showNotification(message) {
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #e94560;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 3000;
+                font-size: 14px;
+            `;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2000);
         }
         
         function openPlotModal(plot = null, defaultVolume = 1) {
