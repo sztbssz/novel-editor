@@ -391,18 +391,16 @@
             margin-bottom: 15px;
         }
         
-        .type-pretend-weak { background: rgba(255, 107, 107, 0.3); color: #ff6b6b; }
-        .type-face-slap { background: rgba(255, 193, 7, 0.3); color: #ffc107; }
-        .type-intelligence-battle { background: rgba(33, 150, 243, 0.3); color: #2196f3; }
-        .type-marriage-cancel { background: rgba(156, 39, 176, 0.3); color: #9c27b0; }
-        .type-power-awaken { background: rgba(76, 175, 80, 0.3); color: #4caf50; }
-        .type-level-up-battle { background: rgba(255, 87, 34, 0.3); color: #ff5722; }
-        .type-identity-reveal { background: rgba(0, 188, 212, 0.3); color: #00bcd4; }
-        .type-plot-twist { background: rgba(233, 30, 99, 0.3); color: #e91e63; }
-        .type-show-off { background: rgba(255, 152, 0, 0.3); color: #ff9800; }
-        .type-crisis { background: rgba(244, 67, 54, 0.3); color: #f44336; }
-        .type-emotional { background: rgba(233, 69, 96, 0.3); color: #e94560; }
-        .type-master-disciple { background: rgba(63, 81, 181, 0.3); color: #3f51b5; }
+        .type-identity { background: rgba(156, 39, 176, 0.3); color: #9c27b0; }
+        .type-conflict { background: rgba(244, 67, 54, 0.3); color: #f44336; }
+        .type-ability { background: rgba(76, 175, 80, 0.3); color: #4caf50; }
+        .type-scene { background: rgba(33, 150, 243, 0.3); color: #2196f3; }
+        .type-emotion { background: rgba(233, 30, 99, 0.3); color: #e91e63; }
+        .type-intelligence { background: rgba(255, 152, 0, 0.3); color: #ff9800; }
+        .type-resource { background: rgba(0, 188, 212, 0.3); color: #00bcd4; }
+        .type-relationship { background: rgba(63, 81, 181, 0.3); color: #3f51b5; }
+        .type-special { background: rgba(121, 85, 72, 0.3); color: #795548; }
+        .type-default { background: rgba(128, 128, 128, 0.3); color: #888; }
     </style>
 </head>
 <body>
@@ -453,11 +451,19 @@
             </div>
             <div class="modal-body">
                 <form id="trope-form" onsubmit="saveTrope(event)">
-                    <div class="form-group">
-                        <label>桥段类型</label>
-                        <select id="trope-type" required>
-                            <option value="">选择类型...</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>大分类</label>
+                            <select id="trope-category" required onchange="populateTypeSelect()">
+                                <option value="">选择分类...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>子分类</label>
+                            <select id="trope-subtype">
+                                <option value="">选择子类型...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>桥段标题</label>
