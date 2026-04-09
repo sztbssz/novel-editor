@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 桥段素材库 | 创世者</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(0,0,0,0.3);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: 30px;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .header-stats span {
+            color: #fff;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            border-color: #e94560;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .filter-select {
+            padding: 12px 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            min-width: 150px;
+        }
+        
+        .filter-select option {
+            background: #1a1a2e;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .categories-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+        }
+        
+        .category-tag {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .category-tag:hover {
+            background: rgba(233, 69, 96, 0.3);
+        }
+        
+        .category-tag.active {
+            background: #e94560;
+        }
+        
+        .category-tag .count {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .tropes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .trope-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .trope-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(233, 69, 96, 0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .trope-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .trope-type {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .trope-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .trope-actions button {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+            transition: color 0.3s;
+        }
+        
+        .trope-actions button:hover {
+            color: #e94560;
+        }
+        
+        .trope-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .trope-content {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .trope-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #888;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .trope-source .book {
+            color: #e94560;
+        }
+        
+        .trope-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .trope-tag {
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            font-size: 11px;
+            color: #aaa;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 100px 40px;
+            color: #888;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .inspiration-box {
+            background: rgba(233, 69, 96, 0.1);
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .inspiration-box h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        
+        .inspiration-content {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .type-pretend-weak { background: rgba(255, 107, 107, 0.3); color: #ff6b6b; }
+        .type-face-slap { background: rgba(255, 193, 7, 0.3); color: #ffc107; }
+        .type-intelligence-battle { background: rgba(33, 150, 243, 0.3); color: #2196f3; }
+        .type-marriage-cancel { background: rgba(156, 39, 176, 0.3); color: #9c27b0; }
+        .type-power-awaken { background: rgba(76, 175, 80, 0.3); color: #4caf50; }
+        .type-level-up-battle { background: rgba(255, 87, 34, 0.3); color: #ff5722; }
+        .type-identity-reveal { background: rgba(0, 188, 212, 0.3); color: #00bcd4; }
+        .type-plot-twist { background: rgba(233, 30, 99, 0.3); color: #e91e63; }
+        .type-show-off { background: rgba(255, 152, 0, 0.3); color: #ff9800; }
+        .type-crisis { background: rgba(244, 67, 54, 0.3); color: #f44336; }
+        .type-emotional { background: rgba(233, 69, 96, 0.3); color: #e94560; }
+        .type-master-disciple { background: rgba(63, 81, 181, 0.3); color: #3f51b5; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎭 桥段素材库</h1>
+        <div class="header-stats">
+            <div>总桥段数: <span id="total-count">0</span></div>
+            <div>分类数: <span id="category-count">12</span></div>
+            <div>今日新增: <span id="today-count">0</span></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="inspiration-box" id="inspiration-box" style="display:none;">
+            <h3>💡 灵感推荐</h3>
+            <div class="inspiration-content" id="inspiration-content"></div>
+            <button class="btn btn-secondary" onclick="randomTrope()">换一个</button>
+        </div>
+        
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="搜索桥段关键词..." oninput="searchTropes()">
+            </div>
+            <select class="filter-select" id="sort-select" onchange="sortTropes()">
+                <option value="newest">最新添加</option>
+                <option value="popular">使用最多</option>
+                <option value="source">按来源</option>
+            </select>
+            <button class="btn btn-secondary" onclick="showInspiration()">🎲 随机灵感</button>
+            <button class="btn btn-primary" onclick="openModal()">+ 添加桥段</button>
+        </div>
+        
+        <div class="categories-bar" id="categories-bar">
+            <!-- Categories will be loaded here -->
+        </div>
+        
+        <div class="tropes-grid" id="tropes-grid">
+            <!-- Tropes will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Add Trope Modal -->
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加新桥段</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="trope-form" onsubmit="saveTrope(event)">
+                    <div class="form-group">
+                        <label>桥段类型</label>
+                        <select id="trope-type" required>
+                            <option value="">选择类型...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>桥段标题</label>
+                        <input type="text" id="trope-title" placeholder="例如：三年之约" required>
+                    </div>
+                    <div class="form-group">
+                        <label>桥段描述（1-2句话提炼）</label>
+                        <textarea id="trope-content" placeholder="概括这个经典场景的核心要素..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>来源书籍</label>
+                            <input type="text" id="trope-book" placeholder="例如：斗破苍穹">
+                        </div>
+                        <div class="form-group">
+                            <label>作者</label>
+                            <input type="text" id="trope-author" placeholder="例如：天蚕土豆">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>年份</label>
+                            <input type="number" id="trope-year" placeholder="2009" min="2000" max="2026">
+                        </div>
+                        <div class="form-group">
+                            <label>适用标签（用逗号分隔）</label>
+                            <input type="text" id="trope-tags" placeholder="玄幻, 逆袭, 热血">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;">保存桥段</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

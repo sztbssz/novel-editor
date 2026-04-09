@@ -1,0 +1,327 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-04-09",
+  "categories": [
+    {
+      "id": "pretend-weak",
+      "name": "扮猪吃老虎",
+      "description": "隐藏实力，让对手轻视，然后出其不意反击",
+      "count": 3
+    },
+    {
+      "id": "face-slap",
+      "name": "打脸",
+      "description": "被轻视/嘲讽后，用实力或身份让对方难堪",
+      "count": 3
+    },
+    {
+      "id": "intelligence-battle",
+      "name": "智斗",
+      "description": "用计谋、策略战胜对手，而非单纯武力",
+      "count": 2
+    },
+    {
+      "id": "marriage-cancel",
+      "name": "退婚流",
+      "description": "被未婚妻/夫羞辱退婚，然后展现实力让对方后悔",
+      "count": 2
+    },
+    {
+      "id": "power-awaken",
+      "name": "金手指觉醒",
+      "description": "获得特殊能力、系统、传承，开启逆袭之路",
+      "count": 2
+    },
+    {
+      "id": "level-up-battle",
+      "name": "越级挑战",
+      "description": "以弱胜强，挑战远超自己等级的对手",
+      "count": 1
+    },
+    {
+      "id": "identity-reveal",
+      "name": "身份揭露",
+      "description": "隐藏的真实身份被揭开，震惊众人",
+      "count": 1
+    },
+    {
+      "id": "plot-twist",
+      "name": "反转逆袭",
+      "description": "绝境中出现转机，反败为胜",
+      "count": 1
+    },
+    {
+      "id": "show-off",
+      "name": "装逼现场",
+      "description": "不经意间展现实力或财富，让众人震惊",
+      "count": 1
+    },
+    {
+      "id": "crisis",
+      "name": "危机时刻",
+      "description": "生死关头、千钧一发的紧张场景",
+      "count": 1
+    },
+    {
+      "id": "emotional",
+      "name": "情感爆发",
+      "description": "亲情、友情、爱情的感人或虐心时刻",
+      "count": 1
+    },
+    {
+      "id": "master-disciple",
+      "name": "师徒/兄弟情",
+      "description": "师徒传承、兄弟义气的经典场景",
+      "count": 1
+    }
+  ],
+  "tropes": [
+    {
+      "id": "trope_001",
+      "type": "marriage-cancel",
+      "title": "三年之约",
+      "content": "天才少年一朝陨落，被未婚妻当众羞辱退婚。少年立下三年之约，届时上门讨回尊严。这是逆袭的序章，也是经典的打脸前奏。",
+      "book": "斗破苍穹",
+      "author": "天蚕土豆",
+      "year": 2009,
+      "tags": ["玄幻", "逆袭", "热血"],
+      "useCount": 42,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_002",
+      "type": "power-awaken",
+      "title": "戒指里的老爷爷",
+      "content": "主角意外获得一枚神秘戒指，里面藏着一位远古强者的灵魂。从此开启修行之路，获得传承与指导，这是金手指的经典模板。",
+      "book": "斗破苍穹",
+      "author": "天蚕土豆",
+      "year": 2009,
+      "tags": ["玄幻", "金手指", "传承"],
+      "useCount": 38,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_003",
+      "type": "face-slap",
+      "title": "测试震惊全场",
+      "content": "主角参加宗门测试，众人以为他是废物，结果测出天灵根/满级天赋/特殊体质，全场震惊，长老争抢收徒。",
+      "book": "凡人修仙传",
+      "author": "忘语",
+      "year": 2008,
+      "tags": ["仙侠", "测试", "天赋"],
+      "useCount": 56,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_004",
+      "type": "pretend-weak",
+      "title": "废品炼丹师",
+      "content": "主角炼丹水平极高，却伪装成一品炼丹师。在炼丹大会上，以"废品丹药"的表象掩盖极品丹药的本质，让对手轻敌后惨败。",
+      "book": "武炼巅峰",
+      "author": "莫默",
+      "year": 2012,
+      "tags": ["玄幻", "炼丹", "伪装"],
+      "useCount": 27,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_005",
+      "type": "intelligence-battle",
+      "title": "借刀杀人",
+      "content": "主角实力不足以对抗强敌，巧妙设局让两个敌对势力互相残杀，自己坐收渔利。体现主角的谋略而非单纯武力。",
+      "book": "雪中悍刀行",
+      "author": "烽火戏诸侯",
+      "year": 2012,
+      "tags": ["武侠", "谋略", "权谋"],
+      "useCount": 33,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_006",
+      "type": "identity-reveal",
+      "title": "废物竟是绝世高手",
+      "content": "门派中的扫地僧/外门弟子一直被当成废物，直到宗门大难，他才显露真实修为，原来是隐居的绝世强者。",
+      "book": "一念永恒",
+      "author": "耳根",
+      "year": 2016,
+      "tags": ["仙侠", "隐藏", "强者"],
+      "useCount": 45,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_007",
+      "type": "level-up-battle",
+      "title": "越级秒杀",
+      "content": "筑基期主角遭遇金丹期对手，所有人都以为必死无疑。结果主角底牌尽出，法宝+秘术+算计，以弱胜强完成越级反杀。",
+      "book": "仙逆",
+      "author": "耳根",
+      "year": 2009,
+      "tags": ["仙侠", "战斗", "底牌"],
+      "useCount": 39,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_008",
+      "type": "plot-twist",
+      "title": "绝境突破",
+      "content": "主角被逼入绝境，濒死之际突破瓶颈，不仅伤势痊愈，修为更是暴涨。反杀仇敌，让原本的猎手成为猎物。",
+      "book": "完美世界",
+      "author": "辰东",
+      "year": 2013,
+      "tags": ["玄幻", "突破", "反杀"],
+      "useCount": 41,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_009",
+      "type": "show-off",
+      "title": "不经意间露富",
+      "content": "主角随手拿出的"普通物品"，其实是绝世珍品。众人震惊于他拥有的财富/宝物，而主角却一脸茫然：这很值钱吗？",
+      "book": "从前有座灵剑山",
+      "author": "国王陛下",
+      "year": 2013,
+      "tags": ["仙侠", "搞笑", "装逼"],
+      "useCount": 29,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_010",
+      "type": "face-slap",
+      "title": "拍卖会竞价",
+      "content": "反派在拍卖会上嘲讽主角没钱，结果主角直接加价十倍，用财力碾压。随后揭露身份，让反派追悔莫及。",
+      "book": "斗罗大陆",
+      "author": "唐家三少",
+      "year": 2008,
+      "tags": ["玄幻", "拍卖会", "财富"],
+      "useCount": 35,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_011",
+      "type": "pretend-weak",
+      "title": "废柴测试",
+      "content": "主角故意在测试中表现平庸，被分到最差的班级/外门。实则是为了隐藏实力，暗中观察敌人的动向。",
+      "book": "全职法师",
+      "author": "乱",
+      "year": 2015,
+      "tags": ["都市", "魔法", "隐藏"],
+      "useCount": 22,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_012",
+      "type": "intelligence-battle",
+      "title": "空城计",
+      "content": "面对强敌围攻，主角摆出空城姿态，让敌人疑神疑鬼不敢进攻。实则暗中布置杀招，等敌人退却时一举歼灭。",
+      "book": "庆余年",
+      "author": "猫腻",
+      "year": 2007,
+      "tags": ["历史", "权谋", "计谋"],
+      "useCount": 31,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_013",
+      "type": "marriage-cancel",
+      "title": "悔婚现场",
+      "content": "未婚妻嫌弃主角落魄，当众悔婚另嫁高门。结果主角当场展现实力/身份，让未婚妻和新欢都沦为笑柄。",
+      "book": "万古神帝",
+      "author": "飞天鱼",
+      "year": 2015,
+      "tags": ["玄幻", "情感", "复仇"],
+      "useCount": 28,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_014",
+      "type": "power-awaken",
+      "title": "系统绑定",
+      "content": "主角平凡无奇，意外绑定系统。从此可以通过完成任务获得奖励，开启无敌之路。这是系统流的经典开局。",
+      "book": "最强反套路系统",
+      "author": "太上布衣",
+      "year": 2017,
+      "tags": ["系统", "搞笑", "无敌"],
+      "useCount": 48,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_015",
+      "type": "crisis",
+      "title": "宗门覆灭危机",
+      "content": "强敌来袭，宗门长老尽数战死，弟子四散逃命。主角作为唯一希望，背负全宗生死，独自迎战不可战胜的敌人。",
+      "book": "将夜",
+      "author": "猫腻",
+      "year": 2011,
+      "tags": ["玄幻", "守护", "悲壮"],
+      "useCount": 26,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_016",
+      "type": "emotional",
+      "title": "师徒诀别",
+      "content": "师父为救主角，燃烧生命施展禁术。临终前将毕生修为传给主角，含笑而逝。主角含泪承接衣钵，誓要报仇。",
+      "book": "诛仙",
+      "author": "萧鼎",
+      "year": 2003,
+      "tags": ["仙侠", "师徒", "传承"],
+      "useCount": 37,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_017",
+      "type": "master-disciple",
+      "title": "代师收徒",
+      "content": "大师兄代已故师父收徒，照顾年幼师弟师妹。既要承担师父的责任，又要面对同门的质疑，展现长兄如父的情谊。",
+      "book": "剑来",
+      "author": "烽火戏诸侯",
+      "year": 2017,
+      "tags": ["仙侠", "师兄弟", "责任"],
+      "useCount": 19,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_018",
+      "type": "pretend-weak",
+      "title": "废物鉴宝",
+      "content": "众人眼中的"废物"，却能看出别人看不出的宝物价值。以极低价格捡漏绝世珍品，让识货的人眼馋不已。",
+      "book": "遮天",
+      "author": "辰东",
+      "year": 2010,
+      "tags": ["玄幻", "鉴宝", "眼力"],
+      "useCount": 24,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_019",
+      "type": "face-slap",
+      "title": "医术惊人",
+      "content": "神医被权贵嘲讽是骗子，当场治愈顽疾。随后更多疑难杂症患者上门，原本质疑的人纷纷跪求医治。",
+      "book": "医武兵王",
+      "author": "佚名",
+      "year": 2015,
+      "tags": ["都市", "医术", "神医"],
+      "useCount": 21,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_020",
+      "type": "show-off",
+      "title": "低调炫技",
+      "content": "主角故意隐藏修为，在朋友遇险时"恰好"展现实力救人。既帮了朋友，又不显得刻意炫耀，实则装逼于无形。",
+      "book": "天道图书馆",
+      "author": "横扫天涯",
+      "year": 2017,
+      "tags": ["玄幻", "装逼", "教学"],
+      "useCount": 32,
+      "isUserAdded": false
+    }
+  ],
+  "sources": [
+    {"name": "起点中文网", "url": "https://www.qidian.com"},
+    {"name": "番茄小说", "url": "https://fanqienovel.com"},
+    {"name": "晋江文学城", "url": "https://www.jjwxc.net"},
+    {"name": "纵横中文网", "url": "http://www.zongheng.com"},
+    {"name": "飞卢小说网", "url": "https://b.faloo.com"}
+  ]
+}
