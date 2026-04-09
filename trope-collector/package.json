@@ -1,0 +1,30 @@
+{
+  "name": "trope-collector-api",
+  "version": "1.0.0",
+  "description": "网文桥段素材库API服务器",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "init": "node -e \"require('./server.js')\""
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "网文",
+    "桥段",
+    "素材库",
+    "API"
+  ],
+  "author": "创世者团队",
+  "license": "MIT"
+}
