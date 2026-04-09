@@ -49,13 +49,13 @@ let data = {
 
 // 加载数据
 function loadData() {
-  if (fs.existsSync(dataPath)) {
-    try {
-      const raw = fs.readFileSync(dataPath, 'utf8');
+  try {
+    if (fs.existsSync(dataPath)) {
+      var raw = fs.readFileSync(dataPath, 'utf8');
       data = JSON.parse(raw);
-    } catch (e) {
-      console.error('加载数据失败:', e);
     }
+  } catch (e) {
+    console.error('加载数据失败:', e);
   }
 }
 
@@ -71,43 +71,44 @@ function saveData() {
 loadData();
 
 // API 路由
-app.get('/api/categories', (req, res) => {
+app.get('/api/categories', function(req, res) {
   res.json(data.categories);
 });
 
-app.get('/api/tropes', (req, res) => {
-  const { category, search } = req.query;
-  let tropes = data.tropes;
+app.get('/api/tropes', function(req, res) {
+  var category = req.query.category;
+  var search = req.query.search;
+  var tropes = data.tropes;
   
   if (category) {
-    tropes = tropes.filter(t => t.category === category);
+    tropes = tropes.filter(function(t) { return t.category === category; });
   }
   
   if (search) {
-    const q = search.toLowerCase();
-    tropes = tropes.filter(t => 
-      t.title.toLowerCase().includes(q) ||
-      t.content.toLowerCase().includes(q) ||
-      t.subType.toLowerCase().includes(q)
-    );
+    var q = search.toLowerCase();
+    tropes = tropes.filter(function(t) {
+      return t.title.toLowerCase().indexOf(q) > -1 ||
+             t.content.toLowerCase().indexOf(q) > -1 ||
+             t.subType.toLowerCase().indexOf(q) > -1;
+    });
   }
   
   res.json(tropes);
 });
 
-app.post('/api/tropes', (req, res) => {
-  const { category, subType, title, content, book, author, year, tags } = req.body;
-  const id = 'trope_' + Date.now();
-  const newTrope = {
-    id,
-    category,
-    subType,
-    title,
-    content,
-    book,
-    author,
-    year,
-    tags: tags || [],
+app.post('/api/tropes', function(req, res) {
+  var body = req.body;
+  var id = 'trope_' + Date.now();
+  var newTrope = {
+    id: id,
+    category: body.category,
+    subType: body.subType,
+    title: body.title,
+    content: body.content,
+    book: body.book,
+    author: body.author,
+    year: body.year,
+    tags: body.tags || [],
     useCount: 0,
     isUserAdded: true,
     source: '用户添加'
@@ -117,8 +118,14 @@ app.post('/api/tropes', (req, res) => {
   res.json(newTrope);
 });
 
-app.delete('/api/tropes/:id', (req, res) => {
-  const index = data.tropes.findIndex(t => t.id === req.params.id);
+app.delete('/api/tropes/:id', function(req, res) {
+  var index = -1;
+  for (var i = 0; i < data.tropes.length; i++) {
+    if (data.tropes[i].id === req.params.id) {
+      index = i;
+      break;
+    }
+  }
   if (index > -1) {
     data.tropes.splice(index, 1);
     saveData();
@@ -129,13 +136,13 @@ app.delete('/api/tropes/:id', (req, res) => {
 });
 
 // 健康检查
-app.get('/api/health', (req, res) => {
+app.get('/api/health', function(req, res) {
   res.json({ status: 'ok', tropes: data.tropes.length, categories: data.categories.length });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`API server running on port ${PORT}`);
+app.listen(PORT, function() {
+  console.log('API server running on port ' + PORT);
 });
 
 module.exports = app;
