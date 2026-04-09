@@ -1,9 +1,17 @@
 {
   "name": "trope-collector-api",
   "version": "1.0.0",
+  "description": "网文桥段素材库 API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "sqlite3": "^5.1.6"
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
