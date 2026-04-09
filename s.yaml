@@ -1,0 +1,31 @@
+edition: 1.0.0
+name: trope-api
+access: default
+
+vars:
+  region: cn-hangzhou
+
+services:
+  trope-api:
+    component: fc
+    props:
+      region: ${vars.region}
+      service:
+        name: trope-service
+        description: 网文桥段素材库 API
+      function:
+        name: api
+        description: 桥段 API
+        runtime: nodejs18
+        codeUri: ./code
+        handler: index.handler
+        memorySize: 128
+        timeout: 30
+        triggers:
+          - name: httpTrigger
+            type: http
+            config:
+              authType: anonymous
+              methods:
+                - GET
+                - POST
