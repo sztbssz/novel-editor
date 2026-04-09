@@ -1,0 +1,18 @@
+{
+  "name": "novel-editor-creator",
+  "version": "1.0.0",
+  "description": "创世者小说编辑器 - 镜像囚笼专用",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder"
+  },
+  "author": "Creator",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {}
+}

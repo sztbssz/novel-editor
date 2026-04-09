@@ -3,145 +3,1282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>创世者编辑器 - 启动</title>
+    <title>🎮 创世者编辑器</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: #fff;
             min-height: 100vh;
+        }
+        
+        /* 布局 */
+        .container {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            width: 220px;
+            background: #16213e;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 0 20px 30px;
+            border-bottom: 1px solid #0f3460;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        
+        .logo p {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            padding: 20px 10px;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #ccc;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .nav-item:hover {
+            background: #0f3460;
             color: #fff;
         }
-        .container {
-            text-align: center;
-            padding: 40px;
-            max-width: 600px;
+        
+        .nav-item.active {
+            background: #e94560;
+            color: #fff;
         }
-        .logo {
-            font-size: 48px;
-            margin-bottom: 20px;
+        
+        .nav-item i {
+            margin-right: 10px;
+            font-style: normal;
         }
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
         }
-        .subtitle {
-            color: #888;
-            margin-bottom: 40px;
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #16213e;
         }
-        .command-box {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+        
+        .header h2 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-primary {
+            background: #e94560;
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            background: #d63a54;
+        }
+        
+        .btn-secondary {
+            background: #0f3460;
+            color: #fff;
+        }
+        
+        .btn-secondary:hover {
+            background: #1a4a7a;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+        
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background: #16213e;
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .command-label {
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .card-type {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #0f3460;
+            color: #00d4ff;
+        }
+        
+        .card-content {
             color: #888;
             font-size: 14px;
-            margin-bottom: 10px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
-        .command {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 16px;
-            color: #00d4ff;
-            word-break: break-all;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 6px;
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #0f3460;
         }
-        .copy-btn {
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #16213e;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+        }
+        
+        .modal-close {
+            background: none;
             border: none;
-            color: #fff;
-            padding: 12px 40px;
-            font-size: 16px;
-            border-radius: 25px;
+            color: #888;
+            font-size: 24px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
         }
-        .copy-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,212,255,0.3);
+        
+        .modal-close:hover {
+            color: #fff;
         }
-        .copy-btn:active {
-            transform: translateY(0);
+        
+        .modal-body {
+            padding: 30px;
         }
-        .tips {
-            margin-top: 30px;
-            color: #666;
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
             font-size: 14px;
-            line-height: 1.8;
         }
-        .success-msg {
-            color: #4ade80;
-            margin-top: 10px;
-            opacity: 0;
-            transition: opacity 0.3s;
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
-        .success-msg.show {
-            opacity: 1;
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #0f3460;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .empty-state p {
+            color: #888;
+            margin-bottom: 30px;
+        }
+        
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 30px;
+            background: #16213e;
+            padding: 5px;
+            border-radius: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #888;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: #fff;
+        }
+        
+        .tab.active {
+            background: #e94560;
+            color: #fff;
+        }
+        
+        /* 列表视图 */
+        .list-view {
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #0f3460;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:hover {
+            background: #1a2a4a;
+        }
+        
+        .list-item-info h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .list-item-info p {
+            font-size: 13px;
+            color: #888;
+        }
+        
+        .list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* 搜索框 */
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* 数据操作 */
+        .data-ops {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🎮</div>
-        <h1>创世者编辑器</h1>
-        <p class="subtitle">Novel Editor for 镜像囚笼</p>
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🎮 创世者</h1>
+                <p>镜像囚笼 · 小说编辑器</p>
+            </div>
+            <nav class="nav-menu">
+                <a class="nav-item active" data-page="home">
+                    <i>🏠</i>首页
+                </a>
+                <a class="nav-item" data-page="characters">
+                    <i>👤</i>角色管理
+                </a>
+                <a class="nav-item" data-page="world">
+                    <i>🌍</i>世界观
+                </a>
+                <a class="nav-item" data-page="plot">
+                    <i>📖</i>情节大纲
+                </a>
+                <a class="nav-item" data-page="data">
+                    <i>💾</i>数据管理
+                </a>
+            </nav>
+        </aside>
         
-        <div class="command-box">
-            <div class="command-label">终端启动命令</div>
-            <div class="command" id="command">cd ~/.openclaw/workspace/novel-editor && python creator.py</div>
-            <button class="copy-btn" onclick="copyCommand()">复制命令</button>
-            <div class="success-msg" id="success">✓ 已复制到剪贴板</div>
-        </div>
-        
-        <div class="tips">
-            <p>1. 点击「复制命令」按钮</p>
-            <p>2. 打开终端（Terminal）</p>
-            <p>3. 粘贴命令并回车运行</p>
+        <!-- 主内容 -->
+        <main class="main-content" id="mainContent">
+            <!-- 动态加载内容 -->
+        </main>
+    </div>
+    
+    <!-- 模态框 -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">标题</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" id="modalConfirm" onclick="confirmModal()">保存</button>
+            </div>
         </div>
     </div>
 
     <script>
-        function copyCommand() {
-            const command = document.getElementById('command').innerText;
-            navigator.clipboard.writeText(command).then(() => {
-                const success = document.getElementById('success');
-                success.classList.add('show');
-                setTimeout(() => {
-                    success.classList.remove('show');
-                }, 2000);
-            }).catch(() => {
-                // 降级方案
-                const textarea = document.createElement('textarea');
-                textarea.value = command;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
+        // ==================== 数据库模块 ====================
+        class Database {
+            constructor() {
+                this.db = null;
+                this.dbName = 'CreatorDB';
+                this.dbVersion = 1;
+            }
+            
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve();
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // 角色表
+                        if (!db.objectStoreNames.contains('characters')) {
+                            const charStore = db.createObjectStore('characters', { keyPath: 'id', autoIncrement: true });
+                            charStore.createIndex('name', 'name', { unique: false });
+                            charStore.createIndex('role_type', 'role_type', { unique: false });
+                        }
+                        
+                        // 世界观表
+                        if (!db.objectStoreNames.contains('world_settings')) {
+                            const worldStore = db.createObjectStore('world_settings', { keyPath: 'id', autoIncrement: true });
+                            worldStore.createIndex('category', 'category', { unique: false });
+                        }
+                        
+                        // 情节表
+                        if (!db.objectStoreNames.contains('plots')) {
+                            const plotStore = db.createObjectStore('plots', { keyPath: 'id', autoIncrement: true });
+                            plotStore.createIndex('volume', 'volume', { unique: false });
+                            plotStore.createIndex('chapter', 'chapter', { unique: false });
+                        }
+                    };
+                });
+            }
+            
+            // 通用CRUD操作
+            async add(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    data.created_at = new Date().toISOString();
+                    data.updated_at = new Date().toISOString();
+                    const request = store.add(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async get(storeName, id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readonly');
+                    const store = tx.objectStore(storeName);
+                    const request = store.get(id);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getAll(storeName, indexName = null, value = null) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readonly');
+                    const store = tx.objectStore(storeName);
+                    let request;
+                    
+                    if (indexName && value !== null) {
+                        const index = store.index(indexName);
+                        request = index.getAll(value);
+                    } else {
+                        request = store.getAll();
+                    }
+                    
+                    request.onsuccess = () => {
+                        // 按更新时间倒序
+                        const results = request.result.sort((a, b) => 
+                            new Date(b.updated_at) - new Date(a.updated_at)
+                        );
+                        resolve(results);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async update(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    data.updated_at = new Date().toISOString();
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async delete(storeName, id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const request = store.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async clear(storeName) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // 导出所有数据
+            async exportAll() {
+                return {
+                    characters: await this.getAll('characters'),
+                    world_settings: await this.getAll('world_settings'),
+                    plots: await this.getAll('plots'),
+                    export_time: new Date().toISOString()
+                };
+            }
+            
+            // 导入数据
+            async importAll(data) {
+                await this.clear('characters');
+                await this.clear('world_settings');
+                await this.clear('plots');
                 
-                const success = document.getElementById('success');
-                success.classList.add('show');
-                setTimeout(() => {
-                    success.classList.remove('show');
-                }, 2000);
-            });
+                for (const char of data.characters || []) {
+                    delete char.id;
+                    await this.add('characters', char);
+                }
+                
+                for (const setting of data.world_settings || []) {
+                    delete setting.id;
+                    await this.add('world_settings', setting);
+                }
+                
+                for (const plot of data.plots || []) {
+                    delete plot.id;
+                    await this.add('plots', plot);
+                }
+            }
         }
+        
+        // ==================== 全局状态 ====================
+        const db = new Database();
+        let currentPage = 'home';
+        let modalCallback = null;
+        
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await db.init();
+            loadPage('home');
+            
+            // 导航事件
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    loadPage(item.dataset.page);
+                });
+            });
+        });
+        
+        // ==================== 页面加载 ====================
+        function loadPage(page) {
+            currentPage = page;
+            const main = document.getElementById('mainContent');
+            
+            switch(page) {
+                case 'home':
+                    renderHome(main);
+                    break;
+                case 'characters':
+                    renderCharacters(main);
+                    break;
+                case 'world':
+                    renderWorld(main);
+                    break;
+                case 'plot':
+                    renderPlot(main);
+                    break;
+                case 'data':
+                    renderData(main);
+                    break;
+            }
+        }
+        
+        // ==================== 首页 ====================
+        async function renderHome(container) {
+            const chars = await db.getAll('characters');
+            const world = await db.getAll('world_settings');
+            const plots = await db.getAll('plots');
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>🏠 概览</h2>
+                </div>
+                
+                <div class="card-grid">
+                    <div class="card" onclick="loadPage('characters')">
+                        <div class="card-header">
+                            <span class="card-title">👤 角色</span>
+                            <span class="card-type">${chars.length} 个</span>
+                        </div>
+                        <div class="card-content">
+                            管理小说中的所有角色，包括主角、反派和配角。
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="loadPage('world')">
+                        <div class="card-header">
+                            <span class="card-title">🌍 世界观</span>
+                            <span class="card-type">${world.length} 项</span>
+                        </div>
+                        <div class="card-content">
+                            设定地理环境、历史背景、文化习俗和力量体系。
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="loadPage('plot')">
+                        <div class="card-header">
+                            <span class="card-title">📖 情节</span>
+                            <span class="card-type">${plots.length} 章</span>
+                        </div>
+                        <div class="card-content">
+                            规划分卷大纲和章节内容，追踪写作进度。
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="loadPage('data')">
+                        <div class="card-header">
+                            <span class="card-title">💾 数据</span>
+                            <span class="card-type">管理</span>
+                        </div>
+                        <div class="card-content">
+                            导入导出数据，备份和恢复创作内容。
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ==================== 角色管理 ====================
+        async function renderCharacters(container, filterType = 'all') {
+            const characters = await db.getAll('characters');
+            const filtered = filterType === 'all' ? characters : 
+                characters.filter(c => c.role_type === filterType);
+            
+            const typeNames = {
+                'protagonist': '主角',
+                'antagonist': '反派', 
+                'supporting': '配角'
+            };
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>👤 角色管理</h2>
+                    <button class="btn btn-primary" onclick="openCharacterModal()">➕ 新建角色</button>
+                </div>
+                
+                <div class="tabs">
+                    <div class="tab ${filterType === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'all')">全部</div>
+                    <div class="tab ${filterType === 'protagonist' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'protagonist')">主角</div>
+                    <div class="tab ${filterType === 'antagonist' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'antagonist')">反派</div>
+                    <div class="tab ${filterType === 'supporting' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'supporting')">配角</div>
+                </div>
+                
+                ${filtered.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <h3>暂无角色</h3>
+                        <p>点击右上角按钮创建第一个角色</p>
+                    </div>
+                ` : `
+                    <div class="card-grid">
+                        ${filtered.map(char => `
+                            <div class="card">
+                                <div class="card-header">
+                                    <span class="card-title">${char.name}</span>
+                                    <span class="card-type">${typeNames[char.role_type] || char.role_type}</span>
+                                </div>
+                                <div class="card-content">
+                                    ${char.appearance || '暂无外貌描述'}
+                                </div>
+                                <div class="card-footer">
+                                    <span style="color:#888;font-size:12px">${char.age || '-'} 岁</span>
+                                    <div class="card-actions">
+                                        <button class="btn btn-secondary" onclick="editCharacter(${char.id})">编辑</button>
+                                        <button class="btn btn-danger" onclick="deleteCharacter(${char.id}, '${char.name}')">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+        }
+        
+        function openCharacterModal(character = null) {
+            const isEdit = !!character;
+            document.getElementById('modalTitle').textContent = isEdit ? '编辑角色' : '新建角色';
+            
+            document.getElementById('modalBody').innerHTML = `
+                <form id="characterForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名 *</label>
+                            <input type="text" name="name" value="${character?.name || ''}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>角色类型</label>
+                            <select name="role_type">
+                                <option value="protagonist" ${character?.role_type === 'protagonist' ? 'selected' : ''}>主角</option>
+                                <option value="antagonist" ${character?.role_type === 'antagonist' ? 'selected' : ''}>反派</option>
+                                <option value="supporting" ${character?.role_type === 'supporting' ? 'selected' : ''}>配角</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>年龄</label>
+                            <input type="number" name="age" value="${character?.age || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>性别</label>
+                            <select name="gender">
+                                <option value="男" ${character?.gender === '男' ? 'selected' : ''}>男</option>
+                                <option value="女" ${character?.gender === '女' ? 'selected' : ''}>女</option>
+                                <option value="其他" ${character?.gender === '其他' ? 'selected' : ''}>其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>外貌特征</label>
+                        <textarea name="appearance">${character?.appearance || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>性格特点</label>
+                        <textarea name="personality">${character?.personality || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>身世背景</label>
+                        <textarea name="background">${character?.background || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>能力/技能（每行一个）</label>
+                        <textarea name="abilities">${character?.abilities?.join('\n') || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>目标/动机</label>
+                        <textarea name="goals">${character?.goals || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea name="notes">${character?.notes || ''}</textarea>
+                    </div>
+                    
+                    ${isEdit ? `<input type="hidden" name="id" value="${character.id}">` : ''}
+                </form>
+            `;
+            
+            modalCallback = async () => {
+                const form = document.getElementById('characterForm');
+                const formData = new FormData(form);
+                const data = {
+                    name: formData.get('name'),
+                    role_type: formData.get('role_type'),
+                    age: parseInt(formData.get('age')) || null,
+                    gender: formData.get('gender'),
+                    appearance: formData.get('appearance'),
+                    personality: formData.get('personality'),
+                    background: formData.get('background'),
+                    abilities: formData.get('abilities').split('\n').filter(a => a.trim()),
+                    goals: formData.get('goals'),
+                    notes: formData.get('notes')
+                };
+                
+                if (isEdit) {
+                    data.id = parseInt(formData.get('id'));
+                    await db.update('characters', data);
+                } else {
+                    await db.add('characters', data);
+                }
+                
+                closeModal();
+                renderCharacters(document.getElementById('mainContent'));
+            };
+            
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        async function editCharacter(id) {
+            const character = await db.get('characters', id);
+            openCharacterModal(character);
+        }
+        
+        async function deleteCharacter(id, name) {
+            if (confirm(`确定要删除角色「${name}」吗？`)) {
+                await db.delete('characters', id);
+                renderCharacters(document.getElementById('mainContent'));
+            }
+        }
+        
+        // ==================== 世界观 ====================
+        async function renderWorld(container, category = 'geography') {
+            const settings = await db.getAll('world_settings', 'category', category);
+            
+            const categoryNames = {
+                'geography': '地理环境',
+                'history': '历史背景',
+                'culture': '文化习俗',
+                'magic_system': '力量体系',
+                'other': '其他设定'
+            };
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>🌍 世界观设定</h2>
+                    <button class="btn btn-primary" onclick="openWorldModal(null, '${category}')">➕ 添加设定</button>
+                </div>
+                
+                <div class="tabs">
+                    ${Object.entries(categoryNames).map(([key, name]) => `
+                        <div class="tab ${category === key ? 'active' : ''}" onclick="renderWorld(document.getElementById('mainContent'), '${key}')">${name}</div>
+                    `).join('')}
+                </div>
+                
+                ${settings.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌍</div>
+                        <h3>暂无${categoryNames[category]}设定</h3>
+                        <p>点击右上角按钮添加</p>
+                    </div>
+                ` : `
+                    <div class="card-grid">
+                        ${settings.map(setting => `
+                            <div class="card">
+                                <div class="card-header">
+                                    <span class="card-title">${setting.title}</span>
+                                </div>
+                                <div class="card-content">
+                                    ${setting.content}
+                                </div>
+                                <div class="card-footer">
+                                    <span></span>
+                                    <div class="card-actions">
+                                        <button class="btn btn-secondary" onclick="editWorldSetting(${setting.id})">编辑</button>
+                                        <button class="btn btn-danger" onclick="deleteWorldSetting(${setting.id}, '${setting.title}')">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+        }
+        
+        function openWorldModal(setting = null, defaultCategory = 'geography') {
+            const isEdit = !!setting;
+            document.getElementById('modalTitle').textContent = isEdit ? '编辑设定' : '添加设定';
+            
+            document.getElementById('modalBody').innerHTML = `
+                <form id="worldForm">
+                    <div class="form-group">
+                        <label>分类</label>
+                        <select name="category">
+                            <option value="geography" ${(setting?.category || defaultCategory) === 'geography' ? 'selected' : ''}>地理环境</option>
+                            <option value="history" ${(setting?.category || defaultCategory) === 'history' ? 'selected' : ''}>历史背景</option>
+                            <option value="culture" ${(setting?.category || defaultCategory) === 'culture' ? 'selected' : ''}>文化习俗</option>
+                            <option value="magic_system" ${(setting?.category || defaultCategory) === 'magic_system' ? 'selected' : ''}>力量体系</option>
+                            <option value="other" ${(setting?.category || defaultCategory) === 'other' ? 'selected' : ''}>其他设定</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input type="text" name="title" value="${setting?.title || ''}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>内容</label>
+                        <textarea name="content" rows="10">${setting?.content || ''}</textarea>
+                    </div>
+                    
+                    ${isEdit ? `<input type="hidden" name="id" value="${setting.id}">` : ''}
+                </form>
+            `;
+            
+            modalCallback = async () => {
+                const form = document.getElementById('worldForm');
+                const formData = new FormData(form);
+                const data = {
+                    category: formData.get('category'),
+                    title: formData.get('title'),
+                    content: formData.get('content')
+                };
+                
+                if (isEdit) {
+                    data.id = parseInt(formData.get('id'));
+                    await db.update('world_settings', data);
+                    renderWorld(document.getElementById('mainContent'), data.category);
+                } else {
+                    await db.add('world_settings', data);
+                    renderWorld(document.getElementById('mainContent'), data.category);
+                }
+                
+                closeModal();
+            };
+            
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        async function editWorldSetting(id) {
+            const setting = await db.get('world_settings', id);
+            openWorldModal(setting);
+        }
+        
+        async function deleteWorldSetting(id, title) {
+            if (confirm(`确定要删除设定「${title}」吗？`)) {
+                await db.delete('world_settings', id);
+                renderWorld(document.getElementById('mainContent'));
+            }
+        }
+        
+        // ==================== 情节大纲 ====================
+        async function renderPlot(container, volume = 1) {
+            const plots = await db.getAll('plots', 'volume', volume);
+            plots.sort((a, b) => a.chapter - b.chapter);
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>📖 情节大纲</h2>
+                    <button class="btn btn-primary" onclick="openPlotModal(null, ${volume})">➕ 添加章节</button>
+                </div>
+                
+                <div class="tabs">
+                    ${[1,2,3,4,5,6,7].map(v => `
+                        <div class="tab ${volume === v ? 'active' : ''}" onclick="renderPlot(document.getElementById('mainContent'), ${v})">第${v}卷</div>
+                    `).join('')}
+                </div>
+                
+                ${plots.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <h3>第${volume}卷暂无章节</h3>
+                        <p>点击右上角按钮添加</p>
+                    </div>
+                ` : `
+                    <div class="list-view">
+                        ${plots.map(plot => {
+                            const statusColors = {
+                                'draft': '#888',
+                                'writing': '#ffa500',
+                                'completed': '#4ade80'
+                            };
+                            const statusText = {
+                                'draft': '草稿',
+                                'writing': '写作中',
+                                'completed': '已完成'
+                            };
+                            return `
+                                <div class="list-item">
+                                    <div class="list-item-info">
+                                        <h4>第${plot.chapter}章：${plot.title}</h4>
+                                        <p>${plot.summary?.substring(0, 100) || '暂无概要'}${plot.summary?.length > 100 ? '...' : ''}</p>
+                                    </div>
+                                    <div class="list-item-actions">
+                                        <span style="color:${statusColors[plot.status] || '#888'};font-size:12px;margin-right:10px">${statusText[plot.status] || plot.status}</span>
+                                        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="editPlot(${plot.id})">编辑</button>
+                                        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px" onclick="deletePlot(${plot.id}, '${plot.title}')">删除</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `}
+            `;
+        }
+        
+        function openPlotModal(plot = null, defaultVolume = 1) {
+            const isEdit = !!plot;
+            document.getElementById('modalTitle').textContent = isEdit ? '编辑章节' : '添加章节';
+            
+            document.getElementById('modalBody').innerHTML = `
+                <form id="plotForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>分卷</label>
+                            <select name="volume">
+                                ${[1,2,3,4,5,6,7].map(v => `
+                                    <option value="${v}" ${(plot?.volume || defaultVolume) === v ? 'selected' : ''}>第${v}卷</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>章节号</label>
+                            <input type="number" name="chapter" value="${plot?.chapter || ''}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>章节标题</label>
+                        <input type="text" name="title" value="${plot?.title || ''}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select name="status">
+                            <option value="draft" ${plot?.status === 'draft' ? 'selected' : ''}>草稿</option>
+                            <option value="writing" ${plot?.status === 'writing' ? 'selected' : ''}>写作中</option>
+                            <option value="completed" ${plot?.status === 'completed' ? 'selected' : ''}>已完成</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>章节概要</label>
+                        <textarea name="summary" rows="6">${plot?.summary || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>场景列表（每行一个）</label>
+                        <textarea name="scenes" rows="4">${plot?.scenes?.join('\n') || ''}</textarea>
+                    </div>
+                    
+                    ${isEdit ? `<input type="hidden" name="id" value="${plot.id}">` : ''}
+                </form>
+            `;
+            
+            modalCallback = async () => {
+                const form = document.getElementById('plotForm');
+                const formData = new FormData(form);
+                const data = {
+                    volume: parseInt(formData.get('volume')),
+                    chapter: parseInt(formData.get('chapter')),
+                    title: formData.get('title'),
+                    status: formData.get('status'),
+                    summary: formData.get('summary'),
+                    scenes: formData.get('scenes').split('\n').filter(s => s.trim()),
+                    characters: plot?.characters || []
+                };
+                
+                if (isEdit) {
+                    data.id = parseInt(formData.get('id'));
+                    await db.update('plots', data);
+                } else {
+                    await db.add('plots', data);
+                }
+                
+                closeModal();
+                renderPlot(document.getElementById('mainContent'), data.volume);
+            };
+            
+            document.getElementById('modal').classList.add('active');
+        }
+        
+        async function editPlot(id) {
+            const plot = await db.get('plots', id);
+            openPlotModal(plot, plot.volume);
+        }
+        
+        async function deletePlot(id, title) {
+            if (confirm(`确定要删除章节「${title}」吗？`)) {
+                await db.delete('plots', id);
+                renderPlot(document.getElementById('mainContent'));
+            }
+        }
+        
+        // ==================== 数据管理 ====================
+        async function renderData(container) {
+            const chars = await db.getAll('characters');
+            const world = await db.getAll('world_settings');
+            const plots = await db.getAll('plots');
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>💾 数据管理</h2>
+                </div>
+                
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <span class="card-title">📊 数据概览</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px 0;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 36px; color: #00d4ff; font-weight: bold;">${chars.length}</div>
+                            <div style="color: #888; margin-top: 5px;">角色数量</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 36px; color: #00d4ff; font-weight: bold;">${world.length}</div>
+                            <div style="color: #888; margin-top: 5px;">世界观设定</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 36px; color: #00d4ff; font-weight: bold;">${plots.length}</div>
+                            <div style="color: #888; margin-top: 5px;">章节数量</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-ops">
+                    <button class="btn btn-primary" onclick="exportData()">📤 导出数据</button>
+                    <button class="btn btn-secondary" onclick="importData()">📥 导入数据</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空数据</button>
+                </div>
+                
+                <input type="file" id="importFile" style="display: none" accept=".json" onchange="handleImport(event)">
+            `;
+        }
+        
+        async function exportData() {
+            const data = await db.exportAll();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `novel_data_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+        
+        async function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!confirm('导入数据将覆盖现有数据，是否继续？')) return;
+            
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    await db.importAll(data);
+                    alert('数据导入成功！');
+                    loadPage('data');
+                } catch (err) {
+                    alert('导入失败：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        async function clearAllData() {
+            if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
+            if (!confirm('真的确定吗？所有角色、世界观、情节都将被删除！')) return;
+            
+            await db.clear('characters');
+            await db.clear('world_settings');
+            await db.clear('plots');
+            alert('数据已清空');
+            loadPage('data');
+        }
+        
+        // ==================== 模态框控制 ====================
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            modalCallback = null;
+        }
+        
+        function confirmModal() {
+            if (modalCallback) {
+                modalCallback();
+            }
+        }
+        
+        // 点击模态框外部关闭
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
