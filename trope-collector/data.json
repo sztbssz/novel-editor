@@ -1,24 +1,24 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-04-09",
+  "lastUpdated": "2026-04-09T19:30:00",
   "categories": [
     {
       "id": "pretend-weak",
       "name": "扮猪吃老虎",
       "description": "隐藏实力，让对手轻视，然后出其不意反击",
-      "count": 3
+      "count": 6
     },
     {
       "id": "face-slap",
       "name": "打脸",
       "description": "被轻视/嘲讽后，用实力或身份让对方难堪",
-      "count": 3
+      "count": 6
     },
     {
       "id": "intelligence-battle",
       "name": "智斗",
       "description": "用计谋、策略战胜对手，而非单纯武力",
-      "count": 2
+      "count": 7
     },
     {
       "id": "marriage-cancel",
@@ -314,6 +314,126 @@
       "year": 2017,
       "tags": ["玄幻", "装逼", "教学"],
       "useCount": 32,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_021",
+      "type": "pretend-weak",
+      "title": "傻子人设伪装",
+      "content": "主角顶着"傻子"名号，让对手放松警惕认为"跟傻子计较不值当"。实则暗中布局，关键时刻一击致命。",
+      "book": "四合院之扮猪吃老虎",
+      "author": "佚名",
+      "year": 2023,
+      "tags": ["都市", "伪装", "复仇"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_022",
+      "type": "pretend-weak",
+      "title": "古老家族继承人伪装",
+      "content": "主角是古老家族的继承人或绝世高手，却伪装成普通学生或门派杂役。表面平凡甚至弱小，关键时刻显露真实实力形成降维打击。",
+      "book": "各类爽文",
+      "author": "多种",
+      "year": 2010,
+      "tags": ["身份反差", "隐藏", "逆袭"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_023",
+      "type": "pretend-weak",
+      "title": "顶头上司看不起",
+      "content": "大人物或帮派大佬对主角毕恭毕敬，但顶头上司却看不上主角。最后出事时上司呵斥主角，对方敌人却被主角吓退，上司目瞪口呆。",
+      "book": "网文经典模板",
+      "author": "通用",
+      "year": 2008,
+      "tags": ["身份反差", "隐藏", "打脸"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_024",
+      "type": "face-slap",
+      "title": "冒名顶替被揭穿",
+      "content": "主角小有名气后被人冒名顶替招摇撞骗，结果主角遇到当场揭穿。假李鬼遇真李逵，幽默情节与打脸场面并存。",
+      "book": "网文经典模板",
+      "author": "通用",
+      "year": 2008,
+      "tags": ["身份", "揭穿", "打脸"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_025",
+      "type": "face-slap",
+      "title": "一百零一次站起来",
+      "content": "主角被打倒100次，周围人从哄堂大笑到鸦雀无声。当主角第101次站起来时，打人的人手都在抖，被主角执着的信念和顽强的生命力震撼。",
+      "book": "网文经典模板",
+      "author": "通用",
+      "year": 2008,
+      "tags": ["坚韧", "震撼", "逆袭"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_026",
+      "type": "intelligence-battle",
+      "title": "草船借箭",
+      "content": "主角利用敌人资源为己所用。如诸葛亮利用浓雾和曹操疑心，派草船驶向曹营"借"箭。三日功夫，十万羽箭到手，敌人还无可奈何。",
+      "book": "三国演义",
+      "author": "罗贯中",
+      "year": 1400,
+      "tags": ["谋略", "借势", "三国"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_027",
+      "type": "intelligence-battle",
+      "title": "围魏救赵",
+      "content": "不直接救援被围困的友军，而是攻敌必救之处，迫使敌人回援，从而解围。体现"攻其所必救"的兵法精髓。",
+      "book": "史记·孙子吴起列传",
+      "author": "孙膑",
+      "year": -340,
+      "tags": ["兵法", "解围", "谋略"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_028",
+      "type": "intelligence-battle",
+      "title": "欲擒故纵",
+      "content": "假装退让或放走敌人，诱敌深入或松懈警惕，再一举歼灭。让敌人以为逃脱，实则是主角设下的陷阱。",
+      "book": "三十六计",
+      "author": "佚名",
+      "year": 500,
+      "tags": ["兵法", "诱敌", "计谋"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_029",
+      "type": "intelligence-battle",
+      "title": "声东击西",
+      "content": "制造攻打东边的假象，实际攻击西边。通过假象迷惑敌人，让敌人兵力部署出现漏洞，从而攻其不备。",
+      "book": "三十六计",
+      "author": "佚名",
+      "year": 500,
+      "tags": ["兵法", "迷惑", "奇袭"],
+      "useCount": 0,
+      "isUserAdded": false
+    },
+    {
+      "id": "trope_030",
+      "type": "intelligence-battle",
+      "title": "假剑谱布局",
+      "content": "敌人觊觎某宝物/功法时，主角伪造假品转移视线，化解危机，同时借敌人内斗削弱对手，尽显运筹帷幄智慧。",
+      "book": "剑出衡山",
+      "author": "一片苏叶",
+      "year": 2023,
+      "tags": ["武侠", "布局", "谋略"],
+      "useCount": 0,
       "isUserAdded": false
     }
   ],
