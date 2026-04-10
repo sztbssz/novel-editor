@@ -5,1001 +5,383 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 创世者编辑器</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: #1a1a2e;
-            color: #fff;
-            min-height: 100vh;
+            background: #1a1a2e; color: #fff; min-height: 100vh;
         }
-        
-        /* 布局 */
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-        
-        /* 侧边栏 */
+        .container { display: flex; height: 100vh; }
         .sidebar {
-            width: 220px;
-            background: #16213e;
-            padding: 20px 0;
-            display: flex;
-            flex-direction: column;
+            width: 220px; background: #16213e; padding: 20px 0;
+            display: flex; flex-direction: column;
         }
-        
-        .logo {
-            text-align: center;
-            padding: 0 20px 30px;
-            border-bottom: 1px solid #0f3460;
-        }
-        
-        .logo h1 {
-            font-size: 24px;
-            color: #00d4ff;
-            margin-bottom: 5px;
-        }
-        
-        .logo p {
-            font-size: 12px;
-            color: #888;
-        }
-        
-        .nav-menu {
-            flex: 1;
-            padding: 20px 10px;
-        }
-        
+        .logo { text-align: center; padding: 0 20px 30px; border-bottom: 1px solid #0f3460; }
+        .logo h1 { font-size: 24px; color: #00d4ff; margin-bottom: 5px; }
+        .logo p { font-size: 12px; color: #888; }
+        .nav-menu { flex: 1; padding: 20px 10px; }
         .nav-item {
-            display: block;
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: #ccc;
-            text-decoration: none;
-            font-size: 14px;
+            display: block; padding: 12px 20px; margin: 5px 10px;
+            border-radius: 8px; cursor: pointer; transition: all 0.3s;
+            color: #ccc; text-decoration: none; font-size: 14px;
         }
-        
-        .nav-item:hover {
-            background: #0f3460;
-            color: #fff;
-        }
-        
-        .nav-item.active {
-            background: #e94560;
-            color: #fff;
-        }
-        
-        .nav-item i {
-            margin-right: 10px;
-            font-style: normal;
-        }
-        
-        /* 主内容区 */
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
-        
+        .nav-item:hover { background: #0f3460; color: #fff; }
+        .nav-item.active { background: #e94560; color: #fff; }
+        .nav-item i { margin-right: 10px; font-style: normal; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #16213e;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #16213e;
         }
-        
-        .header h2 {
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
+        .header h2 { font-size: 24px; font-weight: 600; }
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            padding: 10px 20px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 14px; transition: all 0.3s;
+            display: inline-flex; align-items: center; gap: 5px;
         }
-        
-        .btn-primary {
-            background: #e94560;
-            color: #fff;
-        }
-        
-        .btn-primary:hover {
-            background: #d63a54;
-        }
-        
-        .btn-secondary {
-            background: #0f3460;
-            color: #fff;
-        }
-        
-        .btn-secondary:hover {
-            background: #1a4a7a;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
-        
-        .btn-success {
-            background: #28a745;
-            color: #fff;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        /* 卡片网格 */
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #d63a54; }
+        .btn-secondary { background: #0f3460; color: #fff; }
+        .btn-secondary:hover { background: #1a4a7a; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-success:hover { background: #218838; }
         .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
         }
-        
         .card {
-            background: #16213e;
-            border-radius: 12px;
-            padding: 20px;
+            background: #16213e; border-radius: 12px; padding: 20px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            display: flex; justify-content: space-between; align-items: flex-start;
             margin-bottom: 15px;
         }
-        
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-        }
-        
+        .card-title { font-size: 18px; font-weight: 600; color: #fff; }
         .card-type {
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: #0f3460;
-            color: #00d4ff;
+            font-size: 12px; padding: 4px 10px; border-radius: 20px;
+            background: #0f3460; color: #00d4ff;
         }
-        
         .card-content {
-            color: #888;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 15px;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
+            color: #888; font-size: 14px; line-height: 1.6; margin-bottom: 15px;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
             overflow: hidden;
         }
-        
         .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 15px;
-            border-top: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 15px; border-top: 1px solid #0f3460;
         }
-        
-        .card-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .card-actions button {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        /* 模态框 */
+        .card-actions { display: flex; gap: 10px; }
+        .card-actions button { padding: 6px 12px; font-size: 12px; }
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 1000; justify-content: center; align-items: center;
         }
-        
-        .modal.active {
-            display: flex;
-        }
-        
+        .modal.active { display: flex; }
         .modal-content {
-            background: #16213e;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
+            background: #16213e; border-radius: 16px; width: 90%;
+            max-width: 700px; max-height: 90vh; overflow-y: auto;
         }
-        
         .modal-header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #0f3460;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px 30px; border-bottom: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .modal-header h3 {
-            font-size: 20px;
-        }
-        
+        .modal-header h3 { font-size: 20px; }
         .modal-close {
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 24px;
-            cursor: pointer;
+            background: none; border: none; color: #888; font-size: 24px; cursor: pointer;
         }
-        
-        .modal-close:hover {
-            color: #fff;
-        }
-        
-        .modal-body {
-            padding: 30px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
+        .modal-close:hover { color: #fff; }
+        .modal-body { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
         .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #ccc;
-            font-size: 14px;
+            display: block; margin-bottom: 8px; color: #ccc; font-size: 14px;
         }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            background: #1a1a2e;
-            border: 1px solid #0f3460;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            transition: border-color 0.3s;
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 15px; background: #1a1a2e;
+            border: 1px solid #0f3460; border-radius: 8px; color: #fff;
+            font-size: 14px; transition: border-color 0.3s;
         }
-        
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #00d4ff;
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #00d4ff;
         }
-        
-        .form-group textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .modal-footer {
-            padding: 20px 30px;
-            border-top: 1px solid #0f3460;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
+            padding: 20px 30px; border-top: 1px solid #0f3460;
+            display: flex; justify-content: flex-end; gap: 10px;
         }
-
-        /* 桥段详情弹窗 */
         .trope-detail-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 1500;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+            z-index: 1500; justify-content: center; align-items: center;
         }
-        
-        .trope-detail-modal.active {
-            display: flex;
-        }
-        
+        .trope-detail-modal.active { display: flex; }
         .trope-detail-content {
-            background: #16213e;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 85vh;
-            overflow-y: auto;
+            background: #16213e; border-radius: 16px; width: 90%;
+            max-width: 600px; max-height: 85vh; overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
-        
         .trope-detail-header {
-            padding: 24px 30px 16px;
-            border-bottom: 1px solid #0f3460;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            padding: 24px 30px 16px; border-bottom: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
-        
-        .trope-detail-header h3 {
-            font-size: 20px;
-            color: #fff;
-            margin: 0;
-            flex: 1;
-            padding-right: 15px;
-        }
-        
+        .trope-detail-header h3 { font-size: 20px; color: #fff; margin: 0; flex: 1; padding-right: 15px; }
         .trope-detail-close {
-            background: none;
-            border: none;
-            color: #888;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            transition: all 0.2s;
+            background: none; border: none; color: #888; font-size: 28px;
+            cursor: pointer; padding: 0; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; transition: all 0.2s;
         }
-        
-        .trope-detail-close:hover {
-            color: #fff;
-            background: rgba(233, 69, 96, 0.2);
-        }
-        
-        .trope-detail-body {
-            padding: 24px 30px;
-        }
-        
+        .trope-detail-close:hover { color: #fff; background: rgba(233, 69, 96, 0.2); }
+        .trope-detail-body { padding: 24px 30px; }
         .trope-detail-content-text {
-            background: #1a1a2e;
-            border: 1px solid #0f3460;
-            border-radius: 10px;
-            padding: 20px;
-            line-height: 1.8;
-            color: #ddd;
-            font-size: 14px;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            background: #1a1a2e; border: 1px solid #0f3460; border-radius: 10px;
+            padding: 20px; line-height: 1.8; color: #ddd; font-size: 14px;
+            margin-bottom: 20px; white-space: pre-wrap; word-wrap: break-word;
         }
-        
         .trope-detail-source {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-            padding: 12px 15px;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #00d4ff;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+            padding: 12px 15px; background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px; border-left: 3px solid #00d4ff;
         }
-        
-        .trope-detail-source-label {
-            color: #00d4ff;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        
-        .trope-detail-source-info {
-            color: #aaa;
-            font-size: 13px;
-        }
-        
-        .trope-detail-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        
+        .trope-detail-source-label { color: #00d4ff; font-size: 13px; font-weight: 500; }
+        .trope-detail-source-info { color: #aaa; font-size: 13px; }
+        .trope-detail-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
         .trope-detail-tag {
-            padding: 5px 12px;
-            background: rgba(233, 69, 96, 0.15);
-            border-radius: 15px;
-            font-size: 12px;
-            color: #e94560;
+            padding: 5px 12px; background: rgba(233, 69, 96, 0.15);
+            border-radius: 15px; font-size: 12px; color: #e94560;
         }
-        
         .trope-detail-footer {
-            padding: 16px 30px 24px;
-            display: flex;
-            justify-content: center;
-            gap: 12px;
+            padding: 16px 30px 24px; display: flex; justify-content: center; gap: 12px;
         }
-        
         .trope-detail-btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            padding: 10px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 14px; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        
-        .trope-detail-btn-copy {
-            background: #e94560;
-            color: #fff;
-        }
-        
-        .trope-detail-btn-copy:hover {
-            background: #d63a54;
-        }
-        
-        .trope-detail-btn-close {
-            background: #0f3460;
-            color: #fff;
-        }
-        
-        .trope-detail-btn-close:hover {
-            background: #1a4a7a;
-        }
-        
-        /* 空状态 */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-        
-        .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-        
-        .empty-state p {
-            color: #888;
-            margin-bottom: 30px;
-        }
-        
-        /* 标签页 */
+        .trope-detail-btn-copy { background: #e94560; color: #fff; }
+        .trope-detail-btn-copy:hover { background: #d63a54; }
+        .trope-detail-btn-close { background: #0f3460; color: #fff; }
+        .trope-detail-btn-close:hover { background: #1a4a7a; }
+        .empty-state { text-align: center; padding: 60px 20px; }
+        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+        .empty-state h3 { font-size: 20px; margin-bottom: 10px; color: #fff; }
+        .empty-state p { color: #888; margin-bottom: 30px; }
         .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 30px;
-            background: #16213e;
-            padding: 5px;
-            border-radius: 10px;
+            display: flex; gap: 5px; margin-bottom: 30px;
+            background: #16213e; padding: 5px; border-radius: 10px;
         }
-        
         .tab {
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            color: #888;
-            transition: all 0.3s;
+            padding: 10px 20px; border-radius: 6px; cursor: pointer;
+            color: #888; transition: all 0.3s;
         }
-        
-        .tab:hover {
-            color: #fff;
-        }
-        
-        .tab.active {
-            background: #e94560;
-            color: #fff;
-        }
-        
-        /* 列表视图 */
-        .list-view {
-            background: #16213e;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
+        .tab:hover { color: #fff; }
+        .tab.active { background: #e94560; color: #fff; }
+        .list-view { background: #16213e; border-radius: 12px; overflow: hidden; }
         .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #0f3460;
-            cursor: pointer;
-            transition: background 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; border-bottom: 1px solid #0f3460;
+            cursor: pointer; transition: background 0.2s;
         }
-        
-        .list-item:last-child {
-            border-bottom: none;
-        }
-        
-        .list-item:hover {
-            background: #1a2a4a;
-        }
-        
-        .list-item-info h4 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .list-item-info p {
-            font-size: 13px;
-            color: #888;
-        }
-        
-        .list-item-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        /* 搜索框 */
-        .search-box {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #1a2a4a; }
+        .list-item-info h4 { font-size: 16px; margin-bottom: 5px; }
+        .list-item-info p { font-size: 13px; color: #888; }
+        .list-item-actions { display: flex; gap: 8px; }
+        .search-box { position: relative; margin-bottom: 20px; }
         .search-box input {
-            width: 100%;
-            padding: 12px 15px 12px 45px;
-            background: #16213e;
-            border: 1px solid #0f3460;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 14px;
+            width: 100%; padding: 12px 15px 12px 45px;
+            background: #16213e; border: 1px solid #0f3460;
+            border-radius: 10px; color: #fff; font-size: 14px;
         }
-        
         .search-box::before {
-            content: "🔍";
-            position: absolute;
-            left: 15px;
-            top: 50%;
+            content: "🔍"; position: absolute; left: 15px; top: 50%;
             transform: translateY(-50%);
         }
-        
-        /* 数据操作 */
-        .data-ops {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        /* 桥段素材库面板样式 */
+        .data-ops { display: flex; gap: 10px; margin-bottom: 20px; }
+        .hidden { display: none !important; }
         .trope-panel {
-            width: 0;
-            min-width: 0;
-            background: #16213e;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            opacity: 0;
+            width: 0; min-width: 0; background: #16213e;
+            border-radius: 12px; overflow: hidden;
+            transition: all 0.3s ease; opacity: 0;
         }
-        
-        .trope-panel.active {
-            width: 380px;
-            min-width: 380px;
-            opacity: 1;
-        }
-        
+        .trope-panel.active { width: 380px; min-width: 380px; opacity: 1; }
         .trope-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; border-bottom: 1px solid #0f3460;
         }
-        
-        .trope-panel-header h3 {
-            font-size: 16px;
-            color: #00d4ff;
-        }
-        
+        .trope-panel-header h3 { font-size: 16px; color: #00d4ff; }
         .trope-panel-body {
-            padding: 15px;
-            height: calc(100vh - 250px);
-            overflow-y: auto;
+            padding: 15px; height: calc(100vh - 250px); overflow-y: auto;
         }
-        
         .trope-categories {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;
         }
-        
         .trope-cat-tag {
-            padding: 6px 12px;
-            background: #1a1a2e;
-            border-radius: 15px;
-            font-size: 12px;
-            color: #888;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            padding: 6px 12px; background: #1a1a2e; border-radius: 15px;
+            font-size: 12px; color: #888; cursor: pointer;
+            transition: all 0.2s; border: 1px solid transparent;
         }
-        
-        .trope-cat-tag:hover {
-            background: #0f3460;
-            color: #fff;
-        }
-        
-        .trope-cat-tag.active {
-            background: #e94560;
-            color: #fff;
-            border-color: #e94560;
-        }
-        
-        .trope-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
+        .trope-cat-tag:hover { background: #0f3460; color: #fff; }
+        .trope-cat-tag.active { background: #e94560; color: #fff; border-color: #e94560; }
+        .trope-list { display: flex; flex-direction: column; gap: 12px; }
         .trope-item {
-            background: #1a1a2e;
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #0f3460;
-            transition: all 0.2s;
+            background: #1a1a2e; border-radius: 10px; padding: 15px;
+            border: 1px solid #0f3460; transition: all 0.2s;
         }
-        
-        .trope-item:hover {
-            border-color: #00d4ff;
-            transform: translateX(-2px);
-        }
-        
+        .trope-item:hover { border-color: #00d4ff; transform: translateX(-2px); }
         .trope-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 8px;
         }
-        
         .trope-item-type {
-            font-size: 11px;
-            padding: 3px 8px;
-            background: rgba(233, 69, 96, 0.2);
-            color: #e94560;
-            border-radius: 10px;
+            font-size: 11px; padding: 3px 8px;
+            background: rgba(233, 69, 96, 0.2); color: #e94560; border-radius: 10px;
         }
-        
-        .trope-item-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-        
-        .trope-item-content {
-            font-size: 12px;
-            color: #aaa;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-        
+        .trope-item-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+        .trope-item-content { font-size: 12px; color: #aaa; line-height: 1.6; margin-bottom: 10px; }
         .trope-item-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 10px;
-            border-top: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 10px; border-top: 1px solid #0f3460;
         }
-        
         .btn-copy {
-            padding: 4px 12px;
-            background: #0f3460;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 11px;
-            cursor: pointer;
+            padding: 4px 12px; background: #0f3460; color: #fff;
+            border: none; border-radius: 6px; font-size: 11px; cursor: pointer;
             transition: all 0.2s;
         }
-        
-        .btn-copy:hover {
-            background: #00d4ff;
-        }
-
-        /* Token输入框样式 */
-        .token-input-group {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .token-input-group input {
-            flex: 1;
-        }
-        
+        .btn-copy:hover { background: #00d4ff; }
+        .token-input-group { display: flex; gap: 10px; }
+        .token-input-group input { flex: 1; }
         .token-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 4px;
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 12px; padding: 4px 10px; border-radius: 4px;
         }
-        
-        .token-status.valid {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
-        }
-        
-        .token-status.invalid {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-        }
-        
+        .token-status.valid { background: rgba(40, 167, 69, 0.2); color: #28a745; }
+        .token-status.invalid { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
         .sync-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
-            background: #1a1a2e;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 15px; background: #1a1a2e; border-radius: 8px;
+            margin-bottom: 20px; font-size: 13px;
         }
-        
-        .sync-status.synced {
-            border-left: 3px solid #28a745;
-        }
-        
-        .sync-status.unsynced {
-            border-left: 3px solid #ffc107;
-        }
-        
-        .sync-status.error {
-            border-left: 3px solid #dc3545;
-        }
-
-        /* GitHub设置模态框 */
+        .sync-status.synced { border-left: 3px solid #28a745; }
+        .sync-status.unsynced { border-left: 3px solid #ffc107; }
+        .sync-status.error { border-left: 3px solid #dc3545; }
         .github-setup-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            display: none;
-            justify-content: center;
-            align-items: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
         }
-        
-        .github-setup-modal.active {
-            display: flex;
-        }
-        
+        .github-setup-modal.active { display: flex; }
         .github-setup-content {
-            background: #16213e;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
-            padding: 40px;
-            text-align: center;
+            background: #16213e; border-radius: 16px; width: 90%;
+            max-width: 500px; padding: 40px; text-align: center;
         }
-        
-        .github-setup-content h2 {
-            color: #00d4ff;
-            margin-bottom: 20px;
-        }
-        
-        .github-setup-content p {
-            color: #888;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        
-        .github-setup-content .form-group {
-            text-align: left;
-        }
-        
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .help-text a {
-            color: #00d4ff;
-        }
-
-        /* 加载动画 */
+        .github-setup-content h2 { color: #00d4ff; margin-bottom: 20px; }
+        .github-setup-content p { color: #888; margin-bottom: 30px; line-height: 1.6; }
+        .github-setup-content .form-group { text-align: left; }
+        .help-text { font-size: 12px; color: #666; margin-top: 5px; }
+        .help-text a { color: #00d4ff; }
         .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s ease-in-out infinite;
         }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* 加载进度条 */
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loading-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(233, 69, 96, 0.2);
-            z-index: 3000;
-            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 3px;
+            background: rgba(233, 69, 96, 0.2); z-index: 3000; display: none;
         }
-        
-        .loading-bar.active {
-            display: block;
-        }
-        
+        .loading-bar.active { display: block; }
         .loading-bar-progress {
-            height: 100%;
-            background: linear-gradient(90deg, #e94560, #ff6b8a);
-            width: 0%;
-            transition: width 0.3s ease;
+            height: 100%; background: linear-gradient(90deg, #e94560, #ff6b8a);
+            width: 0%; transition: width 0.3s ease;
             box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
         }
-        
         .loading-status {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(22, 33, 62, 0.95);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            color: #fff;
-            z-index: 3001;
-            display: none;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid #0f3460;
+            position: fixed; top: 10px; left: 50%;
+            transform: translateX(-50%); background: rgba(22, 33, 62, 0.95);
+            padding: 10px 20px; border-radius: 20px; font-size: 13px;
+            color: #fff; z-index: 3001; display: none;
+            align-items: center; gap: 10px; border: 1px solid #0f3460;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-        
-        .loading-status.active {
-            display: flex;
-        }
-        
-        .loading-status-error {
-            background: rgba(220, 53, 69, 0.95);
-            border-color: #dc3545;
-        }
-        
-        .loading-status-success {
-            background: rgba(40, 167, 69, 0.95);
-            border-color: #28a745;
-        }
+        .loading-status.active { display: flex; }
+        .loading-status-error { background: rgba(220, 53, 69, 0.95); border-color: #dc3545; }
+        .loading-status-success { background: rgba(40, 167, 69, 0.95); border-color: #28a745; }
 
         /* 数据加载覆盖层 */
         .data-loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(26, 26, 46, 0.9);
-            z-index: 2500;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 26, 46, 0.95); z-index: 2500;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
             gap: 20px;
         }
-        
-        .data-loading-overlay.active {
-            display: flex;
-        }
-        
-        .data-loading-content {
-            text-align: center;
-        }
-        
+        .data-loading-overlay.active { display: flex; }
+        .data-loading-content { text-align: center; max-width: 400px; padding: 30px; }
         .data-loading-spinner {
-            width: 50px;
-            height: 50px;
+            width: 50px; height: 50px;
             border: 4px solid rgba(233, 69, 96, 0.3);
-            border-top-color: #e94560;
-            border-radius: 50%;
+            border-top-color: #e94560; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
+        }
+        .data-loading-text { font-size: 18px; color: #fff; margin-bottom: 10px; font-weight: 600; }
+        .data-loading-subtext { font-size: 14px; color: #888; margin-bottom: 20px; }
+        .data-loading-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .data-loading-stats { 
+            font-size: 13px; color: #00d4ff; margin-top: 15px;
+            padding: 10px 20px; background: rgba(0, 212, 255, 0.1); border-radius: 8px;
+        }
+        .data-loading-error { color: #e94560; font-size: 14px; margin-top: 10px; }
+
+        /* 刷新按钮 */
+        .refresh-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #e94560; color: #fff; border: none;
+            cursor: pointer; font-size: 20px; z-index: 100;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+            transition: all 0.3s; display: flex; align-items: center; justify-content: center;
+        }
+        .refresh-btn:hover { transform: scale(1.1); background: #d63a54; }
+        .refresh-btn.spinning { animation: spin 1s linear infinite; }
+
+        /* 加载提示条 */
+        .loading-hint {
+            background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff;
+            border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .loading-hint-spinner {
+            width: 24px; height: 24px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top-color: #00d4ff; border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
         }
-        
-        .data-loading-text {
-            font-size: 16px;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-        
-        .data-loading-subtext {
-            font-size: 13px;
-            color: #888;
-        }
-        
-        .data-loading-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
+        .loading-hint-text { flex: 1; }
+        .loading-hint-title { font-size: 14px; color: #fff; font-weight: 500; }
+        .loading-hint-desc { font-size: 12px; color: #888; margin-top: 2px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 侧边栏 -->
         <aside class="sidebar">
             <div class="logo">
                 <h1>🎮 创世者</h1>
                 <p>镜像囚笼 · 小说编辑器</p>
             </div>
             <nav class="nav-menu">
-                <a class="nav-item active" data-page="home">
-                    <i>🏠</i>首页
-                </a>
-                <a class="nav-item" data-page="characters">
-                    <i>👤</i>角色管理
-                </a>
-                <a class="nav-item" data-page="world">
-                    <i>🌍</i>世界观
-                </a>
-                <a class="nav-item" data-page="plot">
-                    <i>📖</i>情节大纲
-                </a>
-                <a class="nav-item" data-page="trope">
-                    <i>🎭</i>桥段素材
-                </a>
-                <a class="nav-item" data-page="data">
-                    <i>💾</i>数据管理
-                </a>
+                <a class="nav-item active" data-page="home"><i>🏠</i>首页</a>
+                <a class="nav-item" data-page="characters"><i>👤</i>角色管理</a>
+                <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
+                <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
+                <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
+                <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
             </nav>
         </aside>
-        
-        <!-- 主内容 -->
-        <main class="main-content" id="mainContent">
-            <!-- 动态加载内容 -->
-        </main>
+        <main class="main-content" id="mainContent"></main>
     </div>
-    
+
     <!-- 模态框 -->
     <div class="modal" id="modal">
         <div class="modal-content">
@@ -1007,9 +389,7 @@
                 <h3 id="modalTitle">标题</h3>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- 动态内容 -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
                 <button class="btn btn-primary" id="modalConfirm" onclick="confirmModal()">保存</button>
@@ -1030,9 +410,7 @@
                     <span class="trope-detail-source-label">📚 出处</span>
                     <span id="tropeDetailSource" class="trope-detail-source-info">书名 · 作者 · 年份</span>
                 </div>
-                <div id="tropeDetailTags" class="trope-detail-tags">
-                    <!-- 动态生成标签 -->
-                </div>
+                <div id="tropeDetailTags" class="trope-detail-tags"></div>
             </div>
             <div class="trope-detail-footer">
                 <button class="trope-detail-btn trope-detail-btn-copy" onclick="copyTropeDetailContent()">📋 复制内容</button>
@@ -1058,12 +436,17 @@
             <div class="data-loading-spinner"></div>
             <div class="data-loading-text" id="dataLoadingText">正在加载数据...</div>
             <div class="data-loading-subtext" id="dataLoadingSubtext">首次加载可能需要一些时间</div>
+            <div class="data-loading-error" id="dataLoadingError"></div>
+            <div class="data-loading-stats" id="dataLoadingStats"></div>
             <div class="data-loading-actions" id="dataLoadingActions" style="display:none;">
                 <button class="btn btn-primary" onclick="retryLoadingData()">🔄 重试</button>
                 <button class="btn btn-secondary" onclick="skipLoadingData()">⏭️ 跳过</button>
             </div>
         </div>
     </div>
+
+    <!-- 强制刷新按钮 -->
+    <button class="refresh-btn" id="refreshBtn" onclick="forceRefreshData()" title="强制刷新数据">🔄</button>
 
     <!-- GitHub Token 设置模态框 -->
     <div class="github-setup-modal" id="githubSetupModal">
@@ -1084,35 +467,163 @@
     </div>
 
     <script>
+        // ==================== 网络优化配置 ====================
+        const NETWORK_CONFIG = {
+            timeout: 30000,          // 30秒超时
+            maxRetries: 3,           // 最大重试3次
+            retryDelay: [1000, 2000, 4000],  // 指数退避延迟
+            cacheVersion: 'v2.0'     // 缓存版本
+        };
+
+        // ==================== 数据加载状态管理 ====================
+        const dataLoadState = {
+            characters: { loaded: false, loading: false, error: null, cached: false, data: null },
+            worldview: { loaded: false, loading: false, error: null, cached: false, data: null },
+            tropes: { loaded: false, loading: false, error: null, data: null }
+        };
+
+        // ==================== IndexedDB 缓存管理 ====================
+        class CacheManager {
+            constructor() {
+                this.dbName = 'NovelEditorCache';
+                this.dbVersion = 1;
+                this.db = null;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve();
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('dataCache')) {
+                            const store = db.createObjectStore('dataCache', { keyPath: 'key' });
+                            store.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async get(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('dataCache', 'readonly');
+                    const store = tx.objectStore('dataCache');
+                    const request = store.get(key);
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result && result.version === NETWORK_CONFIG.cacheVersion) {
+                            resolve(result.data);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async set(key, data) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('dataCache', 'readwrite');
+                    const store = tx.objectStore('dataCache');
+                    const request = store.put({
+                        key: key,
+                        data: data,
+                        version: NETWORK_CONFIG.cacheVersion,
+                        timestamp: Date.now()
+                    });
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async clear(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('dataCache', 'readwrite');
+                    const store = tx.objectStore('dataCache');
+                    const request = store.delete(key);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async clearAll() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('dataCache', 'readwrite');
+                    const store = tx.objectStore('dataCache');
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        const cacheManager = new CacheManager();
+
+        // ==================== 网络请求工具（带超时、重试、指数退避）====================
+        async function fetchWithRetry(url, options = {}) {
+            const { timeout = NETWORK_CONFIG.timeout, retries = NETWORK_CONFIG.maxRetries } = options;
+            let lastError;
+            
+            for (let i = 0; i < retries; i++) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+                
+                try {
+                    console.log(`🌐 请求尝试 ${i + 1}/${retries}: ${url}`);
+                    const response = await fetch(url, { 
+                        signal: controller.signal,
+                        cache: 'no-cache',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        console.log(`✅ 请求成功: ${url}`);
+                        return response;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    lastError = error;
+                    console.warn(`⚠️ 请求失败 (${i + 1}/${retries}): ${url}`, error.message);
+                    
+                    if (i < retries - 1) {
+                        const delay = NETWORK_CONFIG.retryDelay[i] || NETWORK_CONFIG.retryDelay[NETWORK_CONFIG.retryDelay.length - 1];
+                        console.log(`⏱️ 等待 ${delay}ms 后重试...`);
+                        await new Promise(r => setTimeout(r, delay));
+                    }
+                }
+            }
+            
+            console.error(`❌ 所有请求尝试失败: ${url}`, lastError);
+            throw lastError;
+        }
+
         // ==================== GitHub 同步模块 ====================
         class GitHubSync {
             constructor() {
                 this.token = localStorage.getItem('github_token');
                 this.gistId = localStorage.getItem('github_gist_id');
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
-                this.tropeDataUrl = 'data.json';
             }
 
-            // 检查是否已配置
-            isConfigured() {
-                return !!this.token;
-            }
+            isConfigured() { return !!this.token; }
 
-            // 保存 Token
             saveToken(token) {
                 this.token = token;
                 localStorage.setItem('github_token', token);
             }
 
-            // 验证 Token
             async verifyToken() {
                 if (!this.token) return false;
                 try {
-                    const response = await fetch('https://api.github.com/user', {
-                        headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                    const response = await fetchWithRetry('https://api.github.com/user', {
+                        retries: 2,
+                        timeout: 15000
                     });
                     return response.ok;
                 } catch (e) {
@@ -1120,51 +631,24 @@
                 }
             }
 
-            // 获取或创建 Gist
             async getOrCreateGist() {
                 if (this.gistId) {
-                    // 检查 Gist 是否存在
                     try {
-                        const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                            headers: {
-                                'Authorization': `token ${this.token}`,
-                                'Accept': 'application/vnd.github.v3+json'
-                            }
+                        const response = await fetchWithRetry(`https://api.github.com/gists/${this.gistId}`, {
+                            retries: 2,
+                            timeout: 15000
                         });
-                        if (response.ok) {
-                            return this.gistId;
-                        }
+                        if (response.ok) return this.gistId;
                     } catch (e) {
                         console.error('Gist check failed:', e);
                     }
                 }
 
-                // 创建新 Gist
                 try {
-                    const response = await fetch('https://api.github.com/gists', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            description: '创世者编辑器 - 小说写作数据备份',
-                            public: false,
-                            files: {
-                                'novel_editor_data.json': {
-                                    content: JSON.stringify({
-                                        version: 1,
-                                        created_at: new Date().toISOString(),
-                                        characters: [],
-                                        world_settings: [],
-                                        plots: []
-                                    }, null, 2)
-                                }
-                            }
-                        })
+                    const response = await fetchWithRetry('https://api.github.com/gists', {
+                        retries: 2,
+                        timeout: 20000
                     });
-
                     if (response.ok) {
                         const data = await response.json();
                         this.gistId = data.id;
@@ -1177,26 +661,20 @@
                 }
             }
 
-            // 从 Gist 加载数据
             async loadFromGist() {
                 if (!this.gistId || !this.token) return null;
-
                 try {
-                    const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                        headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
+                    const response = await fetchWithRetry(`https://api.github.com/gists/${this.gistId}`, {
+                        retries: 2,
+                        timeout: 20000
                     });
-
                     if (response.ok) {
                         const data = await response.json();
                         const file = data.files['novel_editor_data.json'];
                         if (file) {
-                            const content = JSON.parse(file.content);
                             this.lastSyncTime = new Date().toISOString();
                             localStorage.setItem('last_sync_time', this.lastSyncTime);
-                            return content;
+                            return JSON.parse(file.content);
                         }
                     }
                 } catch (e) {
@@ -1205,31 +683,13 @@
                 return null;
             }
 
-            // 保存数据到 Gist
             async saveToGist(data) {
                 const gistId = await this.getOrCreateGist();
-
                 try {
-                    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            files: {
-                                'novel_editor_data.json': {
-                                    content: JSON.stringify({
-                                        version: 1,
-                                        updated_at: new Date().toISOString(),
-                                        ...data
-                                    }, null, 2)
-                                }
-                            }
-                        })
+                    const response = await fetchWithRetry(`https://api.github.com/gists/${gistId}`, {
+                        retries: 2,
+                        timeout: 20000
                     });
-
                     if (response.ok) {
                         this.lastSyncTime = new Date().toISOString();
                         localStorage.setItem('last_sync_time', this.lastSyncTime);
@@ -1241,25 +701,6 @@
                 return false;
             }
 
-            // 从远程加载桥段数据（无缓存，强制实时加载）
-            async loadTropeData() {
-                try {
-                    // 强制绕过缓存
-                    const noCacheUrl = this.tropeDataUrl + '?t=' + new Date().getTime();
-                    const response = await fetch(noCacheUrl, {
-                        cache: 'no-store',
-                        headers: { 'Cache-Control': 'no-cache' }
-                    });
-                    if (response.ok) {
-                        return await response.json();
-                    }
-                } catch (e) {
-                    console.error('Load trope data failed:', e);
-                }
-                return null;
-            }
-
-            // 清除配置
             clearConfig() {
                 this.token = null;
                 this.gistId = null;
@@ -1283,40 +724,30 @@
             async init() {
                 return new Promise((resolve, reject) => {
                     const request = indexedDB.open(this.dbName, this.dbVersion);
-                    
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         this.db = request.result;
                         resolve();
                     };
-                    
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
-                        
-                        // 角色表
                         if (!db.objectStoreNames.contains('characters')) {
                             const charStore = db.createObjectStore('characters', { keyPath: 'id', autoIncrement: true });
                             charStore.createIndex('name', 'name', { unique: false });
-                            charStore.createIndex('role_type', 'role_type', { unique: false });
+                            charStore.createIndex('role', 'role', { unique: false });
                         }
-                        
-                        // 世界观表
                         if (!db.objectStoreNames.contains('world_settings')) {
                             const worldStore = db.createObjectStore('world_settings', { keyPath: 'id', autoIncrement: true });
                             worldStore.createIndex('category', 'category', { unique: false });
                         }
-                        
-                        // 情节表
                         if (!db.objectStoreNames.contains('plots')) {
                             const plotStore = db.createObjectStore('plots', { keyPath: 'id', autoIncrement: true });
                             plotStore.createIndex('volume', 'volume', { unique: false });
-                            plotStore.createIndex('chapter', 'chapter', { unique: false });
                         }
                     };
                 });
             }
             
-            // 通用CRUD操作
             async add(storeName, data) {
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readwrite');
@@ -1324,12 +755,7 @@
                     data.created_at = new Date().toISOString();
                     data.updated_at = new Date().toISOString();
                     const request = store.add(data);
-                    request.onsuccess = async () => {
-                        if (this.syncEnabled) {
-                            await this.syncToGitHub();
-                        }
-                        resolve(request.result);
-                    };
+                    request.onsuccess = () => resolve(request.result);
                     request.onerror = () => reject(request.error);
                 });
             }
@@ -1349,18 +775,15 @@
                     const tx = this.db.transaction(storeName, 'readonly');
                     const store = tx.objectStore(storeName);
                     let request;
-                    
                     if (indexName && value !== null) {
                         const index = store.index(indexName);
                         request = index.getAll(value);
                     } else {
                         request = store.getAll();
                     }
-                    
                     request.onsuccess = () => {
-                        // 按更新时间倒序
                         const results = request.result.sort((a, b) => 
-                            new Date(b.updated_at) - new Date(a.updated_at)
+                            new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
                         );
                         resolve(results);
                     };
@@ -1374,12 +797,7 @@
                     const store = tx.objectStore(storeName);
                     data.updated_at = new Date().toISOString();
                     const request = store.put(data);
-                    request.onsuccess = async () => {
-                        if (this.syncEnabled) {
-                            await this.syncToGitHub();
-                        }
-                        resolve(request.result);
-                    };
+                    request.onsuccess = () => resolve(request.result);
                     request.onerror = () => reject(request.error);
                 });
             }
@@ -1389,12 +807,7 @@
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
                     const request = store.delete(id);
-                    request.onsuccess = async () => {
-                        if (this.syncEnabled) {
-                            await this.syncToGitHub();
-                        }
-                        resolve();
-                    };
+                    request.onsuccess = () => resolve();
                     request.onerror = () => reject(request.error);
                 });
             }
@@ -1404,92 +817,12 @@
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
                     const request = store.clear();
-                    request.onsuccess = async () => {
-                        if (this.syncEnabled) {
-                            await this.syncToGitHub();
-                        }
-                        resolve();
-                    };
+                    request.onsuccess = () => resolve();
                     request.onerror = () => reject(request.error);
                 });
             }
-            
-            // 导出所有数据
-            async exportAll() {
-                return {
-                    characters: await this.getAll('characters'),
-                    world_settings: await this.getAll('world_settings'),
-                    plots: await this.getAll('plots'),
-                    export_time: new Date().toISOString()
-                };
-            }
-            
-            // 导入数据
-            async importAll(data) {
-                await this.clear('characters');
-                await this.clear('world_settings');
-                await this.clear('plots');
-                
-                for (const char of data.characters || []) {
-                    delete char.id;
-                    await this.add('characters', char);
-                }
-                
-                for (const setting of data.world_settings || []) {
-                    delete setting.id;
-                    await this.add('world_settings', setting);
-                }
-                
-                for (const plot of data.plots || []) {
-                    delete plot.id;
-                    await this.add('plots', plot);
-                }
-
-                // 导入后同步到 GitHub
-                if (this.syncEnabled) {
-                    await this.syncToGitHub();
-                }
-            }
-
-            // 同步到 GitHub
-            async syncToGitHub() {
-                if (!this.githubSync.isConfigured()) return false;
-                
-                try {
-                    const data = await this.exportAll();
-                    const success = await this.githubSync.saveToGist(data);
-                    if (success) {
-                        updateSyncStatus('synced', '已同步到 GitHub');
-                    }
-                    return success;
-                } catch (e) {
-                    console.error('Sync to GitHub failed:', e);
-                    updateSyncStatus('error', '同步失败');
-                    return false;
-                }
-            }
-
-            // 从 GitHub 加载
-            async loadFromGitHub() {
-                if (!this.githubSync.isConfigured()) return false;
-                
-                try {
-                    const data = await this.githubSync.loadFromGist();
-                    if (data) {
-                        this.syncEnabled = false; // 临时禁用同步避免循环
-                        await this.importAll(data);
-                        this.syncEnabled = true;
-                        updateSyncStatus('synced', '已从 GitHub 加载');
-                        return true;
-                    }
-                } catch (e) {
-                    console.error('Load from GitHub failed:', e);
-                    updateSyncStatus('error', '加载失败');
-                }
-                return false;
-            }
         }
-        
+
         // ==================== 全局状态 ====================
         const db = new Database();
         const githubSync = new GitHubSync();
@@ -1497,102 +830,9 @@
         let modalCallback = null;
         let tropesData = null;
         let currentTropeDetail = null;
-        
-        // 数据加载状态
-        const dataLoadState = {
-            characters: { loaded: false, loading: false, error: null, cached: false },
-            worldview: { loaded: false, loading: false, error: null, cached: false },
-            tropes: { loaded: false, loading: false, error: null }
-        };
-        
-        // CDN 配置（优先使用 jsdelivr 加速 GitHub Pages）
-        const CDN_CONFIG = {
-            primary: 'https://cdn.jsdelivr.net/gh/sztbssz/novel-editor@latest/',
-            fallback: 'https://sztbssz.github.io/novel-editor/',
-            useCDN: true
-        };
-        
-        // ==================== 初始化 ====================
-        document.addEventListener('DOMContentLoaded', async () => {
-            await db.init();
-            
-            // 检查本地缓存状态
-            await checkLocalCache();
-            
-            // 检查是否需要设置 GitHub Token
-            if (!githubSync.isConfigured()) {
-                showGitHubSetupModal();
-            } else {
-                // 尝试从 GitHub 加载数据
-                await syncFromGitHub();
-            }
-            
-            // 只加载桥段数据（轻量级）
-            await loadTropeData();
-            
-            // 延迟加载角色和世界观数据（后台静默加载）
-            setTimeout(() => {
-                preloadDataSilently();
-            }, 2000);
-            
-            loadPage('home');
-            
-            // 导航事件
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    const page = item.dataset.page;
-                    
-                    // 懒加载：进入角色页时加载角色数据
-                    if (page === 'characters' && !dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
-                        loadCharacterDataWithUI();
-                    }
-                    // 懒加载：进入世界观页时加载世界观数据
-                    else if (page === 'world' && !dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
-                        loadWorldviewDataWithUI();
-                    }
-                    
-                    loadPage(page);
-                });
-            });
-        });
-        
-        // 检查本地缓存
-        async function checkLocalCache() {
-            try {
-                const chars = await db.getAll('characters');
-                const worlds = await db.getAll('world_settings');
-                
-                dataLoadState.characters.cached = chars.length > 0;
-                dataLoadState.worldview.cached = worlds.length > 0;
-                
-                if (chars.length > 0) {
-                    dataLoadState.characters.loaded = true;
-                    console.log(`✅ 本地缓存: ${chars.length} 个角色`);
-                }
-                if (worlds.length > 0) {
-                    dataLoadState.worldview.loaded = true;
-                    console.log(`✅ 本地缓存: ${worlds.length} 条世界观`);
-                }
-            } catch (e) {
-                console.error('检查本地缓存失败:', e);
-            }
-        }
-        
-        // 后台静默预加载
-        async function preloadDataSilently() {
-            if (!dataLoadState.characters.loaded) {
-                console.log('🔄 后台预加载角色数据...');
-                loadCharacterDataSilent();
-            }
-            if (!dataLoadState.worldview.loaded) {
-                console.log('🔄 后台预加载世界观数据...');
-                loadWorldviewDataSilent();
-            }
-        }
-        
-        // 显示加载进度条
+        let currentLoadingRetry = null;
+
+        // ==================== UI 控制函数 ====================
         function showLoadingBar() {
             document.getElementById('loadingBar').classList.add('active');
         }
@@ -1606,42 +846,42 @@
             document.getElementById('loadingBarProgress').style.width = `${progress}%`;
         }
         
-        // 显示加载状态提示
         function showLoadingStatus(text, type = 'normal') {
             const status = document.getElementById('loadingStatus');
             const statusText = document.getElementById('loadingStatusText');
-            
             status.className = 'loading-status active';
             if (type === 'error') status.classList.add('loading-status-error');
             if (type === 'success') status.classList.add('loading-status-success');
-            
             statusText.textContent = text;
         }
         
         function hideLoadingStatus() {
             document.getElementById('loadingStatus').classList.remove('active');
         }
-        
-        // 显示数据加载覆盖层
-        function showDataLoadingOverlay(text, subtext = '') {
-            document.getElementById('dataLoadingText').textContent = text;
-            document.getElementById('dataLoadingSubtext').textContent = subtext;
+
+        function showDataLoadingOverlay(title, subtitle = '') {
+            document.getElementById('dataLoadingText').textContent = title;
+            document.getElementById('dataLoadingSubtext').textContent = subtitle;
+            document.getElementById('dataLoadingError').textContent = '';
+            document.getElementById('dataLoadingStats').textContent = '';
             document.getElementById('dataLoadingActions').style.display = 'none';
             document.getElementById('dataLoadingOverlay').classList.add('active');
+        }
+        
+        function updateDataLoadingStats(text) {
+            document.getElementById('dataLoadingStats').textContent = text;
         }
         
         function hideDataLoadingOverlay() {
             document.getElementById('dataLoadingOverlay').classList.remove('active');
         }
         
-        function showDataLoadingError(text) {
-            document.getElementById('dataLoadingText').textContent = text;
-            document.getElementById('dataLoadingSubtext').textContent = '请检查网络连接后重试';
+        function showDataLoadingError(error, retryFn) {
+            document.getElementById('dataLoadingError').textContent = error;
             document.getElementById('dataLoadingActions').style.display = 'flex';
+            currentLoadingRetry = retryFn;
         }
-        
-        // 重试/跳过加载
-        let currentLoadingRetry = null;
+
         function retryLoadingData() {
             if (currentLoadingRetry) {
                 currentLoadingRetry();
@@ -1653,139 +893,126 @@
             showNotification('已跳过数据加载，部分功能可能不可用');
         }
 
-        // 带超时的 fetch（支持重试）
-        async function fetchWithRetry(url, options = {}) {
-            const { timeout = 30000, retries = 3, retryDelay = 1000 } = options;
-            let lastError;
-            
-            for (let i = 0; i < retries; i++) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeout);
-                
-                try {
-                    const response = await fetch(url, { 
-                        signal: controller.signal,
-                        cache: 'no-cache'
-                    });
-                    clearTimeout(timeoutId);
-                    return response;
-                } catch (error) {
-                    clearTimeout(timeoutId);
-                    lastError = error;
-                    console.warn(`⚠️ 请求失败 (${i + 1}/${retries}): ${url}`, error.message);
-                    if (i < retries - 1) {
-                        await new Promise(r => setTimeout(r, retryDelay * (i + 1)));
-                    }
-                }
-            }
-            throw lastError;
-        }
-        
-        // 获取 URL（带 CDN 回退）
-        async function fetchWithCDN(filename) {
-            const urls = CDN_CONFIG.useCDN ? [
-                `${CDN_CONFIG.primary}${filename}`,
-                `${CDN_CONFIG.fallback}${filename}`
-            ] : [`${CDN_CONFIG.fallback}${filename}`];
-            
-            for (let i = 0; i < urls.length; i++) {
-                try {
-                    const response = await fetchWithRetry(urls[i], { timeout: 30000, retries: 2 });
-                    if (response.ok) {
-                        if (i > 0) console.log(`✅ 使用回退 URL: ${urls[i]}`);
-                        return response;
-                    }
-                } catch (e) {
-                    if (i === urls.length - 1) throw e;
-                    console.warn(`⚠️ CDN 失败，尝试回退: ${urls[i]}`);
-                }
-            }
-            throw new Error('所有 URL 都失败');
+        function showNotification(message) {
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed; top: 20px; right: 20px;
+                background: #e94560; color: white;
+                padding: 12px 20px; border-radius: 8px;
+                z-index: 3000; font-size: 14px;
+            `;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 2000);
         }
 
-        // 加载角色数据（带 UI）
+        // ==================== 延迟加载（懒加载）函数 ====================
+
+        // 加载角色数据（带UI）
         async function loadCharacterDataWithUI() {
-            if (dataLoadState.characters.loading) return;
-            dataLoadState.characters.loading = true;
+            if (dataLoadState.characters.loading || dataLoadState.characters.loaded) return;
             
-            showDataLoadingOverlay('正在加载角色数据...', '约 255 个角色，首次加载可能需要一些时间');
+            dataLoadState.characters.loading = true;
+            showDataLoadingOverlay('正在加载角色数据...', '约 267 个角色，首次加载可能需要一些时间');
             showLoadingBar();
             
             try {
-                await loadCharacterDataInternal((progress) => {
+                await loadCharacterDataInternal((progress, message) => {
                     updateLoadingBar(progress);
+                    if (message) updateDataLoadingStats(message);
                 });
                 
                 hideDataLoadingOverlay();
                 showLoadingStatus('✅ 角色数据加载完成', 'success');
                 setTimeout(hideLoadingStatus, 2000);
+                
+                // 刷新角色页面
+                if (currentPage === 'characters') {
+                    renderCharacters(document.getElementById('mainContent'));
+                }
             } catch (error) {
                 console.error('加载角色数据失败:', error);
                 dataLoadState.characters.error = error.message;
-                showDataLoadingError('角色数据加载失败');
-                currentLoadingRetry = () => {
+                showDataLoadingError('角色数据加载失败: ' + error.message, () => {
                     dataLoadState.characters.loading = false;
                     loadCharacterDataWithUI();
-                };
+                });
             } finally {
                 dataLoadState.characters.loading = false;
                 hideLoadingBar();
             }
         }
-        
-        // 静默加载角色数据
-        async function loadCharacterDataSilent() {
-            if (dataLoadState.characters.loading || dataLoadState.characters.loaded) return;
-            dataLoadState.characters.loading = true;
-            
-            try {
-                await loadCharacterDataInternal();
-                console.log('✅ 后台静默加载角色数据完成');
-            } catch (error) {
-                console.error('后台加载角色数据失败:', error);
-            } finally {
-                dataLoadState.characters.loading = false;
-            }
-        }
-        
+
         // 内部：实际加载角色数据
         async function loadCharacterDataInternal(onProgress = null) {
-            const response = await fetchWithCDN('characters_all.json');
+            // 1. 先检查缓存
+            const cachedData = await cacheManager.get('characters_all');
+            if (cachedData) {
+                console.log('✅ 从缓存加载角色数据');
+                dataLoadState.characters.data = cachedData;
+                dataLoadState.characters.cached = true;
+                dataLoadState.characters.loaded = true;
+                
+                // 导入到IndexedDB
+                await importCharactersToDB(cachedData.characters || [], onProgress);
+                return;
+            }
+            
+            // 2. 从网络加载
+            console.log('🌐 从网络加载角色数据...');
+            if (onProgress) onProgress(10, '正在连接服务器...');
+            
+            const response = await fetchWithRetry('characters_all.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
-                let characters = data.characters || [];
+                if (onProgress) onProgress(50, `已获取 ${data.characters?.length || 0} 个角色`);
                 
-                if (onProgress) onProgress(50);
+                // 保存到缓存
+                await cacheManager.set('characters_all', data);
+                dataLoadState.characters.data = data;
                 
-                // 检查现有数据
-                const existingChars = await db.getAll('characters');
-                const existingNames = new Set(existingChars.map(c => c.name));
+                // 导入到IndexedDB
+                await importCharactersToDB(data.characters || [], onProgress);
                 
-                let addedCount = 0;
-                for (let i = 0; i < characters.length; i++) {
-                    const char = characters[i];
-                    if (!existingNames.has(char.name)) {
-                        await db.add('characters', char);
-                        addedCount++;
-                    }
-                    
-                    if (onProgress && i % 50 === 0) {
-                        onProgress(50 + (i / characters.length) * 50);
-                    }
-                }
-                
-                if (onProgress) onProgress(100);
                 dataLoadState.characters.loaded = true;
-                console.log(`✅ 角色数据加载完成: 新增 ${addedCount} 个角色`);
+                console.log(`✅ 角色数据加载完成: ${data.characters?.length || 0} 个角色`);
             }
         }
 
-        // 加载世界观数据（带 UI）
-        async function loadWorldviewDataWithUI() {
-            if (dataLoadState.worldview.loading) return;
-            dataLoadState.worldview.loading = true;
+        // 导入角色到DB
+        async function importCharactersToDB(characters, onProgress) {
+            const existingChars = await db.getAll('characters');
+            const existingNames = new Set(existingChars.map(c => c.name + '|' + c.book));
             
+            let addedCount = 0;
+            let skippedCount = 0;
+            
+            for (let i = 0; i < characters.length; i++) {
+                const char = characters[i];
+                const key = char.name + '|' + char.book;
+                
+                if (!existingNames.has(key)) {
+                    await db.add('characters', char);
+                    addedCount++;
+                } else {
+                    skippedCount++;
+                }
+                
+                if (onProgress && i % 20 === 0) {
+                    const progress = 50 + (i / characters.length) * 45;
+                    onProgress(progress, `导入中... ${i}/${characters.length} (新增 ${addedCount})`);
+                }
+            }
+            
+            if (onProgress) onProgress(100, `完成！新增 ${addedCount} 个，跳过 ${skippedCount} 个`);
+        }
+
+        // 加载世界观数据（带UI）
+        async function loadWorldviewDataWithUI() {
+            if (dataLoadState.worldview.loading || dataLoadState.worldview.loaded) return;
+            
+            dataLoadState.worldview.loading = true;
             showDataLoadingOverlay('正在加载世界观数据...');
             showLoadingBar();
             
@@ -1797,504 +1024,149 @@
                 hideDataLoadingOverlay();
                 showLoadingStatus('✅ 世界观数据加载完成', 'success');
                 setTimeout(hideLoadingStatus, 2000);
+                
+                if (currentPage === 'world') {
+                    renderWorld(document.getElementById('mainContent'));
+                }
             } catch (error) {
                 console.error('加载世界观数据失败:', error);
                 dataLoadState.worldview.error = error.message;
-                showDataLoadingError('世界观数据加载失败');
-                currentLoadingRetry = () => {
+                showDataLoadingError('世界观数据加载失败: ' + error.message, () => {
                     dataLoadState.worldview.loading = false;
                     loadWorldviewDataWithUI();
-                };
+                });
             } finally {
                 dataLoadState.worldview.loading = false;
                 hideLoadingBar();
             }
         }
-        
-        // 静默加载世界观数据
-        async function loadWorldviewDataSilent() {
-            if (dataLoadState.worldview.loading || dataLoadState.worldview.loaded) return;
-            dataLoadState.worldview.loading = true;
-            
-            try {
-                await loadWorldviewDataInternal();
-                console.log('✅ 后台静默加载世界观数据完成');
-            } catch (error) {
-                console.error('后台加载世界观数据失败:', error);
-            } finally {
-                dataLoadState.worldview.loading = false;
-            }
-        }
-        
+
         // 内部：实际加载世界观数据
         async function loadWorldviewDataInternal(onProgress = null) {
-            const response = await fetchWithCDN('data.json?t=' + Date.now());
+            if (onProgress) onProgress(10);
+            
+            const response = await fetchWithRetry('data.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
                 if (onProgress) onProgress(30);
                 
                 const worldbuildingLibrary = data.worldbuildingLibrary;
-                
                 if (worldbuildingLibrary && worldbuildingLibrary.entries) {
                     const worldviews = worldbuildingLibrary.entries;
-                    
-                    // 检查是否已存在
                     const existingSettings = await db.getAll('world_settings');
                     const existingTitles = new Set(existingSettings.map(s => s.title));
                     
                     let addedCount = 0;
-                    let skippedCount = 0;
                     
                     for (let i = 0; i < worldviews.length; i++) {
                         const world = worldviews[i];
                         const title = `${world.book} - 世界观`;
                         
                         if (!existingTitles.has(title)) {
-                            const content = `**作者**: ${world.author}
-**年份**: ${world.year}
-**背景类型**: ${world.backgroundType}
-**力量类型**: ${world.powerType}
-
-**文化习俗**:
-${world.culture}
-
-**世界特色**:
-${world.features}
-
-**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                            const content = `**作者**: ${world.author}\n**年份**: ${world.year}\n**背景类型**: ${world.backgroundType}\n**力量类型**: ${world.powerType}\n\n**文化习俗**:\n${world.culture}\n\n**世界特色**:\n${world.features}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
                             
-                            // 根据标签判断分类
                             let category = 'other';
                             const tags = world.tags || [];
                             if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
                             else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
                             else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
                             else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
-                            else if (tags.some(t => ['历史', '架空历史', '穿越', '门阀', '士族'].includes(t))) category = 'history';
-                            else if (tags.some(t => ['奇幻', '魔法', '西方', '魔兽'].includes(t))) category = 'magic';
-                            else if (tags.some(t => ['灵异', '民俗', '盗墓', '克苏鲁'].includes(t))) category = 'horror';
+                            else if (tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
+                            else if (tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
+                            else if (tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
                             
-                            await db.add('world_settings', {
-                                category: category,
-                                title: title,
-                                content: content
-                            });
+                            await db.add('world_settings', { category, title, content });
                             addedCount++;
-                        } else {
-                            skippedCount++;
                         }
                         
-                        if (onProgress && i % 10 === 0) {
+                        if (onProgress && i % 5 === 0) {
                             onProgress(30 + (i / worldviews.length) * 70);
                         }
                     }
                     
                     if (onProgress) onProgress(100);
                     dataLoadState.worldview.loaded = true;
-                    console.log(`✅ 世界观库加载完成: 新增 ${addedCount} 条, 跳过 ${skippedCount} 条`);
+                    console.log(`✅ 世界观库加载完成: 新增 ${addedCount} 条`);
                 }
             }
         }
 
-        // 加载桥段数据
+        // 加载桥段数据（首页初始化时加载）
         async function loadTropeData() {
-            tropesData = await githubSync.loadTropeData();
-            if (!tropesData) {
-                // 使用默认数据
+            if (dataLoadState.tropes.loaded) return;
+            
+            try {
+                const response = await fetchWithRetry('data.json?t=' + Date.now(), {
+                    retries: 2,
+                    timeout: 20000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    tropesData = data;
+                    dataLoadState.tropes.loaded = true;
+                    console.log('✅ 桥段数据加载完成');
+                }
+            } catch (e) {
+                console.error('加载桥段数据失败:', e);
                 tropesData = getDefaultTropeData();
+                dataLoadState.tropes.loaded = true;
             }
         }
 
-        // 默认桥段数据（新版18类别243子类型）
+        // 强制刷新数据
+        async function forceRefreshData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.classList.add('spinning');
+            
+            try {
+                showLoadingStatus('🔄 正在刷新数据...');
+                
+                // 清除缓存
+                await cacheManager.clear('characters_all');
+                
+                // 重置加载状态
+                dataLoadState.characters.loaded = false;
+                dataLoadState.characters.cached = false;
+                
+                // 根据当前页面重新加载
+                if (currentPage === 'characters') {
+                    await loadCharacterDataWithUI();
+                } else if (currentPage === 'world') {
+                    await loadWorldviewDataWithUI();
+                } else {
+                    showNotification('✅ 缓存已清除，下次访问时重新加载');
+                }
+                
+                hideLoadingStatus();
+            } catch (e) {
+                console.error('刷新失败:', e);
+                showLoadingStatus('❌ 刷新失败', 'error');
+                setTimeout(hideLoadingStatus, 2000);
+            } finally {
+                refreshBtn.classList.remove('spinning');
+            }
+        }
+
+        // 默认桥段数据
         function getDefaultTropeData() {
             return {
                 "version": "3.0",
                 "categories": [
-                    {
-                        "id": "universal",
-                        "name": "全网文通用核心桥段",
-                        "description": "全题材覆盖，高频出现的核心爽点桥段",
-                        "subTypes": [
-                            {"name": "装逼打脸"}, {"name": "扮猪吃老虎"}, {"name": "智斗博弈"},
-                            {"name": "越级反杀"}, {"name": "绝境翻盘"}, {"name": "废物逆袭"},
-                            {"name": "身份揭晓/身份反转"}, {"name": "全场震惊"}, {"name": "降维打击"},
-                            {"name": "快意恩仇"}, {"name": "护短名场面"}, {"name": "闷声发大财"},
-                            {"name": "捡漏淘宝"}, {"name": "天降机缘"}, {"name": "截胡机缘"},
-                            {"name": "后手反制"}, {"name": "信息差碾压"}, {"name": "精准预判"},
-                            {"name": "以弱胜强"}, {"name": "借力打力"}, {"name": "釜底抽薪"},
-                            {"name": "杀鸡儆猴"}, {"name": "深藏功与名"}, {"name": "反套路打脸"},
-                            {"name": "破而后立"}, {"name": "死里逃生"}, {"name": "假死脱身"},
-                            {"name": "剧情反转"}, {"name": "伏笔回收"}, {"name": "计中计/连环计"},
-                            {"name": "背刺反水"}, {"name": "临阵倒戈"}, {"name": "真相大白"},
-                            {"name": "惊天秘闻揭露"}, {"name": "正邪反转"}, {"name": "阵营反转"},
-                            {"name": "无间卧底/双面间谍"}, {"name": "真假身份/替身梗"},
-                            {"name": "先知先觉布局"}, {"name": "经验碾压"}, {"name": "多底牌爆发"},
-                            {"name": "误会解除"}, {"name": "困兽之斗"}, {"name": "弃子逆袭"},
-                            {"name": "螳螂捕蝉黄雀在后"}
-                        ]
-                    },
-                    {
-                        "id": "growth",
-                        "name": "人物成长与金手指专属",
-                        "subTypes": [
-                            {"name": "废柴觉醒"}, {"name": "金手指解锁/升级"}, {"name": "境界突破/实力进阶"},
-                            {"name": "顿悟开窍"}, {"name": "闭关出关"}, {"name": "血脉/天赋觉醒"},
-                            {"name": "传承获取"}, {"name": "功法/技能领悟"}, {"name": "洗髓伐脉"},
-                            {"name": "系统任务/奖励解锁"}, {"name": "签到打卡获宝"},
-                            {"name": "本命法宝/武器认主/觉醒"}, {"name": "专属领域解锁"}, {"name": "残血反杀/越挫越勇"}
-                        ]
-                    },
-                    {
-                        "id": "emotion",
-                        "name": "情感与人际关系类桥段",
-                        "subTypes": [
-                            {"name": "英雄救美"}, {"name": "美救英雄"}, {"name": "双向奔赴"},
-                            {"name": "久别重逢"}, {"name": "破镜重圆"}, {"name": "一见钟情"},
-                            {"name": "欢喜冤家"}, {"name": "虐恋情深"}, {"name": "白月光/朱砂痣"},
-                            {"name": "天降vs竹马"}, {"name": "师徒羁绊/师徒反目"}, {"name": "兄弟情深/兄弟反目"},
-                            {"name": "亲情和解/亲情守护"}, {"name": "红颜/蓝颜知己"}, {"name": "忠犬守护"},
-                            {"name": "霸道宠溺"}, {"name": "追妻火葬场"}, {"name": "追夫火葬场"},
-                            {"name": "先婚后爱"}, {"name": "契约恋爱"}, {"name": "双向暗恋"},
-                            {"name": "误会拉扯"}, {"name": "救赎文学"}, {"name": "宿敌对决/宿敌惺惺相惜"},
-                            {"name": "师门情深/师门反目"}, {"name": "舔狗逆袭/舔狗反杀"}, {"name": "护妻/护夫狂魔"}
-                        ]
-                    },
-                    {
-                        "id": "world",
-                        "name": "世界观探索与势力博弈类桥段",
-                        "subTypes": [
-                            {"name": "秘境探险/遗迹寻宝"}, {"name": "副本闯关/试炼挑战"}, {"name": "地图解锁/位面穿梭"},
-                            {"name": "势力大比/擂台对决"}, {"name": "拍卖会竞价博弈"}, {"name": "宗门/势力建立与扩张"},
-                            {"name": "联盟缔结/阵营对抗"}, {"name": "国战/界战/种族争霸"}, {"name": "赌石/赌宝对决"},
-                            {"name": "专业赛道比拼（丹道/器道/阵道/厨艺等）"}, {"name": "科举/职场/行业考核"},
-                            {"name": "天梯赛/排位赛/生死斗"}, {"name": "机关破解/规则博弈"}, {"name": "上古秘辛/文明溯源"},
-                            {"name": "位面入侵/位面守护"}
-                        ]
-                    },
-                    {
-                        "id": "xuanhuan",
-                        "name": "玄幻/仙侠题材专属",
-                        "subTypes": [
-                            {"name": "渡劫飞升"}, {"name": "雷劫反杀"}, {"name": "宗门站队"},
-                            {"name": "正邪大战"}, {"name": "三界争霸"}, {"name": "轮回转世"},
-                            {"name": "神魂夺舍"}, {"name": "天地异象触发"}, {"name": "万族争霸"},
-                            {"name": "天道博弈"}, {"name": "逆天改命"}, {"name": "香火成神"},
-                            {"name": "地府/冥界闯关"}, {"name": "仙凡之恋"}
-                        ]
-                    },
-                    {
-                        "id": "dushi",
-                        "name": "都市题材专属",
-                        "subTypes": [
-                            {"name": "商战博弈"}, {"name": "资本收割/股市操盘"}, {"name": "娱乐圈洗白翻红"},
-                            {"name": "选秀逆袭"}, {"name": "职场背刺反杀"}, {"name": "项目截胡反制"},
-                            {"name": "行业黑马逆袭"}, {"name": "技术碾压"}, {"name": "医疗手术封神"},
-                            {"name": "律政庭审绝杀"}, {"name": "电竞赛场逆风翻盘"}, {"name": "体育赛场绝杀夺冠"},
-                            {"name": "古玩鉴宝捡漏"}, {"name": "玄学/风水断局"}, {"name": "种田开荒致富"}, {"name": "基建落地"}
-                        ]
-                    },
-                    {
-                        "id": "gongdou",
-                        "name": "古言/宫斗/宅斗题材专属",
-                        "subTypes": [
-                            {"name": "宅斗反杀"}, {"name": "宫斗上位"}, {"name": "嫡庶之争"},
-                            {"name": "储位/后位之争"}, {"name": "选秀逆袭"}, {"name": "皇权博弈"},
-                            {"name": "后宫争宠"}, {"name": "栽赃反制"}, {"name": "借刀杀人"},
-                            {"name": "和亲博弈"}, {"name": "家族荣辱兴衰"}, {"name": "替嫁梗"}
-                        ]
-                    },
-                    {
-                        "id": "yineng",
-                        "name": "异能/末世题材专属",
-                        "subTypes": [
-                            {"name": "异能觉醒/变异升级"}, {"name": "超能力对决"}, {"name": "都市隐藏世界揭秘"},
-                            {"name": "古武/异能世家对决"}, {"name": "官方特殊组织招揽/对抗"}, {"name": "末世囤货基建"},
-                            {"name": "丧尸围城突围"}, {"name": "末世求生"}, {"name": "空间异能应用"}, {"name": "末世势力割据"}
-                        ]
-                    },
-                    {
-                        "id": "xuanyi",
-                        "name": "悬疑/灵异/无限流题材专属",
-                        "subTypes": [
-                            {"name": "规则怪谈破解"}, {"name": "无限流副本闯关"}, {"name": "密室逃脱"},
-                            {"name": "灵异事件溯源"}, {"name": "凶手反转"}, {"name": "人格分裂揭秘"},
-                            {"name": "时间循环"}, {"name": "死亡回溯"}, {"name": "连环凶案追凶"},
-                            {"name": "民俗禁忌破解"}, {"name": "凶宅/禁地探险"}, {"name": "博弈类桌游对决"}
-                        ]
-                    },
-                    {
-                        "id": "chuanshu",
-                        "name": "重生/穿越/穿书/快穿题材专属",
-                        "subTypes": [
-                            {"name": "重生复仇"}, {"name": "穿越改命"}, {"name": "穿书自救"},
-                            {"name": "穿书反派洗白"}, {"name": "快穿任务执行"}, {"name": "剧情修正/剧情崩坏"},
-                            {"name": "前世遗憾弥补"}, {"name": "前世仇人手撕"}, {"name": "角色自我意识觉醒"}
-                        ]
-                    },
-                    {
-                        "id": "kesulu",
-                        "name": "克苏鲁/诡异复苏/污染题材专属",
-                        "subTypes": [
-                            {"name": "认知污染蔓延"}, {"name": "SAN值临界挣扎"}, {"name": "不可名状降临"},
-                            {"name": "规则污染对抗"}, {"name": "封印松动预警"}, {"name": "群星归位仪式"},
-                            {"name": "人性污染测试"}, {"name": "诡异驾驭融合"}, {"name": "调查员覆灭轮回"}, {"name": "真相认知崩溃"}
-                        ]
-                    },
-                    {
-                        "id": "dihua",
-                        "name": "迪化流/脑补流专属",
-                        "subTypes": [
-                            {"name": "无心之举被神化"}, {"name": "随口一说成预言"}, {"name": "随手之物变至宝"},
-                            {"name": "谦虚被当深不可测"}, {"name": "误打误撞破大局"}, {"name": "全员脑补滤镜"},
-                            {"name": "真相揭露的尴尬"}, {"name": "被迫维持人设"}
-                        ]
-                    },
-                    {
-                        "id": "narrative",
-                        "name": "叙事节奏与结构设计类",
-                        "subTypes": [
-                            {"name": "黄金三章钩子"}, {"name": "悬念层层叠加"}, {"name": "期待感建立"},
-                            {"name": "延迟满足"}, {"name": "多线并行收束"}, {"name": "草蛇灰线回收"},
-                            {"name": "情绪转折节点"}, {"name": "章节卡点设计"}, {"name": "节奏快慢交替"},
-                            {"name": "风暴前的宁静"}, {"name": "余波震荡"}, {"name": "阶段性总结"}
-                        ]
-                    },
-                    {
-                        "id": "game",
-                        "name": "游戏/网游/电竞题材专属",
-                        "subTypes": [
-                            {"name": "隐藏职业获取"}, {"name": "首杀/首通争夺"}, {"name": "游戏现实融合"},
-                            {"name": "NPC觉醒意识"}, {"name": "版本更新适应"}, {"name": "公会争霸战"},
-                            {"name": "氪金碾压反制"}, {"name": "Bug卡出天际"}
-                        ]
-                    },
-                    {
-                        "id": "tianzhong",
-                        "name": "种田/基建/经营流专属",
-                        "subTypes": [
-                            {"name": "从零开始开荒"}, {"name": "科技树解锁"}, {"name": "产业链完善"},
-                            {"name": "领地扩张"}, {"name": "人才招募培养"}, {"name": "应对天灾危机"},
-                            {"name": "贸易路线开辟"}, {"name": "奇观建成"}, {"name": "文化输出"}, {"name": "军队成型阅兵"}
-                        ]
-                    },
-                    {
-                        "id": "tragedy",
-                        "name": "黑深残/致郁/悲剧向桥段",
-                        "subTypes": [
-                            {"name": "必要之恶牺牲"}, {"name": "善意导致恶果"}, {"name": "希望破灭时刻"},
-                            {"name": "信任崩塌瞬间"}, {"name": "无力回天悲剧"}, {"name": "真相残酷揭露"},
-                            {"name": "孤独前行结局"}, {"name": "轮回无法打破"}
-                        ]
-                    },
-                    {
-                        "id": "comedy",
-                        "name": "沙雕/轻松/吐槽向桥段",
-                        "subTypes": [
-                            {"name": "社死名场面"}, {"name": "疯狂吐槽"}, {"name": "反向操作"},
-                            {"name": "反差萌设定"}, {"name": "官方玩梗"}, {"name": "作死边缘试探"}
-                        ]
-                    }
+                    { "id": "universal", "name": "全网文通用核心桥段", "subTypes": [{"name": "装逼打脸"}, {"name": "扮猪吃老虎"}, {"name": "智斗博弈"}, {"name": "越级反杀"}, {"name": "绝境翻盘"}, {"name": "废物逆袭"}, {"name": "身份揭晓"}, {"name": "全场震惊"}] },
+                    { "id": "growth", "name": "人物成长与金手指", "subTypes": [{"name": "废柴觉醒"}, {"name": "金手指解锁"}, {"name": "境界突破"}, {"name": "顿悟开窍"}, {"name": "血脉觉醒"}] },
+                    { "id": "emotion", "name": "情感与人际关系", "subTypes": [{"name": "英雄救美"}, {"name": "双向奔赴"}, {"name": "久别重逢"}, {"name": "破镜重圆"}, {"name": "师徒羁绊"}] },
+                    { "id": "world", "name": "世界观探索", "subTypes": [{"name": "秘境探险"}, {"name": "副本闯关"}, {"name": "势力大比"}, {"name": "拍卖会"}, {"name": "国战争霸"}] },
+                    { "id": "xuanhuan", "name": "玄幻/仙侠专属", "subTypes": [{"name": "渡劫飞升"}, {"name": "宗门站队"}, {"name": "正邪大战"}, {"name": "轮回转世"}, {"name": "逆天改命"}] },
+                    { "id": "dushi", "name": "都市题材专属", "subTypes": [{"name": "商战博弈"}, {"name": "娱乐圈逆袭"}, {"name": "职场反杀"}, {"name": "技术碾压"}, {"name": "古玩鉴宝"}] },
+                    { "id": "xuanyi", "name": "悬疑/无限流专属", "subTypes": [{"name": "规则怪谈破解"}, {"name": "密室逃脱"}, {"name": "时间循环"}, {"name": "死亡回溯"}, {"name": "凶手反转"}] },
+                    { "id": "chuanshu", "name": "重生/穿越专属", "subTypes": [{"name": "重生复仇"}, {"name": "穿越改命"}, {"name": "穿书自救"}, {"name": "前世弥补"}, {"name": "角色觉醒"}] }
                 ]
             };
         }
 
-        // ==================== GitHub 设置 ====================
-        function showGitHubSetupModal() {
-            document.getElementById('githubSetupModal').classList.add('active');
-        }
-
-        function hideGitHubSetupModal() {
-            document.getElementById('githubSetupModal').classList.remove('active');
-            document.getElementById('githubSetupError').style.display = 'none';
-        }
-
-        function skipGitHubSetup() {
-            hideGitHubSetupModal();
-        }
-
-        async function saveGitHubToken() {
-            const token = document.getElementById('githubTokenInput').value.trim();
-            const errorDiv = document.getElementById('githubSetupError');
-            
-            if (!token) {
-                errorDiv.textContent = '请输入 GitHub Token';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            if (!token.startsWith('ghp_')) {
-                errorDiv.textContent = 'Token 格式不正确，应以 ghp_ 开头';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            // 显示加载状态
-            const btn = document.querySelector('#githubSetupModal .btn-primary');
-            const originalText = btn.textContent;
-            btn.innerHTML = '<span class="loading-spinner"></span> 验证中...';
-            btn.disabled = true;
-
-            try {
-                githubSync.saveToken(token);
-                const valid = await githubSync.verifyToken();
-                
-                if (valid) {
-                    // 获取或创建 Gist
-                    await githubSync.getOrCreateGist();
-                    hideGitHubSetupModal();
-                    showNotification('GitHub Token 已保存');
-                    
-                    // 尝试从 GitHub 加载数据
-                    const loaded = await syncFromGitHub();
-                    if (loaded) {
-                        loadPage('home');
-                    }
-                } else {
-                    errorDiv.textContent = 'Token 验证失败，请检查是否正确';
-                    errorDiv.style.display = 'block';
-                    githubSync.clearConfig();
-                }
-            } catch (e) {
-                errorDiv.textContent = '验证失败：' + e.message;
-                errorDiv.style.display = 'block';
-                githubSync.clearConfig();
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        // 更新同步状态显示
-        function updateSyncStatus(status, message) {
-            const statusEl = document.getElementById('syncStatus');
-            if (statusEl) {
-                statusEl.className = `sync-status ${status}`;
-                const icons = {
-                    synced: '✅',
-                    unsynced: '⏳',
-                    error: '❌'
-                };
-                statusEl.innerHTML = `${icons[status] || '⏳'} ${message}`;
-            }
-        }
-
-        // 从 GitHub 同步
-        async function syncFromGitHub() {
-            if (!githubSync.isConfigured()) {
-                showNotification('请先设置 GitHub Token');
-                return false;
-            }
-            
-            updateSyncStatus('unsynced', '正在从 GitHub 加载...');
-            const success = await db.loadFromGitHub();
-            if (success) {
-                showNotification('已从 GitHub 恢复数据');
-            }
-            return success;
-        }
-
-        // 同步到 GitHub
-        async function syncToGitHub() {
-            if (!githubSync.isConfigured()) {
-                showNotification('请先设置 GitHub Token');
-                return false;
-            }
-            
-            updateSyncStatus('unsynced', '正在同步到 GitHub...');
-            const success = await db.syncToGitHub();
-            if (success) {
-                showNotification('已同步到 GitHub');
-            } else {
-                showNotification('同步失败');
-            }
-            return success;
-        }
-
-        // 打开 GitHub 设置
-        function openGitHubSettings() {
-            if (githubSync.isConfigured()) {
-                document.getElementById('modalTitle').textContent = 'GitHub 同步设置';
-                document.getElementById('modalBody').innerHTML = `
-                    <div class="form-group">
-                        <label>当前状态</label>
-                        <div class="sync-status ${githubSync.lastSyncTime ? 'synced' : 'unsynced'}">
-                            ${githubSync.lastSyncTime ? '✅ 已配置' : '⏳ 未同步'}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>GitHub Token</label>
-                        <div class="token-input-group">
-                            <input type="password" id="settingsTokenInput" value="${githubSync.token || ''}" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                        </div>
-                        <div class="help-text">
-                            修改 Token 后点击保存，或<a href="https://github.com/settings/tokens/new?description=NovelEditor&scopes=gist" target="_blank">创建新 Token</a>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>上次同步时间</label>
-                        <div style="color: #888; font-size: 14px;">
-                            ${githubSync.lastSyncTime ? new Date(githubSync.lastSyncTime).toLocaleString('zh-CN') : '从未同步'}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Gist ID</label>
-                        <div style="color: #888; font-size: 14px; word-break: break-all;">
-                            ${githubSync.gistId || '未创建'}
-                        </div>
-                    </div>
-                `;
-                
-                modalCallback = async () => {
-                    const newToken = document.getElementById('settingsTokenInput').value.trim();
-                    if (newToken && newToken !== githubSync.token) {
-                        githubSync.saveToken(newToken);
-                        const valid = await githubSync.verifyToken();
-                        if (valid) {
-                            await githubSync.getOrCreateGist();
-                            showNotification('Token 已更新');
-                        } else {
-                            showNotification('Token 验证失败');
-                            return;
-                        }
-                    }
-                    closeModal();
-                };
-                
-                document.getElementById('modal').classList.add('active');
-            } else {
-                showGitHubSetupModal();
-            }
-        }
-        
-        // ==================== 页面加载 ====================
-        function loadPage(page) {
-            currentPage = page;
-            const main = document.getElementById('mainContent');
-            
-            switch(page) {
-                case 'home':
-                    renderHome(main);
-                    break;
-                case 'characters':
-                    renderCharacters(main);
-                    break;
-                case 'world':
-                    renderWorld(main);
-                    break;
-                case 'plot':
-                    renderPlot(main);
-                    break;
-                case 'trope':
-                    renderTrope(main);
-                    break;
-                case 'data':
-                    renderData(main);
-                    break;
-            }
-        }
-        
-        // ==================== 首页 ====================
+        // ==================== 页面渲染函数 ====================
         async function renderHome(container) {
             const chars = await db.getAll('characters');
             const world = await db.getAll('world_settings');
@@ -2308,6 +1180,17 @@ ${world.features}
                     </span>
                 </div>
             ` : '';
+            
+            // 数据加载状态提示
+            const charLoadHint = dataLoadState.characters.loaded 
+                ? '' 
+                : `<div class="loading-hint">
+                    <div class="loading-hint-spinner"></div>
+                    <div class="loading-hint-text">
+                        <div class="loading-hint-title">角色数据尚未加载</div>
+                        <div class="loading-hint-desc">点击进入「角色管理」页面将自动加载</div>
+                    </div>
+                   </div>`;
             
             container.innerHTML = `
                 <div class="header">
@@ -2327,6 +1210,7 @@ ${world.features}
                         </div>
                         <div class="card-content">
                             管理小说中的所有角色，包括主角、反派和配角。
+                            ${!dataLoadState.characters.loaded ? '<br><span style="color:#e94560">⚠️ 点击加载角色库</span>' : ''}
                         </div>
                     </div>
                     
@@ -2337,6 +1221,7 @@ ${world.features}
                         </div>
                         <div class="card-content">
                             设定地理环境、历史背景、文化习俗和力量体系。
+                            ${!dataLoadState.worldview.loaded ? '<br><span style="color:#e94560">⚠️ 点击加载世界观库</span>' : ''}
                         </div>
                     </div>
                     
@@ -2345,9 +1230,7 @@ ${world.features}
                             <span class="card-title">📖 情节</span>
                             <span class="card-type">${plots.length} 章</span>
                         </div>
-                        <div class="card-content">
-                            规划分卷大纲和章节内容，追踪写作进度。
-                        </div>
+                        <div class="card-content">规划分卷大纲和章节内容，追踪写作进度。</div>
                     </div>
                     
                     <div class="card" onclick="loadPage('data')">
@@ -2355,25 +1238,54 @@ ${world.features}
                             <span class="card-title">💾 数据</span>
                             <span class="card-type">管理</span>
                         </div>
-                        <div class="card-content">
-                            导入导出数据，备份和恢复创作内容。
-                        </div>
+                        <div class="card-content">导入导出数据，备份和恢复创作内容。</div>
                     </div>
                 </div>
+                
+                ${charLoadHint}
             `;
         }
         
-        // ==================== 角色管理 ====================
-        async function renderCharacters(container, filterType = 'all') {
-            const characters = await db.getAll('characters');
-            const filtered = filterType === 'all' ? characters : 
-                characters.filter(c => c.role_type === filterType);
+        // 角色管理页面
+        async function renderCharacters(container, filterRole = 'all') {
+            // 如果数据未加载且不在加载中，显示加载提示
+            if (!dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
+                container.innerHTML = `
+                    <div class="header">
+                        <h2>👤 角色管理</h2>
+                    </div>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <h3>角色数据未加载</h3>
+                        <p>点击下方按钮加载角色库数据</p>
+                        <button class="btn btn-primary" onclick="loadCharacterDataWithUI()">
+                            <span class="loading-spinner" style="margin-right:8px;display:none" id="loadBtnSpinner"></span>
+                            加载角色数据
+                        </button>
+                    </div>
+                `;
+                return;
+            }
             
-            const typeNames = {
-                'protagonist': '主角',
-                'antagonist': '反派', 
-                'supporting': '配角'
-            };
+            // 如果正在加载，显示加载中
+            if (dataLoadState.characters.loading) {
+                container.innerHTML = `
+                    <div class="header">
+                        <h2>👤 角色管理</h2>
+                    </div>
+                    <div class="empty-state">
+                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
+                        <h3>正在加载角色数据...</h3>
+                        <p>请稍候</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const characters = await db.getAll('characters');
+            const filtered = filterRole === 'all' ? characters : characters.filter(c => c.role === filterRole);
+            
+            const roleNames = { '主角': '主角', '女主': '女主', '反派': '反派', '配角': '配角' };
             
             container.innerHTML = `
                 <div class="header">
@@ -2381,11 +1293,17 @@ ${world.features}
                     <button class="btn btn-primary" onclick="openCharacterModal()">➕ 新建角色</button>
                 </div>
                 
-                <div class="tabs">
-                    <div class="tab ${filterType === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'all')">全部</div>
-                    <div class="tab ${filterType === 'protagonist' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'protagonist')">主角</div>
-                    <div class="tab ${filterType === 'antagonist' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'antagonist')">反派</div>
-                    <div class="tab ${filterType === 'supporting' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'supporting')">配角</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div class="tabs">
+                        <div class="tab ${filterRole === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'all')">全部 (${characters.length})</div>
+                        <div class="tab ${filterRole === '主角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '主角')">主角</div>
+                        <div class="tab ${filterRole === '女主' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '女主')">女主</div>
+                        <div class="tab ${filterRole === '反派' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '反派')">反派</div>
+                        <div class="tab ${filterRole === '配角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '配角')">配角</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="forceRefreshData()" title="强制刷新">
+                        🔄 刷新
+                    </button>
                 </div>
                 
                 ${filtered.length === 0 ? `
@@ -2400,13 +1318,14 @@ ${world.features}
                             <div class="card">
                                 <div class="card-header">
                                     <span class="card-title">${char.name}</span>
-                                    <span class="card-type">${typeNames[char.role_type] || char.role_type}</span>
+                                    <span class="card-type">${char.role || '配角'}</span>
                                 </div>
                                 <div class="card-content">
-                                    ${char.appearance || '暂无外貌描述'}
+                                    ${char.personality ? `<strong>性格：</strong>${char.personality}<br>` : ''}
+                                    ${char.description ? char.description.substring(0, 100) + '...' : '暂无描述'}
                                 </div>
                                 <div class="card-footer">
-                                    <span style="color:#888;font-size:12px">${char.age || '-'} 岁</span>
+                                    <span style="color:#888;font-size:12px">${char.gender || ''} · ${char.book || ''}</span>
                                     <div class="card-actions">
                                         <button class="btn btn-secondary" onclick="editCharacter(${char.id})">编辑</button>
                                         <button class="btn btn-danger" onclick="deleteCharacter(${char.id}, '${char.name}')">删除</button>
@@ -2418,7 +1337,7 @@ ${world.features}
                 `}
             `;
         }
-        
+
         function openCharacterModal(character = null) {
             const isEdit = !!character;
             document.getElementById('modalTitle').textContent = isEdit ? '编辑角色' : '新建角色';
@@ -2432,59 +1351,43 @@ ${world.features}
                         </div>
                         <div class="form-group">
                             <label>角色类型</label>
-                            <select name="role_type">
-                                <option value="protagonist" ${character?.role_type === 'protagonist' ? 'selected' : ''}>主角</option>
-                                <option value="antagonist" ${character?.role_type === 'antagonist' ? 'selected' : ''}>反派</option>
-                                <option value="supporting" ${character?.role_type === 'supporting' ? 'selected' : ''}>配角</option>
+                            <select name="role">
+                                <option value="主角" ${character?.role === '主角' ? 'selected' : ''}>主角</option>
+                                <option value="女主" ${character?.role === '女主' ? 'selected' : ''}>女主</option>
+                                <option value="反派" ${character?.role === '反派' ? 'selected' : ''}>反派</option>
+                                <option value="配角" ${character?.role === '配角' ? 'selected' : ''}>配角</option>
                             </select>
                         </div>
                     </div>
-                    
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>年龄</label>
-                            <input type="number" name="age" value="${character?.age || ''}">
-                        </div>
                         <div class="form-group">
                             <label>性别</label>
                             <select name="gender">
                                 <option value="男" ${character?.gender === '男' ? 'selected' : ''}>男</option>
                                 <option value="女" ${character?.gender === '女' ? 'selected' : ''}>女</option>
-                                <option value="其他" ${character?.gender === '其他' ? 'selected' : ''}>其他</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label>出处书籍</label>
+                            <input type="text" name="book" value="${character?.book || ''}">
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>外貌特征</label>
-                        <textarea name="appearance">${character?.appearance || ''}</textarea>
-                    </div>
-                    
                     <div class="form-group">
                         <label>性格特点</label>
                         <textarea name="personality">${character?.personality || ''}</textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label>身世背景</label>
-                        <textarea name="background">${character?.background || ''}</textarea>
+                        <label>人物简介</label>
+                        <textarea name="description" rows="4">${character?.description || ''}</textarea>
                     </div>
-                    
                     <div class="form-group">
-                        <label>能力/技能（每行一个）</label>
-                        <textarea name="abilities">${character?.abilities?.join('\n') || ''}</textarea>
+                        <label>作者</label>
+                        <input type="text" name="author" value="${character?.author || ''}">
                     </div>
-                    
                     <div class="form-group">
-                        <label>目标/动机</label>
-                        <textarea name="goals">${character?.goals || ''}</textarea>
+                        <label>标签（逗号分隔）</label>
+                        <input type="text" name="tags" value="${character?.tags?.join(', ') || ''}">
                     </div>
-                    
-                    <div class="form-group">
-                        <label>备注</label>
-                        <textarea name="notes">${character?.notes || ''}</textarea>
-                    </div>
-                    
                     ${isEdit ? `<input type="hidden" name="id" value="${character.id}">` : ''}
                 </form>
             `;
@@ -2494,15 +1397,14 @@ ${world.features}
                 const formData = new FormData(form);
                 const data = {
                     name: formData.get('name'),
-                    role_type: formData.get('role_type'),
-                    age: parseInt(formData.get('age')) || null,
+                    role: formData.get('role'),
                     gender: formData.get('gender'),
-                    appearance: formData.get('appearance'),
+                    book: formData.get('book'),
                     personality: formData.get('personality'),
-                    background: formData.get('background'),
-                    abilities: formData.get('abilities').split('\n').filter(a => a.trim()),
-                    goals: formData.get('goals'),
-                    notes: formData.get('notes')
+                    description: formData.get('description'),
+                    author: formData.get('author'),
+                    tags: formData.get('tags').split(/[,，]/).map(t => t.trim()).filter(t => t),
+                    year: character?.year || new Date().getFullYear()
                 };
                 
                 if (isEdit) {
@@ -2531,16 +1433,42 @@ ${world.features}
             }
         }
         
-        // ==================== 世界观 ====================
-        async function renderWorld(container, category = 'geography') {
-            const settings = await db.getAll('world_settings', 'category', category);
+        // 世界观页面
+        async function renderWorld(container, category = 'other') {
+            if (!dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
+                container.innerHTML = `
+                    <div class="header">
+                        <h2>🌍 世界观设定</h2>
+                    </div>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <h3>世界观数据未加载</h3>
+                        <p>点击下方按钮加载世界观库数据</p>
+                        <button class="btn btn-primary" onclick="loadWorldviewDataWithUI()">加载世界观数据</button>
+                    </div>
+                `;
+                return;
+            }
             
+            if (dataLoadState.worldview.loading) {
+                container.innerHTML = `
+                    <div class="header">
+                        <h2>🌍 世界观设定</h2>
+                    </div>
+                    <div class="empty-state">
+                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
+                        <h3>正在加载世界观数据...</h3>
+                        <p>请稍候</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const settings = await db.getAll('world_settings', 'category', category);
             const categoryNames = {
-                'geography': '地理环境',
-                'history': '历史背景',
-                'culture': '文化习俗',
-                'magic_system': '力量体系',
-                'other': '其他设定'
+                'cultivation': '玄幻仙侠', 'modern': '都市现代', 'scifi': '科幻未来',
+                'apocalypse': '末世废土', 'history': '历史架空', 'magic': '奇幻魔法',
+                'horror': '灵异恐怖', 'other': '其他设定'
             };
             
             container.innerHTML = `
@@ -2549,10 +1477,13 @@ ${world.features}
                     <button class="btn btn-primary" onclick="openWorldModal(null, '${category}')">➕ 添加设定</button>
                 </div>
                 
-                <div class="tabs">
-                    ${Object.entries(categoryNames).map(([key, name]) => `
-                        <div class="tab ${category === key ? 'active' : ''}" onclick="renderWorld(document.getElementById('mainContent'), '${key}')">${name}</div>
-                    `).join('')}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div class="tabs">
+                        ${Object.entries(categoryNames).map(([key, name]) => `
+                            <div class="tab ${category === key ? 'active' : ''}" onclick="renderWorld(document.getElementById('mainContent'), '${key}')">${name}</div>
+                        `).join('')}
+                    </div>
+                    <button class="btn btn-secondary" onclick="forceRefreshData()">🔄 刷新</button>
                 </div>
                 
                 ${settings.length === 0 ? `
@@ -2568,9 +1499,7 @@ ${world.features}
                                 <div class="card-header">
                                     <span class="card-title">${setting.title}</span>
                                 </div>
-                                <div class="card-content">
-                                    ${setting.content}
-                                </div>
+                                <div class="card-content">${setting.content}</div>
                                 <div class="card-footer">
                                     <span></span>
                                     <div class="card-actions">
@@ -2585,7 +1514,7 @@ ${world.features}
             `;
         }
         
-        function openWorldModal(setting = null, defaultCategory = 'geography') {
+        function openWorldModal(setting = null, defaultCategory = 'other') {
             const isEdit = !!setting;
             document.getElementById('modalTitle').textContent = isEdit ? '编辑设定' : '添加设定';
             
@@ -2594,24 +1523,24 @@ ${world.features}
                     <div class="form-group">
                         <label>分类</label>
                         <select name="category">
-                            <option value="geography" ${(setting?.category || defaultCategory) === 'geography' ? 'selected' : ''}>地理环境</option>
-                            <option value="history" ${(setting?.category || defaultCategory) === 'history' ? 'selected' : ''}>历史背景</option>
-                            <option value="culture" ${(setting?.category || defaultCategory) === 'culture' ? 'selected' : ''}>文化习俗</option>
-                            <option value="magic_system" ${(setting?.category || defaultCategory) === 'magic_system' ? 'selected' : ''}>力量体系</option>
+                            <option value="cultivation" ${(setting?.category || defaultCategory) === 'cultivation' ? 'selected' : ''}>玄幻仙侠</option>
+                            <option value="modern" ${(setting?.category || defaultCategory) === 'modern' ? 'selected' : ''}>都市现代</option>
+                            <option value="scifi" ${(setting?.category || defaultCategory) === 'scifi' ? 'selected' : ''}>科幻未来</option>
+                            <option value="apocalypse" ${(setting?.category || defaultCategory) === 'apocalypse' ? 'selected' : ''}>末世废土</option>
+                            <option value="history" ${(setting?.category || defaultCategory) === 'history' ? 'selected' : ''}>历史架空</option>
+                            <option value="magic" ${(setting?.category || defaultCategory) === 'magic' ? 'selected' : ''}>奇幻魔法</option>
+                            <option value="horror" ${(setting?.category || defaultCategory) === 'horror' ? 'selected' : ''}>灵异恐怖</option>
                             <option value="other" ${(setting?.category || defaultCategory) === 'other' ? 'selected' : ''}>其他设定</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>标题</label>
                         <input type="text" name="title" value="${setting?.title || ''}" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>内容</label>
                         <textarea name="content" rows="10">${setting?.content || ''}</textarea>
                     </div>
-                    
                     ${isEdit ? `<input type="hidden" name="id" value="${setting.id}">` : ''}
                 </form>
             `;
@@ -2628,13 +1557,12 @@ ${world.features}
                 if (isEdit) {
                     data.id = parseInt(formData.get('id'));
                     await db.update('world_settings', data);
-                    renderWorld(document.getElementById('mainContent'), data.category);
                 } else {
                     await db.add('world_settings', data);
-                    renderWorld(document.getElementById('mainContent'), data.category);
                 }
                 
                 closeModal();
+                renderWorld(document.getElementById('mainContent'), data.category);
             };
             
             document.getElementById('modal').classList.add('active');
@@ -2652,7 +1580,7 @@ ${world.features}
             }
         }
         
-        // ==================== 情节大纲 ====================
+        // 情节大纲页面
         let currentTropeFilter = 'all';
         let currentSubTypeFilter = null;
         let tropeSearchQuery = '';
@@ -2672,7 +1600,6 @@ ${world.features}
                 </div>
                 
                 <div style="display:flex;gap:20px;">
-                    <!-- 左侧：章节列表 -->
                     <div style="flex:1;">
                         <div class="tabs">
                             ${[1,2,3,4,5,6,7].map(v => `
@@ -2689,16 +1616,8 @@ ${world.features}
                         ` : `
                             <div class="list-view">
                                 ${plots.map(plot => {
-                                    const statusColors = {
-                                        'draft': '#888',
-                                        'writing': '#ffa500',
-                                        'completed': '#4ade80'
-                                    };
-                                    const statusText = {
-                                        'draft': '草稿',
-                                        'writing': '写作中',
-                                        'completed': '已完成'
-                                    };
+                                    const statusColors = { 'draft': '#888', 'writing': '#ffa500', 'completed': '#4ade80' };
+                                    const statusText = { 'draft': '草稿', 'writing': '写作中', 'completed': '已完成' };
                                     return `
                                         <div class="list-item">
                                             <div class="list-item-info">
@@ -2717,7 +1636,6 @@ ${world.features}
                         `}
                     </div>
                     
-                    <!-- 右侧：桥段素材库面板 -->
                     <div id="tropePanel" class="trope-panel ${showTropePanel ? 'active' : ''}">
                         <div class="trope-panel-header">
                             <h3>🎭 桥段素材库</h3>
@@ -2745,17 +1663,13 @@ ${world.features}
         function toggleTropePanel() {
             showTropePanel = !showTropePanel;
             const panel = document.getElementById('tropePanel');
-            if (panel) {
-                panel.classList.toggle('active', showTropePanel);
-            } else {
-                renderPlot(document.getElementById('mainContent'));
-            }
+            if (panel) panel.classList.toggle('active', showTropePanel);
+            else renderPlot(document.getElementById('mainContent'));
         }
         
         function filterTropes(category) {
             currentTropeFilter = category;
             currentSubTypeFilter = null;
-            currentTropeDetail = null;
             renderPlot(document.getElementById('mainContent'));
         }
         
@@ -2765,63 +1679,27 @@ ${world.features}
         }
         
         function renderTropeItems() {
-            if (!tropesData) {
-                return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
-            }
+            if (!tropesData) return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
 
-            // 第三级：桥段列表（带编号）
             if (currentSubTypeFilter) {
-                let filtered = tropesData.tropes || [];
-                
-                if (currentTropeFilter !== 'all') {
-                    filtered = filtered.filter(t => t.category === currentTropeFilter);
-                }
-                filtered = filtered.filter(t => t.subType === currentSubTypeFilter);
-                
-                if (tropeSearchQuery) {
-                    const q = tropeSearchQuery.toLowerCase();
-                    filtered = filtered.filter(t => 
-                        t.title.toLowerCase().includes(q) ||
-                        t.content.toLowerCase().includes(q)
-                    );
-                }
-                
-                const catName = tropesData.categories?.find(c => c.id === currentTropeFilter)?.name || currentTropeFilter;
-                
-                let html = `
+                const cat = tropesData.categories?.find(c => c.id === currentTropeFilter);
+                return `
                     <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
-                        <span style="color:#888;cursor:pointer;" onclick="filterTropes('${currentTropeFilter}')">${catName}</span>
+                        <span style="color:#888;">${cat?.name || currentTropeFilter}</span>
                         <span style="color:#666;margin:0 8px;">></span>
                         <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
-                        <span style="margin-left:10px;color:#888;font-size:12px;">(${filtered.length}个桥段)</span>
                         <button onclick="filterTropes('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
                     </div>
+                    <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="useTrope('${currentSubTypeFilter.replace(/'/g, "\\'")}')">
+                        <div style="font-size:13px;color:#fff;">使用「${currentSubTypeFilter}」桥段</div>
+                    </div>
                 `;
-                
-                if (filtered.length === 0) {
-                    return html + '<div style="text-align:center;color:#888;padding:20px;">该类型暂无桥段素材</div>';
-                }
-                
-                return html + filtered.map((trope, index) => {
-                    // 只显示标题和序号，点击后弹出详情
-                    return `
-                        <div class="trope-item" style="cursor:pointer;" onclick='openTropeDetailModal(${JSON.stringify(trope).replace(/'/g, "&#39;")})'>
-                            <div class="trope-item-header">
-                                <span style="background:#e94560;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${index + 1}</span>
-                                <span class="trope-item-title" style="margin-left:10px;">${trope.title}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
             }
 
-            // 第二级：小类型网格
             let categoriesToShow = tropesData.categories || [];
-            
             if (currentTropeFilter !== 'all') {
                 categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
             }
-            
             if (tropeSearchQuery) {
                 const q = tropeSearchQuery.toLowerCase();
                 categoriesToShow = categoriesToShow.filter(c => 
@@ -2843,18 +1721,11 @@ ${world.features}
                                 ${cat.name}
                             </div>
                             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-                                ${cat.subTypes.map(sub => {
-                                    // 统计该子类型下的桥段数量
-                                    const count = (tropesData.tropes || []).filter(t => 
-                                        t.category === cat.id && t.subType === sub.name
-                                    ).length;
-                                    return `
-                                        <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
-                                            <div style="font-size:13px;font-weight:500;color:#fff;margin-bottom:4px;">${sub.name}</div>
-                                            <div style="font-size:11px;color:#888;">${sub.frequency || '中'}频 · ${count}个示例</div>
-                                        </div>
-                                    `;
-                                }).join('')}
+                                ${cat.subTypes.map(sub => `
+                                    <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
+                                        <div style="font-size:13px;font-weight:500;color:#fff;">${sub.name}</div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     `;
@@ -2864,33 +1735,25 @@ ${world.features}
             return html || '<div style="text-align:center;color:#888;padding:20px;">暂无子类型</div>';
         }
         
-        // 选择子类型
         async function selectSubType(categoryId, subTypeName) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
-            currentTropeDetail = null;
-            // 根据当前页面决定渲染方式
-            if (currentPage === 'plot') {
-                await renderPlot(document.getElementById('mainContent'));
-            } else {
-                await renderTrope(document.getElementById('mainContent'));
-            }
+            await renderPlot(document.getElementById('mainContent'));
         }
         
-        // 打开桥段详情弹窗
+        function useTrope(tropeName) {
+            showNotification(`已选择桥段：${tropeName}`);
+        }
+        
         function openTropeDetailModal(trope) {
             currentTropeDetail = trope;
+            document.getElementById('tropeDetailTitle').textContent = trope.title || trope.name || '桥段';
+            document.getElementById('tropeDetailContent').textContent = trope.content || trope.description || '';
+            document.getElementById('tropeDetailSource').textContent = trope.book ? `《${trope.book}》${trope.author || ''}` : '未知出处';
             
-            document.getElementById('tropeDetailTitle').textContent = trope.title;
-            document.getElementById('tropeDetailContent').textContent = trope.content;
-            document.getElementById('tropeDetailSource').textContent = `《${trope.book}》${trope.author} · ${trope.year}年`;
-            
-            // 渲染标签
             const tagsContainer = document.getElementById('tropeDetailTags');
             if (trope.tags && trope.tags.length > 0) {
-                tagsContainer.innerHTML = trope.tags.map(tag => 
-                    `<span class="trope-detail-tag">${tag}</span>`
-                ).join('');
+                tagsContainer.innerHTML = trope.tags.map(tag => `<span class="trope-detail-tag">${tag}</span>`).join('');
             } else {
                 tagsContainer.innerHTML = '';
             }
@@ -2898,61 +1761,19 @@ ${world.features}
             document.getElementById('tropeDetailModal').classList.add('active');
         }
         
-        // 关闭桥段详情弹窗
         function closeTropeDetailModal() {
             document.getElementById('tropeDetailModal').classList.remove('active');
             currentTropeDetail = null;
         }
         
-        // 点击遮罩层关闭弹窗
         function closeTropeDetailModalOnOverlay(event) {
-            if (event.target.id === 'tropeDetailModal') {
-                closeTropeDetailModal();
-            }
+            if (event.target.id === 'tropeDetailModal') closeTropeDetailModal();
         }
         
-        // 复制桥段内容
         function copyTropeDetailContent() {
             if (!currentTropeDetail) return;
-            
-            const text = `${currentTropeDetail.title}：${currentTropeDetail.content}`;
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('桥段已复制到剪贴板');
-            }).catch(err => {
-                // 降级方案
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showNotification('桥段已复制到剪贴板');
-            });
-        }
-        
-        function copyTropeContent(title, content) {
-            const text = `${title}：${content}`;
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('桥段已复制到剪贴板');
-            });
-        }
-        
-        function showNotification(message) {
-            const notif = document.createElement('div');
-            notif.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #e94560;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                z-index: 3000;
-                font-size: 14px;
-            `;
-            notif.textContent = message;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 2000);
+            const text = `${currentTropeDetail.title || currentTropeDetail.name}：${currentTropeDetail.content || currentTropeDetail.description || ''}`;
+            navigator.clipboard.writeText(text).then(() => showNotification('桥段已复制到剪贴板'));
         }
         
         function openPlotModal(plot = null, defaultVolume = 1) {
@@ -2975,12 +1796,10 @@ ${world.features}
                             <input type="number" name="chapter" value="${plot?.chapter || ''}" required>
                         </div>
                     </div>
-                    
                     <div class="form-group">
                         <label>章节标题</label>
                         <input type="text" name="title" value="${plot?.title || ''}" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>状态</label>
                         <select name="status">
@@ -2989,17 +1808,10 @@ ${world.features}
                             <option value="completed" ${plot?.status === 'completed' ? 'selected' : ''}>已完成</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>章节概要</label>
                         <textarea name="summary" rows="6">${plot?.summary || ''}</textarea>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>场景列表（每行一个）</label>
-                        <textarea name="scenes" rows="4">${plot?.scenes?.join('\n') || ''}</textarea>
-                    </div>
-                    
                     ${isEdit ? `<input type="hidden" name="id" value="${plot.id}">` : ''}
                 </form>
             `;
@@ -3012,9 +1824,7 @@ ${world.features}
                     chapter: parseInt(formData.get('chapter')),
                     title: formData.get('title'),
                     status: formData.get('status'),
-                    summary: formData.get('summary'),
-                    scenes: formData.get('scenes').split('\n').filter(s => s.trim()),
-                    characters: plot?.characters || []
+                    summary: formData.get('summary')
                 };
                 
                 if (isEdit) {
@@ -3043,34 +1853,32 @@ ${world.features}
             }
         }
         
-        // ==================== 桥段素材 ====================
+        // 桥段素材页面
         async function renderTrope(container) {
-            const categories = tropesData?.categories || [];
+            if (!tropesData) {
+                container.innerHTML = `
+                    <div class="header"><h2>🎭 桥段素材库</h2></div>
+                    <div class="empty-state">
+                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
+                        <h3>正在加载桥段数据...</h3>
+                    </div>
+                `;
+                return;
+            }
             
-            // 渲染类别筛选按钮
-            const filterButtons = categories.map(cat => `
-                <button class="tab ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropeByCategory('${cat.id}')">
-                    ${cat.name}
-                </button>
-            `).join('');
+            const categories = tropesData.categories || [];
             
             container.innerHTML = `
                 <div class="header" style="flex-direction: column; align-items: flex-start;">
                     <h2>🎭 桥段素材库</h2>
-                    <p style="color: #888; font-size: 13px; margin-top: 5px;">${categories.length}个类别 · 共收录经典桥段子类型</p>
+                    <p style="color: #888; font-size: 13px; margin-top: 5px;">${categories.length}个类别</p>
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                     <button class="tab ${currentTropeFilter === 'all' ? 'active' : ''}" onclick="filterTropeByCategory('all')">全部</button>
-                    ${filterButtons}
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <input type="text" id="tropeSearch" placeholder="搜索桥段类别或子类型..." 
-                        style="width: 100%; padding: 10px 15px; background: #1a1a2e; border: 1px solid #333; border-radius: 6px; color: #fff;"
-                        value="${tropeSearchQuery}"
-                        oninput="onTropeSearch(this.value)"
-                    >
+                    ${categories.map(cat => `
+                        <button class="tab ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropeByCategory('${cat.id}')">${cat.name}</button>
+                    `).join('')}
                 </div>
                 
                 <div id="tropeContent">
@@ -3084,60 +1892,10 @@ ${world.features}
                 return '<div style="text-align:center;color:#888;padding:40px;">加载中...</div>';
             }
             
-            // 第三级：桥段列表（带编号）
-            if (currentSubTypeFilter) {
-                let filtered = tropesData.tropes || [];
-                
-                if (currentTropeFilter !== 'all') {
-                    filtered = filtered.filter(t => t.category === currentTropeFilter);
-                }
-                filtered = filtered.filter(t => t.subType === currentSubTypeFilter);
-                
-                if (tropeSearchQuery) {
-                    const q = tropeSearchQuery.toLowerCase();
-                    filtered = filtered.filter(t => 
-                        t.title.toLowerCase().includes(q) ||
-                        t.content.toLowerCase().includes(q)
-                    );
-                }
-                
-                const catName = tropesData.categories?.find(c => c.id === currentTropeFilter)?.name || currentTropeFilter;
-                
-                let html = `
-                    <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
-                        <span style="color:#888;cursor:pointer;" onclick="filterTropeByCategory('${currentTropeFilter}')">${catName}</span>
-                        <span style="color:#666;margin:0 8px;">></span>
-                        <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
-                        <span style="margin-left:10px;color:#888;font-size:12px;">(${filtered.length}个桥段)</span>
-                        <button onclick="filterTropeByCategory('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
-                    </div>
-                `;
-                
-                if (filtered.length === 0) {
-                    return html + '<div style="text-align:center;color:#888;padding:20px;">该类型暂无桥段素材</div>';
-                }
-                
-                return html + filtered.map((trope, index) => {
-                    // 只显示标题和序号，点击后弹出详情
-                    return `
-                        <div class="trope-item" style="cursor:pointer;" onclick='openTropeDetailModal(${JSON.stringify(trope).replace(/'/g, "&#39;")})'>
-                            <div class="trope-item-header">
-                                <span style="background:#e94560;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${index + 1}</span>
-                                <span class="trope-item-title" style="margin-left:10px;">${trope.title}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
             let categoriesToShow = tropesData.categories;
-            
-            // 按类别筛选
             if (currentTropeFilter !== 'all') {
                 categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
             }
-            
-            // 按搜索词筛选
             if (tropeSearchQuery) {
                 const q = tropeSearchQuery.toLowerCase();
                 categoriesToShow = categoriesToShow.filter(c => 
@@ -3152,31 +1910,21 @@ ${world.features}
             
             return categoriesToShow.map(cat => {
                 let subTypes = cat.subTypes || [];
-                
-                // 如果搜索词匹配子类型，高亮显示
                 if (tropeSearchQuery) {
                     const q = tropeSearchQuery.toLowerCase();
-                    subTypes = subTypes.filter(s => 
-                        s.name.toLowerCase().includes(q) ||
-                        cat.name.toLowerCase().includes(q)
-                    );
+                    subTypes = subTypes.filter(s => s.name.toLowerCase().includes(q));
                 }
-                
                 if (subTypes.length === 0) return '';
                 
                 return `
                     <div style="margin-bottom: 24px; background: #1a1a2e; border-radius: 10px; padding: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333;">
-                            <div style="font-size: 15px; font-weight: 600; color: #e94560;">
-                                ${cat.name}
-                            </div>
-                            <div style="font-size: 12px; color: #888;">
-                                ${subTypes.length}个
-                            </div>
+                            <div style="font-size: 15px; font-weight: 600; color: #e94560;">${cat.name}</div>
+                            <div style="font-size: 12px; color: #888;">${subTypes.length}个</div>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
                             ${subTypes.map(sub => `
-                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
+                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showNotification('桥段：${sub.name.replace(/'/g, "\\'")}')">
                                     <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name}</div>
                                 </div>
                             `).join('')}
@@ -3189,69 +1937,25 @@ ${world.features}
         function filterTropeByCategory(categoryId) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = null;
-            currentTropeDetail = null;
             renderTrope(document.getElementById('mainContent'));
         }
         
         function onTropeSearch(query) {
             tropeSearchQuery = query;
             const contentDiv = document.getElementById('tropeContent');
-            if (contentDiv) {
-                contentDiv.innerHTML = renderTropeContent();
-            }
+            if (contentDiv) contentDiv.innerHTML = renderTropeContent();
         }
 
-        // ==================== 数据管理 ====================
+        // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
             const world = await db.getAll('world_settings');
             const plots = await db.getAll('plots');
             
-            const githubSection = githubSync.isConfigured() ? `
-                <div class="card" style="margin-bottom: 30px; border-left: 3px solid #28a745;">
-                    <div class="card-header">
-                        <span class="card-title">☁️ GitHub 云同步</span>
-                        <span class="card-type" style="background: rgba(40, 167, 69, 0.2); color: #28a745;">已启用</span>
-                    </div>
-                    <div style="padding: 15px 0;">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
-                            <div>
-                                <div style="color: #888; font-size: 12px;">上次同步</div>
-                                <div style="color: #fff; font-size: 14px;">${githubSync.lastSyncTime ? new Date(githubSync.lastSyncTime).toLocaleString('zh-CN') : '从未'}</div>
-                            </div>
-                            <div>
-                                <div style="color: #888; font-size: 12px;">Gist ID</div>
-                                <div style="color: #888; font-size: 12px; word-break: break-all;">${githubSync.gistId || '未创建'}</div>
-                            </div>
-                        </div>
-                        <div class="data-ops">
-                            <button class="btn btn-success" onclick="syncToGitHub()">📤 立即同步到云端</button>
-                            <button class="btn btn-secondary" onclick="syncFromGitHub()">📥 从云端恢复</button>
-                            <button class="btn btn-secondary" onclick="openGitHubSettings()">⚙️ 同步设置</button>
-                        </div>
-                    </div>
-                </div>
-            ` : `
-                <div class="card" style="margin-bottom: 30px; border-left: 3px solid #ffc107;">
-                    <div class="card-header">
-                        <span class="card-title">☁️ GitHub 云同步</span>
-                        <span class="card-type" style="background: rgba(255, 193, 7, 0.2); color: #ffc107;">未启用</span>
-                    </div>
-                    <div style="padding: 15px 0;">
-                        <p style="color: #888; margin-bottom: 15px; font-size: 14px;">
-                            启用云同步后，你的写作数据将自动备份到 GitHub Gist，可在多台设备间同步。
-                        </p>
-                        <button class="btn btn-primary" onclick="openGitHubSettings()">🔐 启用云同步</button>
-                    </div>
-                </div>
-            `;
-            
             container.innerHTML = `
                 <div class="header">
                     <h2>💾 数据管理</h2>
                 </div>
-                
-                ${githubSection}
                 
                 <div class="card" style="margin-bottom: 30px;">
                     <div class="card-header">
@@ -3282,6 +1986,7 @@ ${world.features}
                             <button class="btn btn-primary" onclick="exportData()">📤 导出数据</button>
                             <button class="btn btn-secondary" onclick="importData()">📥 导入数据</button>
                             <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空数据</button>
+                            <button class="btn btn-secondary" onclick="clearCacheOnly()">🧹 清除缓存</button>
                         </div>
                     </div>
                 </div>
@@ -3291,7 +1996,16 @@ ${world.features}
         }
         
         async function exportData() {
-            const data = await db.exportAll();
+            const chars = await db.getAll('characters');
+            const worlds = await db.getAll('world_settings');
+            const plots = await db.getAll('plots');
+            const data = {
+                version: '1.0',
+                export_time: new Date().toISOString(),
+                characters: chars,
+                world_settings: worlds,
+                plots: plots
+            };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -3308,15 +2022,31 @@ ${world.features}
         async function handleImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             if (!confirm('导入数据将覆盖现有数据，是否继续？')) return;
             
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    await db.importAll(data);
-                    alert('数据导入成功！');
+                    
+                    await db.clear('characters');
+                    await db.clear('world_settings');
+                    await db.clear('plots');
+                    
+                    for (const char of data.characters || []) {
+                        delete char.id;
+                        await db.add('characters', char);
+                    }
+                    for (const setting of data.world_settings || []) {
+                        delete setting.id;
+                        await db.add('world_settings', setting);
+                    }
+                    for (const plot of data.plots || []) {
+                        delete plot.id;
+                        await db.add('plots', plot);
+                    }
+                    
+                    showNotification('数据导入成功！');
                     loadPage('data');
                 } catch (err) {
                     alert('导入失败：' + err.message);
@@ -3332,8 +2062,19 @@ ${world.features}
             await db.clear('characters');
             await db.clear('world_settings');
             await db.clear('plots');
-            alert('数据已清空');
+            await cacheManager.clearAll();
+            
+            dataLoadState.characters.loaded = false;
+            dataLoadState.worldview.loaded = false;
+            
+            showNotification('数据已清空');
             loadPage('data');
+        }
+
+        async function clearCacheOnly() {
+            await cacheManager.clearAll();
+            dataLoadState.characters.cached = false;
+            showNotification('缓存已清除');
         }
         
         // ==================== 模态框控制 ====================
@@ -3343,23 +2084,136 @@ ${world.features}
         }
         
         function confirmModal() {
-            if (modalCallback) {
-                modalCallback();
+            if (modalCallback) modalCallback();
+        }
+
+        // ==================== GitHub 设置 ====================
+        function showGitHubSetupModal() {
+            document.getElementById('githubSetupModal').classList.add('active');
+        }
+
+        function hideGitHubSetupModal() {
+            document.getElementById('githubSetupModal').classList.remove('active');
+            document.getElementById('githubSetupError').style.display = 'none';
+        }
+
+        function skipGitHubSetup() {
+            hideGitHubSetupModal();
+        }
+
+        async function saveGitHubToken() {
+            const token = document.getElementById('githubTokenInput').value.trim();
+            const errorDiv = document.getElementById('githubSetupError');
+            
+            if (!token) {
+                errorDiv.textContent = '请输入 GitHub Token';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const btn = document.querySelector('#githubSetupModal .btn-primary');
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="loading-spinner"></span> 验证中...';
+            btn.disabled = true;
+
+            try {
+                githubSync.saveToken(token);
+                const valid = await githubSync.verifyToken();
+                
+                if (valid) {
+                    await githubSync.getOrCreateGist();
+                    hideGitHubSetupModal();
+                    showNotification('GitHub Token 已保存');
+                } else {
+                    errorDiv.textContent = 'Token 验证失败，请检查是否正确';
+                    errorDiv.style.display = 'block';
+                    githubSync.clearConfig();
+                }
+            } catch (e) {
+                errorDiv.textContent = '验证失败：' + e.message;
+                errorDiv.style.display = 'block';
+                githubSync.clearConfig();
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function openGitHubSettings() {
+            if (githubSync.isConfigured()) {
+                showNotification('GitHub 已配置');
+            } else {
+                showGitHubSetupModal();
             }
         }
         
-        // 点击模态框外部关闭
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal') {
-                closeModal();
+        // ==================== 页面加载 ====================
+        function loadPage(page) {
+            currentPage = page;
+            const main = document.getElementById('mainContent');
+            
+            switch(page) {
+                case 'home': renderHome(main); break;
+                case 'characters': renderCharacters(main); break;
+                case 'world': renderWorld(main); break;
+                case 'plot': renderPlot(main); break;
+                case 'trope': renderTrope(main); break;
+                case 'data': renderData(main); break;
             }
-        });
+        }
+        
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await db.init();
+            await cacheManager.init();
+            
+            // 检查本地缓存
+            const cachedChars = await db.getAll('characters');
+            const cachedWorlds = await db.getAll('world_settings');
+            
+            if (cachedChars.length > 0) {
+                dataLoadState.characters.loaded = true;
+                console.log(`✅ 本地已有 ${cachedChars.length} 个角色`);
+            }
+            if (cachedWorlds.length > 0) {
+                dataLoadState.worldview.loaded = true;
+                console.log(`✅ 本地已有 ${cachedWorlds.length} 条世界观`);
+            }
+            
+            // 加载桥段数据（首页需要）
+            await loadTropeData();
+            
+            loadPage('home');
+            
+            // 导航事件
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    const page = item.dataset.page;
+                    
+                    // 懒加载：进入角色页时加载角色数据
+                    if (page === 'characters' && !dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
+                        loadCharacterDataWithUI();
+                    }
+                    // 懒加载：进入世界观页时加载世界观数据
+                    else if (page === 'world' && !dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
+                        loadWorldviewDataWithUI();
+                    }
+                    
+                    loadPage(page);
+                });
+            });
 
-        // ESC键关闭桥段详情弹窗
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeTropeDetailModal();
-            }
+            // 点击模态框外部关闭
+            document.getElementById('modal').addEventListener('click', (e) => {
+                if (e.target.id === 'modal') closeModal();
+            });
+
+            // ESC键关闭弹窗
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeTropeDetailModal();
+            });
         });
     </script>
 </body>
