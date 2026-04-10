@@ -10692,22 +10692,72 @@
         // ==================== 页面加载 ====================
         function loadPage(page) {
             currentPage = page;
-            const main = document.getElementById('mainContent');
+            // 根据分屏模式选择渲染目标
+            const main = document.getElementById('editorContent') || document.getElementById('mainContent');
 
-            switch(page) {
-                case 'home': renderHome(main); break;
-                case 'history': renderHistory(main); break;
-                case 'characters': renderCharacters(main); break;
-                case 'world': renderWorld(main); break;
-                case 'plot': renderPlot(main); break;
-                case 'trope': renderTrope(main); break;
-                case 'scene': renderSceneEditor(main); break;
-                case 'names': renderNameGenerator(main); break;
-                case 'favorites': renderFavorites(main); break;
-                case 'stats': renderStats(main); break;
-                case 'data': renderData(main); break;
-                case 'templates': renderTemplates(main); break;
+            // 在分屏模式下，清空编辑器内容（如果不是编辑相关页面）
+            const editorContent = document.getElementById('editorContent');
+            const splitContainer = document.getElementById('splitContainer');
+
+            if (splitContainer && !splitContainer.classList.contains('single')) {
+                // 分屏模式下，在主区域渲染页面
+                switch(page) {
+                    case 'home': renderHome(editorContent); break;
+                    case 'history': renderHistory(editorContent); break;
+                    case 'characters': renderCharacters(editorContent); break;
+                    case 'world': renderWorld(editorContent); break;
+                    case 'plot': renderPlot(editorContent); break;
+                    case 'trope': renderTrope(editorContent); break;
+                    case 'scene': renderSceneEditor(editorContent); break;
+                    case 'names': renderNameGenerator(editorContent); break;
+                    case 'favorites': renderFavorites(editorContent); break;
+                    case 'stats': renderStats(editorContent); break;
+                    case 'data': renderData(editorContent); break;
+                    case 'templates': renderTemplates(editorContent); break;
+                }
+            } else {
+                // 单栏模式 - 使用原来的mainContent（如果存在）或editorContent
+                const target = document.getElementById('mainContent') || editorContent;
+                switch(page) {
+                    case 'home': renderHome(target); break;
+                    case 'history': renderHistory(target); break;
+                    case 'characters': renderCharacters(target); break;
+                    case 'world': renderWorld(target); break;
+                    case 'plot': renderPlot(target); break;
+                    case 'trope': renderTrope(target); break;
+                    case 'scene': renderSceneEditor(target); break;
+                    case 'names': renderNameGenerator(target); break;
+                    case 'favorites': renderFavorites(target); break;
+                    case 'stats': renderStats(target); break;
+                    case 'data': renderData(target); break;
+                    case 'templates': renderTemplates(target); break;
+                }
             }
+
+            // 更新导航选中状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === page) {
+                    item.classList.add('active');
+                }
+            });
+
+            // 更新窗口标题
+            const titles = {
+                'home': '首页',
+                'history': '历史记录',
+                'characters': '角色管理',
+                'world': '世界观',
+                'plot': '情节大纲',
+                'trope': '桥段素材',
+                'scene': '桥段生成',
+                'names': '姓名生成',
+                'stats': '写作统计',
+                'data': '数据管理',
+                'templates': '模板管理',
+                'favorites': '我的收藏'
+            };
+            document.title = `🎮 创世者编辑器 - ${titles[page] || page}`;
         }
 
         // ==================== 关联推荐系统 ====================
@@ -11846,6 +11896,9 @@
 
             // ==================== 快捷键系统 ====================
             initShortcutSystem();
+
+            // ==================== 分屏系统 ====================
+            splitScreenManager.init();
         });
 
         // ==================== 快捷键管理系统 ====================
@@ -12294,6 +12347,10 @@
                                     <span class="shortcut-desc">导出当前内容</span>
                                 </div>
                                 <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('\\')}</span>
+                                    <span class="shortcut-desc">切换分屏模式</span>
+                                </div>
+                                <div class="shortcut-item">
                                     <span class="shortcut-keys">Esc</span>
                                     <span class="shortcut-desc">关闭弹窗/返回上一页</span>
                                 </div>
@@ -12443,6 +12500,488 @@
         function initShortcutSystem() {
             shortcutManager.init();
         }
+
+        // ==================== 分屏模式管理系统 ====================
+        const splitScreenManager = {
+            mode: 'single', // single | horizontal | vertical
+            isResizing: false,
+            editorContent: [],
+
+            init() {
+                // 从localStorage加载用户偏好
+                const savedMode = localStorage.getItem('splitMode') || 'single';
+                const savedWidth = localStorage.getItem('editorWidth') || '60%';
+                const savedHeight = localStorage.getItem('editorHeight') || '50%';
+
+                // 应用保存的设置
+                document.documentElement.style.setProperty('--editor-width', savedWidth);
+                document.documentElement.style.setProperty('--editor-height', savedHeight);
+
+                // 宽屏默认启用左右分屏
+                if (window.innerWidth > 1024 && !localStorage.getItem('splitMode')) {
+                    this.setMode('horizontal');
+                } else {
+                    this.setMode(savedMode);
+                }
+
+                // 初始化拖拽调整大小
+                this.initResizeHandle();
+
+                // 初始化拖拽功能
+                this.initDragAndDrop();
+
+                console.log('✅ [分屏] 系统已初始化，模式:', this.mode);
+            },
+
+            setMode(mode) {
+                this.mode = mode;
+                const container = document.getElementById('splitContainer');
+
+                // 移除所有模式类
+                container.classList.remove('single', 'horizontal', 'vertical');
+                // 添加当前模式类
+                container.classList.add(mode);
+
+                // 更新菜单选中状态
+                document.querySelectorAll('.split-menu-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.mode === mode);
+                });
+
+                // 保存到localStorage
+                localStorage.setItem('splitMode', mode);
+
+                // 加载素材库内容
+                if (mode !== 'single') {
+                    this.loadMaterialPanel();
+                }
+
+                showToast(`📑 已切换到${mode === 'single' ? '单栏' : mode === 'horizontal' ? '左右分屏' : '上下分屏'}模式`);
+            },
+
+            toggleMenu() {
+                const menu = document.getElementById('splitMenu');
+                menu.classList.toggle('active');
+
+                // 点击外部关闭菜单
+                if (menu.classList.contains('active')) {
+                    setTimeout(() => {
+                        document.addEventListener('click', this.closeMenuOnClickOutside, { once: true });
+                    }, 0);
+                }
+            },
+
+            closeMenuOnClickOutside(e) {
+                const menu = document.getElementById('splitMenu');
+                const btn = document.getElementById('splitToggleBtn');
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.remove('active');
+                }
+            },
+
+            initResizeHandle() {
+                const handle = document.getElementById('resizeHandle');
+                const container = document.getElementById('splitContainer');
+
+                handle.addEventListener('mousedown', (e) => {
+                    this.isResizing = true;
+                    document.body.style.cursor = this.mode === 'horizontal' ? 'col-resize' : 'row-resize';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!this.isResizing) return;
+
+                    const containerRect = container.getBoundingClientRect();
+
+                    if (this.mode === 'horizontal') {
+                        const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+                        if (newWidth >= 30 && newWidth <= 70) {
+                            document.documentElement.style.setProperty('--editor-width', `${newWidth}%`);
+                        }
+                    } else if (this.mode === 'vertical') {
+                        const newHeight = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+                        if (newHeight >= 30 && newHeight <= 70) {
+                            document.documentElement.style.setProperty('--editor-height', `${newHeight}%`);
+                        }
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (this.isResizing) {
+                        this.isResizing = false;
+                        document.body.style.cursor = '';
+
+                        // 保存调整后的尺寸
+                        const root = document.documentElement;
+                        if (this.mode === 'horizontal') {
+                            localStorage.setItem('editorWidth', root.style.getPropertyValue('--editor-width'));
+                        } else if (this.mode === 'vertical') {
+                            localStorage.setItem('editorHeight', root.style.getPropertyValue('--editor-height'));
+                        }
+                    }
+                });
+            },
+
+            initDragAndDrop() {
+                const editorPanel = document.getElementById('editorContent');
+
+                // 编辑器面板接收拖拽
+                editorPanel.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    editorPanel.classList.add('drag-over');
+                });
+
+                editorPanel.addEventListener('dragleave', () => {
+                    editorPanel.classList.remove('drag-over');
+                });
+
+                editorPanel.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    editorPanel.classList.remove('drag-over');
+
+                    const type = e.dataTransfer.getData('type');
+                    const data = e.dataTransfer.getData('data');
+
+                    if (type && data) {
+                        this.insertToEditor(type, JSON.parse(data));
+                    }
+                });
+            },
+
+            makeCardDraggable(card, type, data) {
+                card.draggable = true;
+                card.classList.add('draggable-card');
+
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('type', type);
+                    e.dataTransfer.setData('data', JSON.stringify(data));
+                    card.classList.add('dragging');
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                });
+            },
+
+            insertToEditor(type, data) {
+                const editorContent = document.getElementById('editorContent');
+
+                // 移除占位符
+                const placeholder = editorContent.querySelector('.editor-placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                let content = '';
+                switch (type) {
+                    case 'trope':
+                        content = `\n## 📖 桥段：${data.title || '未命名'}\n\n${data.summary || data.content || ''}\n\n---\n`;
+                        break;
+                    case 'character':
+                        content = `\n## 👤 角色：${data.name || '未命名'}\n\n**身份**：${data.role || '未知'}\n**性格**：${data.personality || '未设定'}\n**背景**：${data.background || '未设定'}\n\n---\n`;
+                        break;
+                    case 'worldview':
+                        content = `\n## 🌍 世界观：${data.title || '未命名'}\n\n${data.content || ''}\n\n---\n`;
+                        break;
+                    case 'name':
+                        content = `\n✨ **${data.name || data}**\n`;
+                        break;
+                }
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'editor-inserted-content';
+                contentDiv.style.cssText = 'padding: 15px; margin: 10px 0; background: rgba(15, 52, 96, 0.3); border-radius: 8px; border-left: 3px solid #e94560;';
+                contentDiv.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; color: #ccc; margin: 0;">${content}</pre>`;
+
+                editorContent.appendChild(contentDiv);
+                editorContent.scrollTop = editorContent.scrollHeight;
+
+                showToast('✅ 已插入到编辑器');
+            },
+
+            async loadMaterialPanel() {
+                // 默认加载桥段
+                await this.loadTropesForPanel();
+            },
+
+            async loadTropesForPanel() {
+                const container = document.getElementById('materialContent');
+                container.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">🔄 加载中...</div>';
+
+                try {
+                    if (!tropeData || tropeData.length === 0) {
+                        await loadTropeData();
+                    }
+
+                    const html = tropeData.slice(0, 20).map(trope => {
+                        const card = `
+                            <div class="card draggable-card" style="margin-bottom: 15px; cursor: pointer;"
+                                onclick="splitScreenManager.insertToEditor('trope', ${JSON.stringify(trope).replace(/"/g, '&quot;')})"
+                            >
+                                <div class="card-header">
+                                    <span class="card-title">${trope.title || '未命名'}</span>
+                                    <span class="card-type">${trope.category || '桥段'}</span>
+                                </div>
+                                <div class="card-content">${trope.summary || trope.content?.substring(0, 100) + '...' || '暂无描述'}</div>
+                            </div>
+                        `;
+                        return card;
+                    }).join('');
+
+                    container.innerHTML = `<div class="material-list" style="padding: 10px;">${html}</div>`;
+
+                    // 添加拖拽功能
+                    setTimeout(() => {
+                        container.querySelectorAll('.draggable-card').forEach((card, idx) => {
+                            this.makeCardDraggable(card, 'trope', tropeData[idx]);
+                        });
+                    }, 0);
+
+                } catch (e) {
+                    container.innerHTML = `<div style="text-align: center; padding: 30px; color: #e94560;">❌ 加载失败</div>`;
+                }
+            },
+
+            async loadCharactersForPanel() {
+                const container = document.getElementById('materialContent');
+                container.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">🔄 加载中...</div>';
+
+                try {
+                    const characters = await db.getAll('characters');
+                    const html = characters.slice(0, 20).map(char => `
+                        <div class="card draggable-card" style="margin-bottom: 15px; cursor: pointer;"
+                            onclick="showCharacterFloat(${char.id})"
+                        >
+                            <div class="card-header">
+                                <span class="card-title">${char.name || '未命名'}</span>
+                                <span class="card-type">${char.role || '角色'}</span>
+                            </div>
+                            <div class="card-content">${char.personality || char.background || '暂无描述'}</div>
+                        </div>
+                    `).join('');
+
+                    container.innerHTML = `<div class="material-list" style="padding: 10px;">${html || '<p style="text-align: center; color: #666;">暂无角色</p>'}</div>`;
+
+                    // 添加拖拽功能
+                    setTimeout(() => {
+                        container.querySelectorAll('.draggable-card').forEach((card, idx) => {
+                            this.makeCardDraggable(card, 'character', characters[idx]);
+                        });
+                    }, 0);
+
+                } catch (e) {
+                    container.innerHTML = `<div style="text-align: center; padding: 30px; color: #e94560;">❌ 加载失败</div>`;
+                }
+            },
+
+            async loadWorldviewsForPanel() {
+                const container = document.getElementById('materialContent');
+                container.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">🔄 加载中...</div>';
+
+                try {
+                    const worldviews = await db.getAll('world_settings');
+                    const html = worldviews.slice(0, 20).map(world => `
+                        <div class="card draggable-card" style="margin-bottom: 15px; cursor: pointer;"
+                            onclick="splitScreenManager.insertToEditor('worldview', ${JSON.stringify(world).replace(/"/g, '&quot;')})"
+                        >
+                            <div class="card-header">
+                                <span class="card-title">${world.title || '未命名'}</span>
+                                <span class="card-type">${world.category || '世界观'}</span>
+                            </div>
+                            <div class="card-content">${world.content?.substring(0, 100) + '...' || '暂无描述'}</div>
+                        </div>
+                    `).join('');
+
+                    container.innerHTML = `<div class="material-list" style="padding: 10px;">${html || '<p style="text-align: center; color: #666;">暂无世界观</p>'}</div>`;
+
+                    // 添加拖拽功能
+                    setTimeout(() => {
+                        container.querySelectorAll('.draggable-card').forEach((card, idx) => {
+                            this.makeCardDraggable(card, 'worldview', worldviews[idx]);
+                        });
+                    }, 0);
+
+                } catch (e) {
+                    container.innerHTML = `<div style="text-align: center; padding: 30px; color: #e94560;">❌ 加载失败</div>`;
+                }
+            },
+
+            loadNamesForPanel() {
+                const container = document.getElementById('materialContent');
+                const names = [
+                    { name: '林墨', type: '现代' },
+                    { name: '苏晚晴', type: '古风' },
+                    { name: '顾临渊', type: '玄幻' },
+                    { name: '沈清欢', type: '言情' },
+                    { name: '萧云起', type: '武侠' },
+                    { name: '陆景行', type: '都市' },
+                    { name: '楚星澜', type: '仙侠' },
+                    { name: '叶无双', type: '武侠' }
+                ];
+
+                const html = names.map(n => `
+                    <div class="card draggable-card" style="margin-bottom: 10px; padding: 12px; cursor: pointer;"
+                        onclick="splitScreenManager.insertToEditor('name', '${n.name}')"
+                    >
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; font-weight: 600;">${n.name}</span>
+                            <span class="card-type">${n.type}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = `<div class="material-list" style="padding: 10px;">${html}</div>`;
+
+                // 添加拖拽功能
+                setTimeout(() => {
+                    container.querySelectorAll('.draggable-card').forEach((card, idx) => {
+                        this.makeCardDraggable(card, 'name', names[idx].name);
+                    });
+                }, 0);
+            }
+        };
+
+        // 分屏控制函数
+        function toggleSplitMenu() {
+            splitScreenManager.toggleMenu();
+        }
+
+        function setSplitMode(mode) {
+            splitScreenManager.setMode(mode);
+            document.getElementById('splitMenu').classList.remove('active');
+        }
+
+        function switchMaterialTab(tab) {
+            // 更新标签样式
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = '#0f3460';
+                btn.style.color = '#ccc';
+            });
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = '#e94560';
+                activeBtn.style.color = '#fff';
+            }
+
+            // 加载对应内容
+            switch (tab) {
+                case 'tropes':
+                    splitScreenManager.loadTropesForPanel();
+                    break;
+                case 'characters':
+                    splitScreenManager.loadCharactersForPanel();
+                    break;
+                case 'worlds':
+                    splitScreenManager.loadWorldviewsForPanel();
+                    break;
+                case 'names':
+                    splitScreenManager.loadNamesForPanel();
+                    break;
+            }
+        }
+
+        function clearEditor() {
+            const editorContent = document.getElementById('editorContent');
+            editorContent.innerHTML = `
+                <div class="editor-placeholder" style="text-align: center; padding: 50px 20px; color: #666;">
+                    <p style="margin-bottom: 15px;">📚 从右侧素材库拖拽内容到此处</p>
+                    <p>或点击素材卡片直接插入编辑器</p>
+                </div>
+            `;
+            showToast('🗑️ 编辑器已清空');
+        }
+
+        function exportEditorContent() {
+            const editorContent = document.getElementById('editorContent');
+            const contents = editorContent.querySelectorAll('.editor-inserted-content pre');
+
+            if (contents.length === 0) {
+                showToast('⚠️ 编辑器为空');
+                return;
+            }
+
+            let text = '';
+            contents.forEach(c => {
+                text += c.textContent + '\n';
+            });
+
+            const blob = new Blob([text], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `novel-editor-content-${new Date().toISOString().slice(0, 10)}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('📤 内容已导出');
+        }
+
+        // 角色详情浮窗
+        async function showCharacterFloat(characterId) {
+            try {
+                const character = await db.get('characters', characterId);
+                if (!character) return;
+
+                const modal = document.getElementById('characterFloatModal');
+                const title = document.getElementById('characterFloatTitle');
+                const content = document.getElementById('characterFloatContent');
+
+                title.textContent = character.name || '未命名角色';
+                content.innerHTML = `
+                    <p><strong>身份：</strong>${character.role || '未设定'}</p>
+                    <p><strong>性格：</strong>${character.personality || '未设定'}</p>
+                    <p><strong>背景：</strong>${character.background || '未设定'}</p>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="splitScreenManager.insertToEditor('character', ${JSON.stringify(character).replace(/"/g, '&quot;')}); closeCharacterFloatModal();">插入编辑器</button>
+                        <button class="btn btn-secondary" onclick="openCharacterDetail(${characterId})">查看详情</button>
+                    </div>
+                `;
+
+                // 定位到点击位置附近
+                modal.style.left = '50%';
+                modal.style.top = '50%';
+                modal.style.transform = 'translate(-50%, -50%)';
+                modal.classList.add('active');
+
+            } catch (e) {
+                console.error('显示角色浮窗失败:', e);
+            }
+        }
+
+        function closeCharacterFloatModal() {
+            document.getElementById('characterFloatModal').classList.remove('active');
+        }
+
+        // 快捷键支持
+        function handleSplitShortcut(e) {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
+
+            // Ctrl/Cmd + \ 切换分屏
+            if (ctrlKey && e.key === '\\') {
+                e.preventDefault();
+                const modes = ['single', 'horizontal', 'vertical'];
+                const currentIndex = modes.indexOf(splitScreenManager.mode);
+                const nextMode = modes[(currentIndex + 1) % modes.length];
+                setSplitMode(nextMode);
+                return;
+            }
+        }
+
+        // 添加全局快捷键监听
+        document.addEventListener('keydown', handleSplitShortcut);
+
+        // 响应式处理
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 1024) {
+                // 窄屏强制单栏
+                if (splitScreenManager.mode !== 'single') {
+                    splitScreenManager.setMode('single');
+                }
+            }
+        });
     </script>
 </body>
 </html>
