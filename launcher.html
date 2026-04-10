@@ -1400,6 +1400,7 @@
 
         // 加载角色数据
         async function loadCharacterData() {
+            const baseUrl = 'https://sztbssz.github.io/novel-editor/';
             const characterFiles = [
                 'characters_2006_2007.json',
                 'characters_2008.json', 
@@ -1410,7 +1411,7 @@
             
             try {
                 for (const file of characterFiles) {
-                    const response = await fetch(`./${file}`);
+                    const response = await fetch(`${baseUrl}${file}`);
                     if (response.ok) {
                         const data = await response.json();
                         // 处理不同格式：数组或对象（带 characters 字段）
