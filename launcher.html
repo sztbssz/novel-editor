@@ -879,6 +879,297 @@
             font-size: 12px;
             color: #e94560;
         }
+
+        /* ==================== 多级作品管理样式 ==================== */
+        .plot-container {
+            display: flex;
+            height: calc(100vh - 140px);
+            gap: 20px;
+        }
+        .works-sidebar {
+            width: 250px;
+            min-width: 250px;
+            background: #16213e;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .works-sidebar-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .works-sidebar-header h3 {
+            font-size: 16px;
+            color: #00d4ff;
+            margin: 0;
+        }
+        .works-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .work-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .work-item:hover {
+            background: #0f3460;
+        }
+        .work-item.active {
+            background: #e94560;
+        }
+        .work-item-name {
+            font-size: 14px;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+        .work-item.active .work-item-name {
+            color: #fff;
+        }
+        .work-item-actions {
+            display: none;
+            gap: 5px;
+        }
+        .work-item:hover .work-item-actions {
+            display: flex;
+        }
+        .work-item-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .work-item-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .work-item.active .work-item-btn {
+            color: rgba(255,255,255,0.8);
+        }
+        .work-item.active .work-item-btn:hover {
+            color: #fff;
+        }
+        .works-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+        .works-empty-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .plot-editor {
+            flex: 1;
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .plot-editor-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .plot-editor-header h3 {
+            font-size: 16px;
+            color: #fff;
+            margin: 0;
+        }
+        .plot-editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .volume-item {
+            background: #1a1a2e;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 1px solid #0f3460;
+        }
+        .volume-header {
+            padding: 15px 20px;
+            background: #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .volume-header:hover {
+            background: #1a4a7a;
+        }
+        .volume-title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .volume-toggle {
+            font-size: 12px;
+            color: #00d4ff;
+            transition: transform 0.2s;
+            width: 20px;
+            text-align: center;
+        }
+        .volume-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        .volume-number {
+            font-size: 13px;
+            color: #e94560;
+            font-weight: 600;
+            min-width: 50px;
+        }
+        .volume-title {
+            font-size: 15px;
+            color: #fff;
+            font-weight: 500;
+        }
+        .volume-summary {
+            font-size: 12px;
+            color: #888;
+            margin-left: 10px;
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .volume-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .volume-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .volume-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .volume-chapters {
+            padding: 10px;
+        }
+        .volume-chapters.collapsed {
+            display: none;
+        }
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #16213e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: move;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .chapter-item:hover {
+            background: #1a2a4a;
+            border-color: #0f3460;
+        }
+        .chapter-item.dragging {
+            opacity: 0.5;
+            background: #0f3460;
+        }
+        .chapter-item.drag-over {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+        .chapter-handle {
+            color: #666;
+            margin-right: 12px;
+            cursor: grab;
+            font-size: 14px;
+        }
+        .chapter-handle:active {
+            cursor: grabbing;
+        }
+        .chapter-number {
+            font-size: 13px;
+            color: #e94560;
+            font-weight: 600;
+            min-width: 50px;
+        }
+        .chapter-title {
+            flex: 1;
+            font-size: 14px;
+            color: #fff;
+        }
+        .chapter-wordcount {
+            font-size: 12px;
+            color: #888;
+            margin-right: 15px;
+        }
+        .chapter-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .chapter-item:hover .chapter-actions {
+            opacity: 1;
+        }
+        .chapter-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .chapter-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .chapters-empty {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+        .plot-empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #888;
+            text-align: center;
+        }
+        .plot-empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .plot-empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -1714,7 +2005,7 @@
             
             async init() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    const request = indexedDB.open(this.dbName, 2);
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         this.db = request.result;
@@ -1734,6 +2025,18 @@
                         if (!db.objectStoreNames.contains('plots')) {
                             const plotStore = db.createObjectStore('plots', { keyPath: 'id', autoIncrement: true });
                             plotStore.createIndex('volume', 'volume', { unique: false });
+                        }
+                        // 多级作品管理
+                        if (!db.objectStoreNames.contains('works')) {
+                            db.createObjectStore('works', { keyPath: 'id', autoIncrement: true });
+                        }
+                        if (!db.objectStoreNames.contains('volumes')) {
+                            const volStore = db.createObjectStore('volumes', { keyPath: 'id', autoIncrement: true });
+                            volStore.createIndex('workId', 'workId', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('chapters')) {
+                            const chapStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
+                            chapStore.createIndex('volumeId', 'volumeId', { unique: false });
                         }
                     };
                 });
@@ -3162,78 +3465,594 @@
         let tropeSearchQuery = '';
         let showTropePanel = false;
         
-        async function renderPlot(container, volume = 1) {
-            const plots = await db.getAll('plots', 'volume', volume);
-            plots.sort((a, b) => a.chapter - b.chapter);
+        // ==================== 多级作品管理 ====================
+        let currentWorkId = null;
+        let worksData = [];
+        let volumesData = [];
+        let chaptersData = [];
+        let expandedVolumes = new Set();
+        let draggedChapter = null;
+
+        // 初始化情节大纲数据
+        async function initPlotData() {
+            await loadWorksList();
+            if (!currentWorkId && worksData.length > 0) {
+                currentWorkId = worksData[0].id;
+            }
+        }
+
+        // 加载作品列表
+        async function loadWorksList() {
+            worksData = await db.getAll('works');
+            worksData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        }
+
+        // 加载卷的章节
+        async function loadVolumeChapters(volumeId) {
+            const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            return chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+        }
+
+        // 渲染情节大纲页面
+        async function renderPlot(container) {
+            if (worksData.length === 0) {
+                await initPlotData();
+            }
+            
+            const worksListHtml = worksData.length === 0 
+                ? `<div class="works-empty">
+                    <div class="works-empty-icon">📚</div>
+                    <p>暂无作品</p>
+                    <p style="font-size:12px;color:#666;margin-top:5px;">点击上方 + 创建</p>
+                   </div>`
+                : worksData.map(work => `
+                    <div class="work-item ${work.id === currentWorkId ? 'active' : ''}" onclick="switchWork(${work.id})">
+                        <span class="work-item-name">${work.name}</span>
+                        <div class="work-item-actions" onclick="event.stopPropagation()">
+                            <button class="work-item-btn" onclick="renameWork(${work.id}, '${work.name.replace(/'/g, "\\'")}')" title="重命名">✏️</button>
+                            <button class="work-item-btn" onclick="deleteWork(${work.id})" title="删除">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            
+            let editorHtml = '';
+            if (!currentWorkId) {
+                editorHtml = `
+                    <div class="plot-empty-state">
+                        <div class="plot-empty-state-icon">📖</div>
+                        <h3>选择一个作品开始创作</h3>
+                        <p>或点击左侧 + 创建新作品</p>
+                    </div>
+                `;
+            } else {
+                const currentWork = worksData.find(w => w.id === currentWorkId);
+                const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+                volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
+                
+                editorHtml = `
+                    <div class="plot-editor-header">
+                        <h3>${currentWork?.name || '未命名作品'}</h3>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-secondary" onclick="toggleTropePanel()">🎭 桥段素材库</button>
+                            <button class="btn btn-primary" onclick="addVolume()">➕ 添加卷</button>
+                        </div>
+                    </div>
+                    <div class="plot-editor-content">
+                        ${volumes.length === 0 
+                            ? `<div class="plot-empty-state">
+                                <div class="plot-empty-state-icon">📚</div>
+                                <h3>暂无卷</h3>
+                                <p>点击上方「添加卷」开始创建</p>
+                               </div>`
+                            : volumes.map(volume => {
+                                const isExpanded = expandedVolumes.has(volume.id);
+                                return `
+                                    <div class="volume-item" data-volume-id="${volume.id}">
+                                        <div class="volume-header" onclick="toggleVolume(${volume.id})">
+                                            <div class="volume-title-section">
+                                                <span class="volume-toggle ${isExpanded ? '' : 'collapsed'}">▼</span>
+                                                <span class="volume-number">第${volume.volumeNumber}卷</span>
+                                                <span class="volume-title">${volume.title || '未命名卷'}</span>
+                                                ${volume.summary ? `<span class="volume-summary">${volume.summary}</span>` : ''}
+                                            </div>
+                                            <div class="volume-actions" onclick="event.stopPropagation()">
+                                                <button class="volume-btn" onclick="editVolume(${volume.id})" title="编辑">✏️</button>
+                                                <button class="volume-btn" onclick="addChapter(${volume.id})" title="添加章节">➕</button>
+                                                <button class="volume-btn" onclick="moveVolumeUp(${volume.id})" title="上移">⬆️</button>
+                                                <button class="volume-btn" onclick="moveVolumeDown(${volume.id})" title="下移">⬇️</button>
+                                                <button class="volume-btn" onclick="deleteVolume(${volume.id})" title="删除">🗑️</button>
+                                            </div>
+                                        </div>
+                                        <div class="volume-chapters ${isExpanded ? '' : 'collapsed'}" id="chapters-${volume.id}">
+                                            ${renderChapters(volume.id)}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')
+                        }
+                    </div>
+                `;
+            }
             
             container.innerHTML = `
                 <div class="header">
                     <h2>📖 情节大纲</h2>
-                    <div style="display:flex;gap:10px;">
-                        <button class="btn btn-secondary" onclick="toggleTropePanel()">🎭 桥段素材库</button>
-                        <button class="btn btn-primary" onclick="openPlotModal(null, ${volume})">➕ 添加章节</button>
-                    </div>
                 </div>
-                
-                <div style="display:flex;gap:20px;">
-                    <div style="flex:1;">
-                        <div class="tabs">
-                            ${[1,2,3,4,5,6,7].map(v => `
-                                <div class="tab ${volume === v ? 'active' : ''}" onclick="renderPlot(document.getElementById('mainContent'), ${v})">第${v}卷</div>
-                            `).join('')}
+                <div class="plot-container">
+                    <div class="works-sidebar">
+                        <div class="works-sidebar-header">
+                            <h3>📚 作品列表</h3>
+                            <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="addWork()">➕</button>
                         </div>
-                        
-                        ${plots.length === 0 ? `
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📖</div>
-                                <h3>第${volume}卷暂无章节</h3>
-                                <p>点击右上角按钮添加</p>
-                            </div>
-                        ` : `
-                            <div class="list-view">
-                                ${plots.map(plot => {
-                                    const statusColors = { 'draft': '#888', 'writing': '#ffa500', 'completed': '#4ade80' };
-                                    const statusText = { 'draft': '草稿', 'writing': '写作中', 'completed': '已完成' };
-                                    return `
-                                        <div class="list-item">
-                                            <div class="list-item-info">
-                                                <h4>第${plot.chapter}章：${plot.title}</h4>
-                                                <p>${plot.summary?.substring(0, 100) || '暂无概要'}${plot.summary?.length > 100 ? '...' : ''}</p>
-                                            </div>
-                                            <div class="list-item-actions">
-                                                <span style="color:${statusColors[plot.status] || '#888'};font-size:12px;margin-right:10px">${statusText[plot.status] || plot.status}</span>
-                                                <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px" onclick="editPlot(${plot.id})">编辑</button>
-                                                <button class="btn btn-danger" style="padding:6px 12px;font-size:12px" onclick="deletePlot(${plot.id}, '${plot.title}')">删除</button>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        `}
+                        <div class="works-list">
+                            ${worksListHtml}
+                        </div>
                     </div>
-                    
-                    <div id="tropePanel" class="trope-panel ${showTropePanel ? 'active' : ''}">
-                        <div class="trope-panel-header">
-                            <h3>🎭 桥段素材库</h3>
-                            <button onclick="toggleTropePanel()" style="background:none;border:none;color:#888;cursor:pointer;font-size:20px;">&times;</button>
-                        </div>
-                        <div class="trope-panel-body">
-                            <div class="search-box" style="margin-bottom:15px;">
-                                <input type="text" id="tropeSearch" placeholder="搜索桥段..." oninput="searchTropes()" style="padding-left:15px;">
-                            </div>
-                            <div class="trope-categories">
-                                <div class="trope-cat-tag ${currentTropeFilter === 'all' ? 'active' : ''}" onclick="filterTropes('all')">全部</div>
-                                ${tropesData?.categories?.map(cat => `
-                                    <div class="trope-cat-tag ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropes('${cat.id}')">${cat.name}</div>
-                                `).join('') || ''}
-                            </div>
-                            <div class="trope-list">
-                                ${renderTropeItems()}
-                            </div>
-                        </div>
+                    <div class="plot-editor" id="plotEditor">
+                        ${editorHtml}
                     </div>
                 </div>
             `;
+            
+            // 绑定章节拖拽事件
+            bindChapterDragEvents();
+        }
+        
+        // 渲染章节列表（用于内部调用）
+        function renderChapters(volumeId) {
+            const chapters = chaptersData.filter(c => c.volumeId === volumeId);
+            if (chapters.length === 0) {
+                return `<div class="chapters-empty">暂无章节，点击上方 ➕ 添加</div>`;
+            }
+            return chapters.map((chapter, index) => `
+                <div class="chapter-item" draggable="true" data-chapter-id="${chapter.id}" data-volume-id="${volumeId}" data-index="${index}">
+                    <span class="chapter-handle">☰</span>
+                    <span class="chapter-number">第${chapter.chapterNumber}章</span>
+                    <span class="chapter-title">${chapter.title || '未命名章节'}</span>
+                    <span class="chapter-wordcount">${chapter.wordCount || 0} 字</span>
+                    <div class="chapter-actions">
+                        <button class="chapter-btn" onclick="editChapter(${chapter.id})" title="编辑">✏️</button>
+                        <button class="chapter-btn" onclick="moveChapterUp(${chapter.id})" title="上移">⬆️</button>
+                        <button class="chapter-btn" onclick="moveChapterDown(${chapter.id})" title="下移">⬇️</button>
+                        <button class="chapter-btn" onclick="deleteChapter(${chapter.id})" title="删除">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 绑定拖拽事件
+        function bindChapterDragEvents() {
+            const chapterItems = document.querySelectorAll('.chapter-item');
+            chapterItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+        
+        function handleDragStart(e) {
+            draggedChapter = {
+                id: parseInt(e.target.dataset.chapterId),
+                volumeId: parseInt(e.target.dataset.volumeId),
+                index: parseInt(e.target.dataset.index)
+            };
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+            draggedChapter = null;
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+        
+        function handleDragEnter(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('chapter-item')) {
+                e.target.classList.add('drag-over');
+            }
+        }
+        
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('chapter-item')) {
+                e.target.classList.remove('drag-over');
+            }
+        }
+        
+        async function handleDrop(e) {
+            e.preventDefault();
+            const targetItem = e.target.closest('.chapter-item');
+            if (!targetItem || !draggedChapter) return;
+            
+            const targetId = parseInt(targetItem.dataset.chapterId);
+            const targetVolumeId = parseInt(targetItem.dataset.volumeId);
+            
+            if (draggedChapter.id === targetId) return;
+            
+            // 同卷内排序
+            if (draggedChapter.volumeId === targetVolumeId) {
+                await reorderChapters(draggedChapter.volumeId, draggedChapter.id, targetId);
+            } else {
+                // 跨卷移动
+                await moveChapterToVolume(draggedChapter.id, targetVolumeId, targetId);
+            }
+            
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 刷新章节数据
+        async function refreshChaptersData() {
+            if (!currentWorkId) return;
+            const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+            chaptersData = [];
+            for (const volume of volumes) {
+                const chapters = await loadVolumeChapters(volume.id);
+                chaptersData.push(...chapters);
+            }
+        }
+        
+        // 同卷内重排序
+        async function reorderChapters(volumeId, fromId, toId) {
+            const chapters = await loadVolumeChapters(volumeId);
+            const fromIndex = chapters.findIndex(c => c.id === fromId);
+            const toIndex = chapters.findIndex(c => c.id === toId);
+            
+            if (fromIndex === -1 || toIndex === -1) return;
+            
+            const [movedChapter] = chapters.splice(fromIndex, 1);
+            chapters.splice(toIndex, 0, movedChapter);
+            
+            // 更新章节号
+            for (let i = 0; i < chapters.length; i++) {
+                chapters[i].chapterNumber = i + 1;
+                await db.update('chapters', chapters[i]);
+            }
+        }
+        
+        // 跨卷移动章节
+        async function moveChapterToVolume(chapterId, targetVolumeId, beforeChapterId) {
+            const chapter = await db.get('chapters', chapterId);
+            if (!chapter) return;
+            
+            // 获取目标卷的章节
+            const targetChapters = await loadVolumeChapters(targetVolumeId);
+            const insertIndex = beforeChapterId 
+                ? targetChapters.findIndex(c => c.id === beforeChapterId)
+                : targetChapters.length;
+            
+            // 从原卷移除
+            const sourceChapters = await loadVolumeChapters(chapter.volumeId);
+            const sourceIndex = sourceChapters.findIndex(c => c.id === chapterId);
+            if (sourceIndex > -1) {
+                sourceChapters.splice(sourceIndex, 1);
+                // 更新原卷章节号
+                for (let i = 0; i < sourceChapters.length; i++) {
+                    sourceChapters[i].chapterNumber = i + 1;
+                    await db.update('chapters', sourceChapters[i]);
+                }
+            }
+            
+            // 插入到新卷
+            chapter.volumeId = targetVolumeId;
+            targetChapters.splice(insertIndex, 0, chapter);
+            
+            // 更新目标卷章节号
+            for (let i = 0; i < targetChapters.length; i++) {
+                targetChapters[i].chapterNumber = i + 1;
+                await db.update('chapters', targetChapters[i]);
+            }
+            
+            // 展开目标卷
+            expandedVolumes.add(targetVolumeId);
+        }
+        
+        // 切换作品
+        async function switchWork(workId) {
+            currentWorkId = workId;
+            expandedVolumes.clear();
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 展开/折叠卷
+        function toggleVolume(volumeId) {
+            if (expandedVolumes.has(volumeId)) {
+                expandedVolumes.delete(volumeId);
+            } else {
+                expandedVolumes.add(volumeId);
+            }
+            const chaptersDiv = document.getElementById(`chapters-${volumeId}`);
+            const toggleSpan = document.querySelector(`.volume-item[data-volume-id="${volumeId}"] .volume-toggle`);
+            if (chaptersDiv) {
+                chaptersDiv.classList.toggle('collapsed');
+                toggleSpan?.classList.toggle('collapsed');
+            }
+        }
+        
+        // 添加作品
+        async function addWork() {
+            const name = prompt('请输入作品名称：');
+            if (!name) return;
+            
+            const description = prompt('请输入作品简介（可选）：') || '';
+            
+            const work = {
+                name: name.trim(),
+                description: description.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            const id = await db.add('works', work);
+            await loadWorksList();
+            currentWorkId = id;
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 作品创建成功');
+        }
+        
+        // 重命名作品
+        async function renameWork(id, currentName) {
+            const newName = prompt('请输入新名称：', currentName);
+            if (!newName || newName === currentName) return;
+            
+            const work = await db.get('works', id);
+            if (work) {
+                work.name = newName.trim();
+                await db.update('works', work);
+                await loadWorksList();
+                await renderPlot(document.getElementById('mainContent'));
+                showNotification('✅ 已重命名');
+            }
+        }
+        
+        // 删除作品
+        async function deleteWork(id) {
+            if (!confirm('确定要删除这个作品吗？所有相关的卷和章节都将被删除！')) return;
+            if (!confirm('再次确认：此操作不可恢复！')) return;
+            
+            // 删除相关卷和章节
+            const volumes = await db.getAll('volumes', 'workId', id);
+            for (const vol of volumes) {
+                const chapters = await db.getAll('chapters', 'volumeId', vol.id);
+                for (const chap of chapters) {
+                    await db.delete('chapters', chap.id);
+                }
+                await db.delete('volumes', vol.id);
+            }
+            
+            await db.delete('works', id);
+            
+            if (currentWorkId === id) {
+                currentWorkId = null;
+            }
+            
+            await loadWorksList();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 作品已删除');
+        }
+        
+        // 添加卷
+        async function addVolume() {
+            if (!currentWorkId) {
+                showNotification('请先选择一个作品');
+                return;
+            }
+            
+            const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+            const nextNumber = volumes.length + 1;
+            
+            const title = prompt(`请输入第${nextNumber}卷标题：`);
+            if (!title) return;
+            
+            const summary = prompt('请输入本卷简介（可选）：') || '';
+            
+            const volume = {
+                workId: currentWorkId,
+                volumeNumber: nextNumber,
+                title: title.trim(),
+                summary: summary.trim()
+            };
+            
+            await db.add('volumes', volume);
+            expandedVolumes.add(volume.id);
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 卷添加成功');
+        }
+        
+        // 编辑卷
+        async function editVolume(id) {
+            const volume = await db.get('volumes', id);
+            if (!volume) return;
+            
+            const newTitle = prompt('卷标题：', volume.title);
+            if (newTitle === null) return;
+            
+            const newSummary = prompt('卷简介：', volume.summary || '');
+            if (newSummary === null) return;
+            
+            volume.title = newTitle.trim();
+            volume.summary = newSummary.trim();
+            await db.update('volumes', volume);
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 已更新');
+        }
+        
+        // 删除卷
+        async function deleteVolume(id) {
+            if (!confirm('确定要删除这个卷吗？所有章节都将被删除！')) return;
+            
+            const chapters = await db.getAll('chapters', 'volumeId', id);
+            for (const chap of chapters) {
+                await db.delete('chapters', chap.id);
+            }
+            
+            await db.delete('volumes', id);
+            expandedVolumes.delete(id);
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 卷已删除');
+        }
+        
+        // 上移卷
+        async function moveVolumeUp(id) {
+            const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+            volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
+            
+            const index = volumes.findIndex(v => v.id === id);
+            if (index <= 0) return;
+            
+            // 交换volumeNumber
+            const temp = volumes[index].volumeNumber;
+            volumes[index].volumeNumber = volumes[index - 1].volumeNumber;
+            volumes[index - 1].volumeNumber = temp;
+            
+            await db.update('volumes', volumes[index]);
+            await db.update('volumes', volumes[index - 1]);
+            
+            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 下移卷
+        async function moveVolumeDown(id) {
+            const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+            volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
+            
+            const index = volumes.findIndex(v => v.id === id);
+            if (index === -1 || index >= volumes.length - 1) return;
+            
+            // 交换volumeNumber
+            const temp = volumes[index].volumeNumber;
+            volumes[index].volumeNumber = volumes[index + 1].volumeNumber;
+            volumes[index + 1].volumeNumber = temp;
+            
+            await db.update('volumes', volumes[index]);
+            await db.update('volumes', volumes[index + 1]);
+            
+            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 添加章节
+        async function addChapter(volumeId) {
+            const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            const nextNumber = chapters.length + 1;
+            
+            const title = prompt(`请输入第${nextNumber}章标题：`);
+            if (!title) return;
+            
+            const chapter = {
+                volumeId: volumeId,
+                chapterNumber: nextNumber,
+                title: title.trim(),
+                content: '',
+                wordCount: 0
+            };
+            
+            await db.add('chapters', chapter);
+            expandedVolumes.add(volumeId);
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 章节添加成功');
+        }
+        
+        // 编辑章节
+        async function editChapter(id) {
+            const chapter = await db.get('chapters', id);
+            if (!chapter) return;
+            
+            const newTitle = prompt('章节标题：', chapter.title);
+            if (newTitle === null) return;
+            
+            chapter.title = newTitle.trim();
+            
+            // 更新字数统计
+            chapter.wordCount = (chapter.content || '').length;
+            
+            await db.update('chapters', chapter);
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 已更新');
+        }
+        
+        // 删除章节
+        async function deleteChapter(id) {
+            if (!confirm('确定要删除这个章节吗？')) return;
+            
+            const chapter = await db.get('chapters', id);
+            if (!chapter) return;
+            
+            const volumeId = chapter.volumeId;
+            await db.delete('chapters', id);
+            
+            // 重新排序该卷章节
+            const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+            
+            for (let i = 0; i < chapters.length; i++) {
+                chapters[i].chapterNumber = i + 1;
+                await db.update('chapters', chapters[i]);
+            }
+            
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+            showNotification('✅ 章节已删除');
+        }
+        
+        // 上移章节
+        async function moveChapterUp(id) {
+            const chapter = await db.get('chapters', id);
+            if (!chapter || chapter.chapterNumber <= 1) return;
+            
+            const chapters = await db.getAll('chapters', 'volumeId', chapter.volumeId);
+            chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+            
+            const index = chapters.findIndex(c => c.id === id);
+            if (index <= 0) return;
+            
+            // 交换chapterNumber
+            const temp = chapters[index].chapterNumber;
+            chapters[index].chapterNumber = chapters[index - 1].chapterNumber;
+            chapters[index - 1].chapterNumber = temp;
+            
+            await db.update('chapters', chapters[index]);
+            await db.update('chapters', chapters[index - 1]);
+            
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 下移章节
+        async function moveChapterDown(id) {
+            const chapter = await db.get('chapters', id);
+            if (!chapter) return;
+            
+            const chapters = await db.getAll('chapters', 'volumeId', chapter.volumeId);
+            chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+            
+            const index = chapters.findIndex(c => c.id === id);
+            if (index === -1 || index >= chapters.length - 1) return;
+            
+            // 交换chapterNumber
+            const temp = chapters[index].chapterNumber;
+            chapters[index].chapterNumber = chapters[index + 1].chapterNumber;
+            chapters[index + 1].chapterNumber = temp;
+            
+            await db.update('chapters', chapters[index]);
+            await db.update('chapters', chapters[index + 1]);
+            
+            await refreshChaptersData();
+            await renderPlot(document.getElementById('mainContent'));
         }
         
         function toggleTropePanel() {
@@ -3552,83 +4371,6 @@
             if (!currentTropeDetail) return;
             const text = `${currentTropeDetail.title || currentTropeDetail.name}：${currentTropeDetail.content || currentTropeDetail.description || ''}`;
             navigator.clipboard.writeText(text).then(() => showNotification('桥段已复制到剪贴板'));
-        }
-        
-        function openPlotModal(plot = null, defaultVolume = 1) {
-            const isEdit = !!plot;
-            document.getElementById('modalTitle').textContent = isEdit ? '编辑章节' : '添加章节';
-            
-            document.getElementById('modalBody').innerHTML = `
-                <form id="plotForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>分卷</label>
-                            <select name="volume">
-                                ${[1,2,3,4,5,6,7].map(v => `
-                                    <option value="${v}" ${(plot?.volume || defaultVolume) === v ? 'selected' : ''}>第${v}卷</option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>章节号</label>
-                            <input type="number" name="chapter" value="${plot?.chapter || ''}" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>章节标题</label>
-                        <input type="text" name="title" value="${plot?.title || ''}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>状态</label>
-                        <select name="status">
-                            <option value="draft" ${plot?.status === 'draft' ? 'selected' : ''}>草稿</option>
-                            <option value="writing" ${plot?.status === 'writing' ? 'selected' : ''}>写作中</option>
-                            <option value="completed" ${plot?.status === 'completed' ? 'selected' : ''}>已完成</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>章节概要</label>
-                        <textarea name="summary" rows="6">${plot?.summary || ''}</textarea>
-                    </div>
-                    ${isEdit ? `<input type="hidden" name="id" value="${plot.id}">` : ''}
-                </form>
-            `;
-            
-            modalCallback = async () => {
-                const form = document.getElementById('plotForm');
-                const formData = new FormData(form);
-                const data = {
-                    volume: parseInt(formData.get('volume')),
-                    chapter: parseInt(formData.get('chapter')),
-                    title: formData.get('title'),
-                    status: formData.get('status'),
-                    summary: formData.get('summary')
-                };
-                
-                if (isEdit) {
-                    data.id = parseInt(formData.get('id'));
-                    await db.update('plots', data);
-                } else {
-                    await db.add('plots', data);
-                }
-                
-                closeModal();
-                renderPlot(document.getElementById('mainContent'), data.volume);
-            };
-            
-            document.getElementById('modal').classList.add('active');
-        }
-        
-        async function editPlot(id) {
-            const plot = await db.get('plots', id);
-            openPlotModal(plot, plot.volume);
-        }
-        
-        async function deletePlot(id, title) {
-            if (confirm(`确定要删除章节「${title}」吗？`)) {
-                await db.delete('plots', id);
-                renderPlot(document.getElementById('mainContent'));
-            }
         }
         
         // 桥段素材页面
