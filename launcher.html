@@ -9003,6 +9003,8 @@
                 <div id="loadingStatus"></div>
             `;
         }
+
+        async function clearAllSmartCache() {
             try {
                 showLoadingStatus('🗑️ 正在清除缓存...');
                 await smartCache.clearAll();
