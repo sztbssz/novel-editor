@@ -5895,65 +5895,71 @@
                 if (desc.includes(kw)) femaleScore++;
             }
             for (const kw of maleKeywords) {
-                if (desc.includes(kw)) maleScore++;
-            if (!name) return;
-            
-            navigator.clipboard.writeText(name).then(() => {
-                showNotification(`已复制：${name}`);
-            });
-        }
-
-        // 渲染起名字页面
-        function renderNameGenerator(container) {
-            container.innerHTML = `
-                <div class="header">
-                    <h2>✨ 姓名生成</h2>
-                </div>
-                
-                <div style="max-width:800px;margin:0 auto;">
-                    <div style="background:#16213e;border-radius:12px;padding:20px;margin-bottom:20px;">
-                        <textarea 
-                            id="nameDescription" 
-                            placeholder="输入角色描述，如：一个冷酷无情的剑客"
-                            style="width:100%;min-height:80px;padding:15px;background:#1a1a2e;border:1px solid #0f3460;border-radius:8px;color:#fff;font-size:14px;resize:vertical;margin-bottom:15px;"
-                        ></textarea>
-                        
-                        <div style="display:flex;gap:10px;">
-                            <select id="nameTypeSelect" onchange="currentNameType = this.value" 
-                                style="padding:10px 15px;background:#1a1a2e;border:1px solid #0f3460;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;"
-                            >
-                                <option value="chinese">中文姓名</option>
-                                <option value="western">西方名字</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="generateNames()" style="flex:1;">
-                                生成名字
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="namesResultContainer" style="background:#16213e;border-radius:12px;padding:20px;min-height:150px;">
-                        <div style="text-align:center;padding:60px 20px;color:#666;">
-                            <div style="font-size:32px;margin-bottom:10px;">✨</div>
-                            <p>输入描述，点击生成</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
         // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
             const world = await db.getAll('world_settings');
             const plots = await db.getAll('plots');
             
-            // 获取智能缓存状态
-            const charCacheVersion = await smartCache.getLocalVersion('characters_all.json');
-            const worldCacheVersion = await smartCache.getLocalVersion('data.json');
+            // 获取智能缓存统计
+            let charStats = null;
+            let worldStats = null;
             
-            const charVersionText = charCacheVersion ? 
-                `v${charCacheVersion.version} · ${new Date(charCacheVersion.cachedAt).toLocaleDateString('zh-CN')}` : '无缓存';
-            const worldVersionText = worldCacheVersion ? 
-                `v${worldCacheVersion.version} · ${new Date(worldCacheVersion.cachedAt).toLocaleDateString('zh-CN')}` : '无缓存';
+            try {
+                charStats = await smartCache.getCacheStats('characters_all.json');
+                worldStats = await smartCache.getCacheStats('data.json');
+            } catch (e) {
+                console.warn('获取缓存统计失败:', e);
+            }
+            
+            // 构建缓存状态HTML
+            const charCacheHtml = charStats ? `
+                <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #28a745;">
+                    <div style="font-size: 13px; color: #888; margin-bottom: 8px;">👤 角色数据缓存</div>
+                    <div style="font-size: 16px; color: #fff; font-weight: 500; margin-bottom: 5px;">
+                        ✅ 已缓存 (v${charStats.version})
+                    </div>
+                    <div style="font-size: 12px; color: #888; line-height: 1.6;">
+                        <div>📦 大小: ${charStats.dataSizeFormatted}</div>
+                        <div>📝 哈希: ${charStats.hash?.substring(0, 8) || 'N/A'}...</div>
+                        <div>📅 更新时间: ${new Date(charStats.lastUpdated).toLocaleString('zh-CN')}</div>
+                        <div>💾 缓存时间: ${new Date(charStats.cachedAt).toLocaleString('zh-CN')}</div>
+                        <div>⏰ 缓存年龄: ${charStats.ageFormatted}</div>
+                    </div>
+                </div>
+            ` : `
+                <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #ffc107;">
+                    <div style="font-size: 13px; color: #888; margin-bottom: 8px;">👤 角色数据缓存</div>
+                    <div style="font-size: 16px; color: #ffc107; font-weight: 500;">⚠️ 无本地缓存</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        首次使用需加载数据，点击"强制刷新数据"按钮
+                    </div>
+                </div>
+            `;
+            
+            const worldCacheHtml = worldStats ? `
+                <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #28a745;">
+                    <div style="font-size: 13px; color: #888; margin-bottom: 8px;">🌍 世界观数据缓存</div>
+                    <div style="font-size: 16px; color: #fff; font-weight: 500; margin-bottom: 5px;">
+                        ✅ 已缓存 (v${worldStats.version})
+                    </div>
+                    <div style="font-size: 12px; color: #888; line-height: 1.6;">
+                        <div>📦 大小: ${worldStats.dataSizeFormatted}</div>
+                        <div>📝 哈希: ${worldStats.hash?.substring(0, 8) || 'N/A'}...</div>
+                        <div>📅 更新时间: ${new Date(worldStats.lastUpdated).toLocaleString('zh-CN')}</div>
+                        <div>💾 缓存时间: ${new Date(worldStats.cachedAt).toLocaleString('zh-CN')}</div>
+                        <div>⏰ 缓存年龄: ${worldStats.ageFormatted}</div>
+                    </div>
+                </div>
+            ` : `
+                <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #ffc107;">
+                    <div style="font-size: 13px; color: #888; margin-bottom: 8px;">🌍 世界观数据缓存</div>
+                    <div style="font-size: 16px; color: #ffc107; font-weight: 500;">⚠️ 无本地缓存</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        首次使用需加载数据，点击"强制刷新数据"按钮
+                    </div>
+                </div>
+            `;
             
             container.innerHTML = `
                 <div class="header">
@@ -5966,18 +5972,10 @@
                     </div>
                     <div style="padding: 20px;">
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
-                            <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #00d4ff;">
-                                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">👤 角色数据缓存</div>
-                                <div style="font-size: 16px; color: #fff; font-weight: 500;">${charVersionText}</div>
-                                <div style="font-size: 12px; color: #666; margin-top: 5px;">${dataLoadState.characters.cached ? '✅ 本地可用' : '⚠️ 未缓存'}</div>
-                            </div>
-                            <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #00d4ff;">
-                                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">🌍 世界观数据缓存</div>
-                                <div style="font-size: 16px; color: #fff; font-weight: 500;">${worldVersionText}</div>
-                                <div style="font-size: 12px; color: #666; margin-top: 5px;">${dataLoadState.worldview.cached ? '✅ 本地可用' : '⚠️ 未缓存'}</div>
-                            </div>
+                            ${charCacheHtml}
+                            ${worldCacheHtml}
                         </div>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn btn-primary" onclick="checkAllUpdates()">🔍 检查更新</button>
                             <button class="btn btn-secondary" onclick="forceRefreshData()">🔄 强制刷新数据</button>
                             <button class="btn btn-danger" onclick="clearAllSmartCache()">🗑️ 清除所有缓存</button>
@@ -6023,11 +6021,6 @@
                 <div id="loadingStatus"></div>
             `;
         }
-        
-        // 清除所有智能缓存
-        async function clearAllSmartCache() {
-            if (!confirm('确定要清除所有智能缓存吗？这将删除已下载的角色和世界观数据。')) return;
-            
             try {
                 showLoadingStatus('🗑️ 正在清除缓存...');
                 await smartCache.clearAll();
@@ -6590,53 +6583,80 @@
         
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
-            await db.init();
-            await cacheManager.init();
-            await smartCache.init();
+            console.log('🚀 [初始化] 启动系统...');
             
-            console.log('🔧 系统初始化完成，开始加载数据...');
+            await db.init();
+            console.log('✅ [初始化] IndexedDB 就绪');
+            
+            await cacheManager.init();
+            console.log('✅ [初始化] 缓存管理器就绪');
+            
+            await smartCache.init();
+            console.log('✅ [初始化] 智能缓存管理器就绪');
+            
+            console.log('🔧 [初始化] 开始加载数据，优先使用本地缓存...');
             
             // 智能缓存：优先从本地读取，同时后台检查更新
-            const [charData, worldData] = await Promise.all([
-                smartCache.getData('characters_all.json'),
-                smartCache.getData('data.json')
-            ]);
+            let charData = null;
+            let worldData = null;
+            
+            try {
+                charData = await smartCache.getData('characters_all.json');
+            } catch (e) {
+                console.error('❌ [缓存] 读取角色缓存失败:', e);
+            }
+            
+            try {
+                worldData = await smartCache.getData('data.json');
+            } catch (e) {
+                console.error('❌ [缓存] 读取世界观缓存失败:', e);
+            }
             
             if (charData) {
-                console.log('✅ 智能缓存：角色数据已就绪');
+                console.log('✅ [智能缓存] 角色数据已就绪，直接使用本地缓存');
                 dataLoadState.characters.data = charData;
                 dataLoadState.characters.cached = true;
                 dataLoadState.characters.loaded = true;
+                showNotification('📦 角色数据已从缓存加载');
                 // 后台导入到IndexedDB
                 importCharactersToDB(charData.characters || []).catch(e => console.warn('后台导入角色失败:', e));
+            } else {
+                console.log('⚠️ [智能缓存] 角色数据未缓存');
             }
             
             if (worldData) {
-                console.log('✅ 智能缓存：世界观数据已就绪');
+                console.log('✅ [智能缓存] 世界观数据已就绪，直接使用本地缓存');
                 dataLoadState.worldview.data = worldData;
                 dataLoadState.worldview.cached = true;
                 dataLoadState.worldview.loaded = true;
+                showNotification('📦 世界观数据已从缓存加载');
                 // 后台导入到IndexedDB
                 importWorldviewToDB(worldData).catch(e => console.warn('后台导入世界观失败:', e));
+            } else {
+                console.log('⚠️ [智能缓存] 世界观数据未缓存');
             }
             
             // 如果本地没有缓存，预加载数据
             if (!charData || !worldData) {
-                console.log('🔄 首次使用，正在预加载数据...');
+                console.log('🔄 [初始化] 首次使用，正在预加载数据...');
+                showNotification('🔄 首次加载，正在下载数据...');
                 setTimeout(() => {
                     if (!charData) loadCharactersSmart(false).catch(e => console.warn('预加载角色失败:', e));
                     if (!worldData) loadWorldviewSmart(false).catch(e => console.warn('预加载世界观失败:', e));
                 }, 500);
             } else {
                 // 有缓存时，后台检查更新
+                console.log('🔄 [初始化] 已有缓存，后台检查更新...');
                 setTimeout(() => {
                     checkAllUpdates();
                 }, 2000);
             }
             
             // 加载桥段数据（首页需要）
+            console.log('🎭 [初始化] 加载桥段数据...');
             await loadTropeData();
             
+            console.log('✅ [初始化] 全部完成，显示首页');
             loadPage('home');
             
             // 导航事件
