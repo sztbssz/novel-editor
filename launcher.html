@@ -459,6 +459,153 @@
         .loading-hint-text { flex: 1; }
         .loading-hint-title { font-size: 14px; color: #fff; font-weight: 500; }
         .loading-hint-desc { font-size: 12px; color: #888; margin-top: 2px; }
+
+        /* 起名字页面样式 */
+        .name-generator-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .name-input-section {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .name-input-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .name-input-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        .name-input-textarea:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+        .name-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .name-type-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .name-type-option:hover {
+            border-color: #00d4ff;
+        }
+        .name-type-option.active {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.1);
+        }
+        .name-type-option input {
+            width: 18px;
+            height: 18px;
+            accent-color: #e94560;
+        }
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            margin-top: 25px;
+        }
+        .names-result-section {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            min-height: 300px;
+        }
+        .names-result-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .names-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+        .name-card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .name-card:hover {
+            border-color: #e94560;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.2);
+        }
+        .name-card.copied {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .name-text {
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        .name-meaning {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.6;
+        }
+        .name-style-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 11px;
+            padding: 4px 10px;
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+            border-radius: 12px;
+        }
+        .copy-hint {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            font-size: 11px;
+            color: #666;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .name-card:hover .copy-hint {
+            opacity: 1;
+        }
+        .empty-names-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-names-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -474,6 +621,7 @@
                 <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
                 <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
                 <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
+                <a class="nav-item" data-page="names"><i>✨</i>起名字</a>
                 <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
             </nav>
         </aside>
@@ -2307,6 +2455,341 @@
             if (contentDiv) contentDiv.innerHTML = renderTropeContent();
         }
 
+        // ==================== 起名字功能 ====================
+        let currentNameType = 'chinese'; // chinese 或 western
+        let generatedNames = [];
+
+        // 名字数据库
+        const nameDatabase = {
+            // 姓氏库
+            surnames: {
+                common: ['李', '王', '张', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高', '林', '何', '郭', '马', '罗'],
+                rare: ['欧阳', '慕容', '上官', '南宫', '独孤', '轩辕', '司马', '诸葛', '夏侯', '尉迟'],
+                ancient: ['嬴', '姬', '姜', '姚', '妫', '姒', '子', '风', '嬴', '偃']
+            },
+            // 冷峻风格（剑客、冷酷、杀伐）
+            cold: {
+                chars: ['锋', '霜', '寒', '冰', '冷', '孤', '绝', '灭', '煞', '刃', '剑', '刀', '影', '刹', '冥', '渊', '寂', '凛', '冽', '煞'],
+                meanings: ['锋芒毕露', '霜寒刺骨', '冷峻无情', '孤傲绝尘', '杀伐果断', '一剑封喉', '影影无踪', '深不可测', '寂灭无声', '寒气逼人']
+            },
+            // 柔美风格（女主、温柔、淡雅）
+            gentle: {
+                chars: ['婉', '柔', '雅', '清', '芷', '若', '雪', '月', '瑶', '琳', '馨', '语', '诗', '韵', '璃', '梦', '盈', '婉', '凝', '萱'],
+                meanings: ['温婉如玉', '柔情似水', '清雅脱俗', '芷若幽兰', '冰雪聪明', '月华如练', '瑶池仙子', '馨香袭人', '如诗如画', '韵致天成']
+            },
+            // 霸气风格（王者、霸主、强势）
+            domineering: {
+                chars: ['天', '霸', '龙', '帝', '皇', '尊', '圣', '威', '昊', '穹', '苍', '曜', '煌', '宸', '御', '傲', '烈', '骁', '擎', '凌'],
+                meanings: ['气吞山河', '霸绝天下', '龙啸九天', '帝王之姿', '唯我独尊', '圣威浩荡', '昊天罔极', '苍穹之主', '煌煌天威', '御宇天下']
+            },
+            // 儒雅风格（书生、谋士、智囊）
+            scholarly: {
+                chars: ['文', '墨', '书', '言', '思', '睿', '哲', '彦', '瑾', '瑜', '谦', '修', '弘', '博', '翰', '轩', '逸', '潇', '然', '之'],
+                meanings: ['文采斐然', '墨香盈袖', '书卷气华', '言之有物', '思如泉涌', '睿智深远', '哲思明辨', '彦士风流', '怀瑾握瑜', '谦谦君子']
+            },
+            // 邪魅风格（反派、妖异、神秘）
+            evil: {
+                chars: ['邪', '魔', '妖', '魅', '煞', '魑', '魍', '魈', '魇', '蛊', '噬', '烬', '烬', '魘', '魋', '魒', '魖', '魌', '魎', '魐'],
+                meanings: ['邪魅狂狷', '魔性天成', '妖异绝伦', '魅影重重', '煞气滔天', '魑魅魍魉', '凶神恶煞', '梦魇缠身', '蛊惑人心', '灰烬重生']
+            },
+            // 坚毅风格（战士、硬汉、不屈）
+            resolute: {
+                chars: ['铁', '钢', '岩', '岳', '磐', '罡', '毅', '恒', '铮', '嵘', '峻', '屹', '峥', '铮', '铿', '锵', '磊', '硕', '砥', '砺'],
+                meanings: ['铁骨铮铮', '钢铁意志', '坚如磐石', '岳峙渊渟', '刚毅不屈', '恒心不改', '峥嵘岁月', '屹立不倒', '铿锵有力', '砥砺前行']
+            },
+            // 灵动风格（活泼、机敏、自由）
+            lively: {
+                chars: ['灵', '羽', '翔', '跃', '翔', '翩', '舞', '歌', '笑', '欢', '悦', '逍', '遥', '逸', '飞', '翔', '翱', '翎', '翩', '跹'],
+                meanings: ['灵动非凡', '羽化成仙', '龙翔九天', '跃然纸上', '翩翩起舞', '载歌载舞', '欢声笑语', '心旷神怡', '逍遥自在', '逸兴遄飞']
+            },
+            // 西方男名
+            westernMale: ['Alexander', 'Maximus', 'Sebastian', 'Nathaniel', 'Dominic', 'Gabriel', 'Raphael', 'Damien', 'Lucas', 'Orion', 'Draven', 'Kael', 'Zane', 'Jasper', 'Felix', 'Silas', 'Cassius', 'Darius', 'Magnus', 'Cyrus'],
+            // 西方女名
+            westernFemale: ['Seraphina', 'Isabella', 'Victoria', 'Cassandra', 'Arabella', 'Genevieve', 'Penelope', 'Evangeline', 'Rosalind', 'Lilith', 'Aurora', 'Celeste', 'Miranda', 'Ophelia', 'Gwendolyn', 'Valentina', 'Adriana', 'Natalia', 'Sabrina', 'Elara']
+        };
+
+        // 关键词匹配规则
+        const keywordRules = {
+            cold: ['冷酷', '冷', '剑客', '剑', '杀', '杀伐', '无情', '刺客', '暗影', '寒', '冰', '孤', '独', '绝', '煞', '刃', '血', '死亡', '冷漠'],
+            gentle: ['温柔', '女', '女主', '柔', '雅', '美', '仙', '清雅', '温婉', '善良', '纯真', '可爱', '甜', '梦', '花', '月', '雪', '诗', '画'],
+            domineering: ['霸气', '王', '皇', '帝', '霸', '强势', '霸主', '至尊', '无敌', '龙', '天', '傲', '狂', '尊', '圣', '威', '权', '统治', '征服'],
+            scholarly: ['书生', '儒', '文', '墨', '谋士', '智囊', '聪明', '智慧', '学者', '才子', '读书人', '文雅', '谦逊', '深思', '博学'],
+            evil: ['邪', '魔', '妖', '反派', '恶', '魅', '诡异', '阴森', '黑暗', '毒', '蛊', '鬼', '魑', '魅', '魍', '魉', '诅咒', '邪魅'],
+            resolute: ['坚毅', '硬', '刚', '战士', '不屈', '坚定', '铁', '钢', '岩', '岳', '勇', '猛', '壮', '武', '毅', '恒'],
+            lively: ['灵动', '活泼', '机敏', '自由', '轻', '快', '乐', '笑', '舞', '羽', '翔', '飞', '跃', '俏皮', '可爱', '天真']
+        };
+
+        // 分析描述，确定风格
+        function analyzeDescription(description) {
+            const desc = description.toLowerCase();
+            const scores = {};
+            
+            for (const [style, keywords] of Object.entries(keywordRules)) {
+                scores[style] = 0;
+                for (const keyword of keywords) {
+                    if (desc.includes(keyword)) {
+                        scores[style] += 1;
+                    }
+                }
+            }
+            
+            // 找出最高分的风格
+            let maxScore = 0;
+            let selectedStyle = 'cold'; // 默认冷峻风格
+            
+            for (const [style, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    selectedStyle = style;
+                }
+            }
+            
+            // 检测性别
+            let gender = 'male';
+            const femaleKeywords = ['女', '女主', '她', '温柔', '柔', '美', '仙子', '姑娘', '小姐', '母', '姐妹'];
+            const maleKeywords = ['男', '男主', '他', '剑客', '公子', '少侠', '爷', '父', '兄弟', '汉'];
+            
+            let femaleScore = 0, maleScore = 0;
+            for (const kw of femaleKeywords) {
+                if (desc.includes(kw)) femaleScore++;
+            }
+            for (const kw of maleKeywords) {
+                if (desc.includes(kw)) maleScore++;
+            }
+            
+            if (femaleScore > maleScore) gender = 'female';
+            else if (maleScore > femaleScore) gender = 'male';
+            else gender = Math.random() > 0.5 ? 'male' : 'female';
+            
+            return { style: selectedStyle, gender };
+        }
+
+        // 生成中文名字
+        function generateChineseName(style, gender) {
+            const styleData = nameDatabase[style] || nameDatabase.cold;
+            const surnames = Math.random() > 0.7 ? nameDatabase.surnames.rare : nameDatabase.surnames.common;
+            const surname = surnames[Math.floor(Math.random() * surnames.length)];
+            
+            // 决定是单字名还是双字名
+            const isDouble = Math.random() > 0.4;
+            
+            let name, meaning;
+            if (isDouble) {
+                const char1 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                const char2 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                name = surname + char1 + char2;
+                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
+            } else {
+                const char = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                name = surname + char;
+                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
+            }
+            
+            return { name, meaning, style: getStyleName(style) };
+        }
+
+        // 生成西方名字
+        function generateWesternName(gender) {
+            const names = gender === 'female' ? nameDatabase.westernFemale : nameDatabase.westernMale;
+            const name = names[Math.floor(Math.random() * names.length)];
+            
+            const meanings = {
+                'Alexander': 'Defender of mankind, strong and noble',
+                'Maximus': 'The greatest, powerful leader',
+                'Sebastian': 'Revered, dignified and majestic',
+                'Nathaniel': 'Gift of God, blessed soul',
+                'Dominic': 'Belonging to the Lord, masterful',
+                'Gabriel': 'God is my strength, divine messenger',
+                'Raphael': 'God has healed, healing touch',
+                'Damien': 'To tame, powerful conqueror',
+                'Lucas': 'Bringer of light, illuminating',
+                'Orion': 'Rising in the sky, celestial hunter',
+                'Draven': 'Hunter of shadows, mysterious',
+                'Kael': 'Slender, swift and agile',
+                'Zane': 'Gift from God, unique blessing',
+                'Jasper': 'Treasurer, precious stone',
+                'Felix': 'Happy and fortunate, blessed',
+                'Silas': 'Of the forest, wild and free',
+                'Cassius': 'Empty, hollow - ready to be filled',
+                'Darius': 'Maintains possessions well, wealthy',
+                'Magnus': 'Great, mighty and powerful',
+                'Cyrus': 'Sun, radiant and warm',
+                'Seraphina': 'Burning one, fiery angel',
+                'Isabella': 'Devoted to God, beautiful soul',
+                'Victoria': 'Victory, triumphant spirit',
+                'Cassandra': 'Shining upon men, prophetess',
+                'Arabella': 'Yielding to prayer, graceful',
+                'Genevieve': 'Tribe woman, noble and kind',
+                'Penelope': 'Weaver, faithful and clever',
+                'Evangeline': 'Bearer of good news, angelic',
+                'Rosalind': 'Beautiful rose, lovely and sweet',
+                'Lilith': 'Of the night, mysterious and dark',
+                'Aurora': 'Dawn, new beginning',
+                'Celeste': 'Heavenly, divine beauty',
+                'Miranda': 'Worthy of admiration, wonderful',
+                'Ophelia': 'Help, compassionate helper',
+                'Gwendolyn': 'White ring, fair and blessed',
+                'Valentina': 'Strong and healthy, vigorous',
+                'Adriana': 'From Hadria, dark and rich',
+                'Natalia': 'Christmas Day, born of celebration',
+                'Sabrina': 'From the River Severn, flowing',
+                'Elara': 'Bright, shining star'
+            };
+            
+            return { 
+                name, 
+                meaning: meanings[name] || 'A name of noble character',
+                style: 'Western Style'
+            };
+        }
+
+        // 获取风格中文名
+        function getStyleName(style) {
+            const names = {
+                cold: '冷峻风格',
+                gentle: '柔美风格',
+                domineering: '霸气风格',
+                scholarly: '儒雅风格',
+                evil: '邪魅风格',
+                resolute: '坚毅风格',
+                lively: '灵动风格'
+            };
+            return names[style] || '古风';
+        }
+
+        // 生成5个名字
+        function generateNames() {
+            const description = document.getElementById('nameDescription')?.value?.trim();
+            if (!description) {
+                showNotification('请输入角色描述');
+                return;
+            }
+            
+            const { style, gender } = analyzeDescription(description);
+            generatedNames = [];
+            
+            for (let i = 0; i < 5; i++) {
+                if (currentNameType === 'chinese') {
+                    generatedNames.push(generateChineseName(style, gender));
+                } else {
+                    generatedNames.push(generateWesternName(gender));
+                }
+            }
+            
+            renderGeneratedNames();
+        }
+
+        // 渲染生成的名字
+        function renderGeneratedNames() {
+            const container = document.getElementById('namesResultContainer');
+            if (!container) return;
+            
+            if (generatedNames.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-names-state">
+                        <div class="empty-names-state-icon">✨</div>
+                        <h3>输入角色描述，生成专属名字</h3>
+                        <p>例如："一个冷酷无情的剑客，出身贫寒，性格坚毅"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="names-result-title">
+                    <span>🎲 为你生成的5个名字</span>
+                    <span style="font-size: 13px; color: #888;">点击卡片复制</span>
+                </div>
+                <div class="names-grid">
+                    ${generatedNames.map((item, index) => `
+                        <div class="name-card" onclick="copyName(${index})" id="nameCard${index}">
+                            <span class="name-style-tag">${item.style}</span>
+                            <div class="name-text">${item.name}</div>
+                            <div class="name-meaning">${item.meaning}</div>
+                            <span class="copy-hint">📋 点击复制</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 复制名字
+        function copyName(index) {
+            const name = generatedNames[index]?.name;
+            if (!name) return;
+            
+            navigator.clipboard.writeText(name).then(() => {
+                const card = document.getElementById(`nameCard${index}`);
+                if (card) {
+                    card.classList.add('copied');
+                    const hint = card.querySelector('.copy-hint');
+                    if (hint) hint.textContent = '✅ 已复制';
+                }
+                showNotification(`已复制：${name}`);
+                
+                setTimeout(() => {
+                    if (card) {
+                        card.classList.remove('copied');
+                        const hint = card.querySelector('.copy-hint');
+                        if (hint) hint.textContent = '📋 点击复制';
+                    }
+                }, 1500);
+            });
+        }
+
+        // 切换名字类型
+        function setNameType(type) {
+            currentNameType = type;
+            document.querySelectorAll('.name-type-option').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector(`.name-type-option[data-type="${type}"]`)?.classList.add('active');
+        }
+
+        // 渲染起名字页面
+        function renderNameGenerator(container) {
+            container.innerHTML = `
+                <div class="header">
+                    <h2>✨ 起名字</h2>
+                    <p style="color: #888; font-size: 13px;">根据角色描述智能生成名字</p>
+                </div>
+                
+                <div class="name-generator-container">
+                    <div class="name-input-section">
+                        <div class="name-input-label">📝 描述角色的性格、身份、背景等信息</div>
+                        <textarea 
+                            class="name-input-textarea" 
+                            id="nameDescription" 
+                            placeholder="例如：一个冷酷无情的剑客，出身贫寒，性格坚毅，行走江湖十年，从不留活口..."
+                        </textarea>
+                        
+                        <div class="name-type-selector">
+                            <div class="name-type-option active" data-type="chinese" onclick="setNameType('chinese')">
+                                <input type="radio" name="nameType" value="chinese" checked>
+                                <span>🇨🇳 中文姓名</span>
+                            </div>
+                            <div class="name-type-option" data-type="western" onclick="setNameType('western')">
+                                <input type="radio" name="nameType" value="western">
+                                <span>🌍 西方名字</span>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary generate-btn" onclick="generateNames()">
+                            ✨ 生成名字
+                        </button>
+                    </div>
+                    
+                    <div class="names-result-section" id="namesResultContainer">
+                        <div class="empty-names-state">
+                            <div class="empty-names-state-icon">✨</div>
+                            <h3>输入角色描述，生成专属名字</h3>
+                            <p>例如："一个冷酷无情的剑客，出身贫寒，性格坚毅"</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
@@ -2519,6 +3002,7 @@
                 case 'world': renderWorld(main); break;
                 case 'plot': renderPlot(main); break;
                 case 'trope': renderTrope(main); break;
+                case 'names': renderNameGenerator(main); break;
                 case 'data': renderData(main); break;
             }
         }
@@ -2548,7 +3032,8 @@
             
             // 导航事件
             document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', () => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
                     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
                     const page = item.dataset.page;
