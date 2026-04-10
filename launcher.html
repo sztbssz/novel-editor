@@ -5061,6 +5061,80 @@
             setTimeout(() => notif.remove(), 2000);
         }
 
+        // ==================== 页面加载 ====================
+        function loadPage(page) {
+            currentPage = page;
+            // 根据分屏模式选择渲染目标
+            const main = document.getElementById('editorContent') || document.getElementById('mainContent');
+
+            // 在分屏模式下，清空编辑器内容（如果不是编辑相关页面）
+            const editorContent = document.getElementById('editorContent');
+            const splitContainer = document.getElementById('splitContainer');
+
+            if (splitContainer && !splitContainer.classList.contains('single')) {
+                // 分屏模式下，在主区域渲染页面
+                switch(page) {
+                    case 'home': renderHome(editorContent); break;
+                    case 'history': renderHistory(editorContent); break;
+                    case 'characters': renderCharacters(editorContent); break;
+                    case 'world': renderWorld(editorContent); break;
+                    case 'plot': renderPlot(editorContent); break;
+                    case 'mindmap': renderMindmap(editorContent); break;
+                    case 'trope': renderTrope(editorContent); break;
+                    case 'scene': renderSceneEditor(editorContent); break;
+                    case 'names': renderNameGenerator(editorContent); break;
+                    case 'favorites': renderFavorites(editorContent); break;
+                    case 'stats': renderStats(editorContent); break;
+                    case 'data': renderData(editorContent); break;
+                    case 'templates': renderTemplates(editorContent); break;
+                }
+            } else {
+                // 单栏模式 - 使用原来的mainContent（如果存在）或editorContent
+                const target = document.getElementById('mainContent') || editorContent;
+                switch(page) {
+                    case 'home': renderHome(target); break;
+                    case 'history': renderHistory(target); break;
+                    case 'characters': renderCharacters(target); break;
+                    case 'world': renderWorld(target); break;
+                    case 'plot': renderPlot(target); break;
+                    case 'mindmap': renderMindmap(target); break;
+                    case 'trope': renderTrope(target); break;
+                    case 'scene': renderSceneEditor(target); break;
+                    case 'names': renderNameGenerator(target); break;
+                    case 'favorites': renderFavorites(target); break;
+                    case 'stats': renderStats(target); break;
+                    case 'data': renderData(target); break;
+                    case 'templates': renderTemplates(target); break;
+                }
+            }
+
+            // 更新导航选中状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === page) {
+                    item.classList.add('active');
+                }
+            });
+
+            // 更新窗口标题
+            const titles = {
+                'home': '首页',
+                'history': '历史记录',
+                'characters': '角色管理',
+                'world': '世界观',
+                'plot': '情节大纲',
+                'mindmap': '大纲导图',
+                'trope': '桥段素材',
+                'scene': '桥段生成',
+                'names': '姓名生成',
+                'stats': '写作统计',
+                'data': '数据管理',
+                'templates': '模板管理',
+                'favorites': '我的收藏'
+            };
+            document.title = `🎮 创世者编辑器 - ${titles[page] || page}`;
+        }
+
         // ==================== 延迟加载（懒加载）函数 ====================
 
         // 加载角色数据（带UI）
@@ -11189,80 +11263,6 @@
 
             URL.revokeObjectURL(url);
             showNotification('✅ 导图已导出为 SVG');
-        }
-
-        // ==================== 页面加载 ====================
-        function loadPage(page) {
-            currentPage = page;
-            // 根据分屏模式选择渲染目标
-            const main = document.getElementById('editorContent') || document.getElementById('mainContent');
-
-            // 在分屏模式下，清空编辑器内容（如果不是编辑相关页面）
-            const editorContent = document.getElementById('editorContent');
-            const splitContainer = document.getElementById('splitContainer');
-
-            if (splitContainer && !splitContainer.classList.contains('single')) {
-                // 分屏模式下，在主区域渲染页面
-                switch(page) {
-                    case 'home': renderHome(editorContent); break;
-                    case 'history': renderHistory(editorContent); break;
-                    case 'characters': renderCharacters(editorContent); break;
-                    case 'world': renderWorld(editorContent); break;
-                    case 'plot': renderPlot(editorContent); break;
-                    case 'mindmap': renderMindmap(editorContent); break;
-                    case 'trope': renderTrope(editorContent); break;
-                    case 'scene': renderSceneEditor(editorContent); break;
-                    case 'names': renderNameGenerator(editorContent); break;
-                    case 'favorites': renderFavorites(editorContent); break;
-                    case 'stats': renderStats(editorContent); break;
-                    case 'data': renderData(editorContent); break;
-                    case 'templates': renderTemplates(editorContent); break;
-                }
-            } else {
-                // 单栏模式 - 使用原来的mainContent（如果存在）或editorContent
-                const target = document.getElementById('mainContent') || editorContent;
-                switch(page) {
-                    case 'home': renderHome(target); break;
-                    case 'history': renderHistory(target); break;
-                    case 'characters': renderCharacters(target); break;
-                    case 'world': renderWorld(target); break;
-                    case 'plot': renderPlot(target); break;
-                    case 'mindmap': renderMindmap(target); break;
-                    case 'trope': renderTrope(target); break;
-                    case 'scene': renderSceneEditor(target); break;
-                    case 'names': renderNameGenerator(target); break;
-                    case 'favorites': renderFavorites(target); break;
-                    case 'stats': renderStats(target); break;
-                    case 'data': renderData(target); break;
-                    case 'templates': renderTemplates(target); break;
-                }
-            }
-
-            // 更新导航选中状态
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.dataset.page === page) {
-                    item.classList.add('active');
-                }
-            });
-
-            // 更新窗口标题
-            const titles = {
-                'home': '首页',
-                'history': '历史记录',
-                'characters': '角色管理',
-                'world': '世界观',
-                'plot': '情节大纲',
-                'mindmap': '大纲导图',
-                'trope': '桥段素材',
-                'scene': '桥段生成',
-                'names': '姓名生成',
-                'stats': '写作统计',
-                'data': '数据管理',
-                'templates': '模板管理',
-                'favorites': '我的收藏'
-            };
-            document.title = `🎮 创世者编辑器 - ${titles[page] || page}`;
         }
 
         // ==================== 关联推荐系统 ====================
