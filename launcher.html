@@ -2105,52 +2105,64 @@
 
         // 内部：实际加载世界观数据
         async function loadWorldviewDataInternal(onProgress = null) {
+            if (onProgress) onProgress(5);
+            
+            // 1. 先检查智能缓存
+            const cachedData = await smartCache.getData('data.json');
+            if (cachedData && cachedData.worldbuildingLibrary) {
+                console.log('✅ 从智能缓存加载世界观数据');
+                dataLoadState.worldview.data = cachedData;
+                dataLoadState.worldview.cached = true;
+                
+                await importWorldviewToDB(cachedData, onProgress);
+                dataLoadState.worldview.loaded = true;
+                console.log('✅ 世界观数据已从缓存加载');
+                
+                // 异步检查更新
+                setTimeout(async () => {
+                    const updateCheck = await smartCache.checkUpdate('data.json');
+                    if (updateCheck.needsUpdate) {
+                        console.log('🔄 发现世界观数据更新，正在后台更新...');
+                        try {
+                            const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
+                            if (response.ok) {
+                                const newData = await response.json();
+                                await smartCache.setData('data.json', newData, updateCheck.remoteVersion);
+                                await db.clear('world_settings');
+                                await importWorldviewToDB(newData);
+                                console.log('✅ 世界观数据已后台更新');
+                                showNotification('🌍 世界观数据已自动更新');
+                            }
+                        } catch (e) {
+                            console.warn('后台更新世界观数据失败:', e);
+                        }
+                    }
+                }, 1000);
+                
+                return;
+            }
+            
+            // 2. 从网络加载
             if (onProgress) onProgress(10);
             
             const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
-                if (onProgress) onProgress(30);
+                if (onProgress) onProgress(20);
                 
-                const worldbuildingLibrary = data.worldbuildingLibrary;
-                if (worldbuildingLibrary && worldbuildingLibrary.entries) {
-                    const worldviews = worldbuildingLibrary.entries;
-                    const existingSettings = await db.getAll('world_settings');
-                    const existingTitles = new Set(existingSettings.map(s => s.title));
-                    
-                    let addedCount = 0;
-                    
-                    for (let i = 0; i < worldviews.length; i++) {
-                        const world = worldviews[i];
-                        const title = `${world.book} - 世界观`;
-                        
-                        if (!existingTitles.has(title)) {
-                            const content = `**作者**: ${world.author}\n**年份**: ${world.year}\n**背景类型**: ${world.backgroundType}\n**力量类型**: ${world.powerType}\n\n**文化习俗**:\n${world.culture}\n\n**世界特色**:\n${world.features}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
-                            
-                            let category = 'other';
-                            const tags = world.tags || [];
-                            if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
-                            else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
-                            else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
-                            else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
-                            else if (tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
-                            else if (tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
-                            else if (tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
-                            
-                            await db.add('world_settings', { category, title, content });
-                            addedCount++;
-                        }
-                        
-                        if (onProgress && i % 5 === 0) {
-                            onProgress(30 + (i / worldviews.length) * 70);
-                        }
-                    }
-                    
-                    if (onProgress) onProgress(100);
-                    dataLoadState.worldview.loaded = true;
-                    console.log(`✅ 世界观库加载完成: 新增 ${addedCount} 条`);
-                }
+                // 保存到智能缓存
+                await smartCache.setData('data.json', data, {
+                    version: '1.0.0',
+                    updated: new Date().toISOString(),
+                    hash: 'initial'
+                });
+                dataLoadState.worldview.data = data;
+                dataLoadState.worldview.cached = true;
+                
+                await importWorldviewToDB(data, onProgress);
+                dataLoadState.worldview.loaded = true;
+                console.log('✅ 世界观数据已加载并缓存');
             }
         }
 
