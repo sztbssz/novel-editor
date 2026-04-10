@@ -475,6 +475,16 @@
             cacheVersion: 'v2.0'     // 缓存版本
         };
 
+        // ==================== CDN 配置 ====================
+        const CDN_CONFIG = {
+            // CDN 加速路径（国内访问快）
+            cdnBase: 'https://cdn.jsdelivr.net/gh/sztbssz/novel-editor@latest/',
+            // GitHub Pages 原始路径（回退用）
+            githubBase: 'https://sztbssz.github.io/novel-editor/',
+            // 本地路径（开发用）
+            localBase: ''
+        };
+
         // ==================== 数据加载状态管理 ====================
         const dataLoadState = {
             characters: { loaded: false, loading: false, error: null, cached: false, data: null },
@@ -943,6 +953,32 @@
             }
         }
 
+        // 带 CDN 回退的加载函数
+        async function fetchWithCDNRetry(filename, options = {}) {
+            const sources = [
+                { base: CDN_CONFIG.cdnBase, name: 'CDN' },
+                { base: CDN_CONFIG.githubBase, name: 'GitHub Pages' },
+                { base: CDN_CONFIG.localBase, name: '本地' }
+            ];
+            
+            let lastError;
+            for (const source of sources) {
+                const url = source.base + filename;
+                try {
+                    console.log(`🌐 尝试从 ${source.name} 加载: ${url}`);
+                    const response = await fetchWithRetry(url, { ...options, retries: 2 });
+                    if (response.ok) {
+                        console.log(`✅ 从 ${source.name} 加载成功`);
+                        return response;
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ ${source.name} 加载失败:`, error.message);
+                    lastError = error;
+                }
+            }
+            throw lastError || new Error(`所有源加载失败: ${filename}`);
+        }
+
         // 内部：实际加载角色数据
         async function loadCharacterDataInternal(onProgress = null) {
             // 1. 先检查缓存
@@ -958,11 +994,11 @@
                 return;
             }
             
-            // 2. 从网络加载
+            // 2. 从网络加载（优先 CDN，失败回退）
             console.log('🌐 从网络加载角色数据...');
             if (onProgress) onProgress(10, '正在连接服务器...');
             
-            const response = await fetchWithRetry('characters_all.json?t=' + Date.now());
+            const response = await fetchWithCDNRetry('characters_all.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
@@ -1045,7 +1081,7 @@
         async function loadWorldviewDataInternal(onProgress = null) {
             if (onProgress) onProgress(10);
             
-            const response = await fetchWithRetry('data.json?t=' + Date.now());
+            const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
@@ -1097,10 +1133,7 @@
             if (dataLoadState.tropes.loaded) return;
             
             try {
-                const response = await fetchWithRetry('data.json?t=' + Date.now(), {
-                    retries: 2,
-                    timeout: 20000
-                });
+                const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
                 
                 if (response.ok) {
                     const data = await response.json();
