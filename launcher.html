@@ -460,6 +460,104 @@
         .loading-hint-title { font-size: 14px; color: #fff; font-weight: 500; }
         .loading-hint-desc { font-size: 12px; color: #888; margin-top: 2px; }
 
+        /* 角色加载进度UI样式 */
+        .char-load-progress-container {
+            margin-bottom: 20px;
+        }
+        .char-load-progress {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+            transition: all 0.3s ease;
+        }
+        .char-load-progress.loading {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .char-load-progress.success {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        .char-load-progress.error {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.05);
+        }
+        .char-load-progress.completed {
+            opacity: 0.6;
+            padding: 12px 20px;
+        }
+        .char-load-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .char-load-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .char-load-icon {
+            font-size: 20px;
+        }
+        .char-load-text {
+            font-size: 15px;
+            color: #fff;
+            font-weight: 500;
+        }
+        .char-load-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #1a1a2e;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .char-load-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #e94560);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .char-load-percent {
+            text-align: right;
+            font-size: 13px;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        .char-load-error-msg {
+            color: #e94560;
+            font-size: 13px;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 6px;
+        }
+        .char-load-retry {
+            width: 100%;
+            justify-content: center;
+        }
+        .char-load-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #888;
+            margin-top: 8px;
+        }
+        .char-load-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .char-load-stat-value {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
         /* 起名字页面样式 */
         .name-generator-container {
             max-width: 900px;
@@ -1182,21 +1280,18 @@
 
         // 加载角色数据（带UI）
         async function loadCharacterDataWithUI() {
-            if (dataLoadState.characters.loading || dataLoadState.characters.loaded) return;
+            if (dataLoadState.characters.loading) return;
             
             dataLoadState.characters.loading = true;
-            showDataLoadingOverlay('正在加载角色数据...', '约 267 个角色，首次加载可能需要一些时间');
-            showLoadingBar();
+            characterLoadProgress.failed = false;
+            
+            // 刷新角色页面以显示加载状态
+            if (currentPage === 'characters') {
+                renderCharacters(document.getElementById('mainContent'));
+            }
             
             try {
-                await loadCharacterDataInternal((progress, message) => {
-                    updateLoadingBar(progress);
-                    if (message) updateDataLoadingStats(message);
-                });
-                
-                hideDataLoadingOverlay();
-                showLoadingStatus('✅ 角色数据加载完成', 'success');
-                setTimeout(hideLoadingStatus, 2000);
+                await loadCharacterDataInternal();
                 
                 // 刷新角色页面
                 if (currentPage === 'characters') {
@@ -1205,13 +1300,14 @@
             } catch (error) {
                 console.error('加载角色数据失败:', error);
                 dataLoadState.characters.error = error.message;
-                showDataLoadingError('角色数据加载失败: ' + error.message, () => {
-                    dataLoadState.characters.loading = false;
-                    loadCharacterDataWithUI();
-                });
+                characterLoadProgress.showError('网络连接失败，请检查网络后重试');
+                
+                // 刷新页面显示错误状态
+                if (currentPage === 'characters') {
+                    renderCharacters(document.getElementById('mainContent'));
+                }
             } finally {
                 dataLoadState.characters.loading = false;
-                hideLoadingBar();
             }
         }
 
@@ -1251,40 +1347,58 @@
                 dataLoadState.characters.cached = true;
                 dataLoadState.characters.loaded = true;
                 
+                // 获取总数用于显示
+                const totalChars = cachedData.characters?.length || 0;
+                characterLoadProgress.showLoading(totalChars, totalChars);
+                
                 // 导入到IndexedDB
-                await importCharactersToDB(cachedData.characters || [], onProgress);
+                await importCharactersToDB(cachedData.characters || [], (loaded, total) => {
+                    characterLoadProgress.updateProgress(loaded, total);
+                    if (onProgress) onProgress(Math.round((loaded/total)*100), `导入中... ${loaded}/${total}`);
+                });
+                
+                characterLoadProgress.showSuccess(totalChars);
                 return;
             }
             
             // 2. 从网络加载（优先 CDN，失败回退）
             console.log('🌐 从网络加载角色数据...');
+            characterLoadProgress.showLoading(0, 100);
             if (onProgress) onProgress(10, '正在连接服务器...');
             
             const response = await fetchWithCDNRetry('characters_all.json?t=' + Date.now());
             
             if (response.ok) {
                 const data = await response.json();
-                if (onProgress) onProgress(50, `已获取 ${data.characters?.length || 0} 个角色`);
+                const totalChars = data.characters?.length || 0;
+                
+                characterLoadProgress.showLoading(0, totalChars);
+                if (onProgress) onProgress(50, `已获取 ${totalChars} 个角色`);
                 
                 // 保存到缓存
                 await cacheManager.set('characters_all', data);
                 dataLoadState.characters.data = data;
                 
-                // 导入到IndexedDB
-                await importCharactersToDB(data.characters || [], onProgress);
+                // 导入到IndexedDB（带进度）
+                await importCharactersToDB(data.characters || [], (loaded, total) => {
+                    characterLoadProgress.updateProgress(loaded, total);
+                    if (onProgress) onProgress(50 + Math.round((loaded/total)*45), `导入中... ${loaded}/${total}`);
+                });
                 
+                characterLoadProgress.showSuccess(totalChars);
                 dataLoadState.characters.loaded = true;
-                console.log(`✅ 角色数据加载完成: ${data.characters?.length || 0} 个角色`);
+                console.log(`✅ 角色数据加载完成: ${totalChars} 个角色`);
             }
         }
 
-        // 导入角色到DB
+        // 导入角色到DB（带进度回调）
         async function importCharactersToDB(characters, onProgress) {
             const existingChars = await db.getAll('characters');
             const existingNames = new Set(existingChars.map(c => c.name + '|' + c.book));
             
             let addedCount = 0;
             let skippedCount = 0;
+            const total = characters.length;
             
             for (let i = 0; i < characters.length; i++) {
                 const char = characters[i];
@@ -1297,13 +1411,14 @@
                     skippedCount++;
                 }
                 
-                if (onProgress && i % 20 === 0) {
-                    const progress = 50 + (i / characters.length) * 45;
-                    onProgress(progress, `导入中... ${i}/${characters.length} (新增 ${addedCount})`);
+                // 每加载20个回调一次进度
+                if (onProgress && (i % 20 === 0 || i === total - 1)) {
+                    onProgress(i + 1, total);
                 }
             }
             
-            if (onProgress) onProgress(100, `完成！新增 ${addedCount} 个，跳过 ${skippedCount} 个`);
+            if (onProgress) onProgress(total, total);
+            console.log(`✅ 导入完成: 新增 ${addedCount} 个，跳过 ${skippedCount} 个`);
         }
 
         // 加载世界观数据（带UI）
@@ -1475,6 +1590,122 @@
             };
         }
 
+        // ==================== 角色加载进度UI管理 ====================
+        const characterLoadProgress = {
+            isLoading: false,
+            loaded: 0,
+            total: 0,
+            failed: false,
+            errorMessage: '',
+            
+            // 显示加载进度
+            showLoading(loaded, total) {
+                this.isLoading = true;
+                this.loaded = loaded;
+                this.total = total;
+                this.failed = false;
+                this.updateUI();
+            },
+            
+            // 更新进度
+            updateProgress(loaded, total) {
+                this.loaded = loaded;
+                this.total = total;
+                this.updateUI();
+            },
+            
+            // 显示成功
+            showSuccess(total) {
+                this.isLoading = false;
+                this.loaded = total;
+                this.total = total;
+                this.failed = false;
+                this.updateUI();
+                
+                // 2秒后隐藏进度条，保留统计
+                setTimeout(() => {
+                    const progressEl = document.getElementById('charLoadProgress');
+                    if (progressEl) {
+                        progressEl.classList.add('completed');
+                    }
+                }, 2000);
+            },
+            
+            // 显示失败
+            showError(message) {
+                this.isLoading = false;
+                this.failed = true;
+                this.errorMessage = message;
+                this.updateUI();
+            },
+            
+            // 隐藏
+            hide() {
+                const container = document.getElementById('charLoadProgressContainer');
+                if (container) {
+                    container.style.display = 'none';
+                }
+            },
+            
+            // 更新UI
+            updateUI() {
+                const container = document.getElementById('charLoadProgressContainer');
+                if (!container) return;
+                
+                container.style.display = 'block';
+                container.innerHTML = this.renderHTML();
+            },
+            
+            // 渲染HTML
+            renderHTML() {
+                if (this.isLoading) {
+                    const percent = this.total > 0 ? Math.round((this.loaded / this.total) * 100) : 0;
+                    return `
+                        <div id="charLoadProgress" class="char-load-progress loading">
+                            <div class="char-load-header">
+                                <span class="char-load-spinner"></span>
+                                <span class="char-load-text">正在加载角色数据... (${this.loaded}/${this.total} 个)</span>
+                            </div>
+                            <div class="char-load-bar-container">
+                                <div class="char-load-bar" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="char-load-percent">${percent}%</div>
+                        </div>
+                    `;
+                } else if (this.failed) {
+                    return `
+                        <div id="charLoadProgress" class="char-load-progress error">
+                            <div class="char-load-header">
+                                <span class="char-load-icon">❌</span>
+                                <span class="char-load-text">加载失败</span>
+                            </div>
+                            <div class="char-load-error-msg">${this.errorMessage}</div>
+                            <button class="btn btn-primary char-load-retry" onclick="retryLoadCharacters()">
+                                🔄 点击重试
+                            </button>
+                        </div>
+                    `;
+                } else if (this.total > 0) {
+                    // 加载完成状态
+                    return `
+                        <div id="charLoadProgress" class="char-load-progress success">
+                            <div class="char-load-header">
+                                <span class="char-load-icon">✅</span>
+                                <span class="char-load-text">共加载 ${this.total} 个角色</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                return '';
+            }
+        };
+
+        // 重试加载角色
+        async function retryLoadCharacters() {
+            characterLoadProgress.hide();
+            await loadCharacterDataWithUI();
+        }
+
         // ==================== 页面渲染函数 ====================
         async function renderHome(container) {
             const chars = await db.getAll('characters');
@@ -1576,21 +1807,7 @@
                 return;
             }
             
-            // 如果正在加载，显示加载中
-            if (dataLoadState.characters.loading) {
-                container.innerHTML = `
-                    <div class="header">
-                        <h2>👤 角色管理</h2>
-                    </div>
-                    <div class="empty-state">
-                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
-                        <h3>正在加载角色数据...</h3>
-                        <p>请稍候</p>
-                    </div>
-                `;
-                return;
-            }
-            
+            // 获取角色数据
             const characters = await db.getAll('characters');
             const filtered = filterRole === 'all' ? characters : characters.filter(c => c.role === filterRole);
             
@@ -1603,13 +1820,23 @@
                 '配角': characters.filter(c => c.role === '配角').length
             };
             
-            const roleNames = { '主角': '主角', '女主': '女主', '反派': '反派', '配角': '配角' };
+            // 生成加载进度UI（如果有加载状态）
+            let loadProgressHTML = '';
+            if (dataLoadState.characters.loading || characterLoadProgress.total > 0) {
+                loadProgressHTML = `
+                    <div id="charLoadProgressContainer" class="char-load-progress-container">
+                        ${characterLoadProgress.renderHTML()}
+                    </div>
+                `;
+            }
             
             container.innerHTML = `
                 <div class="header">
                     <h2>👤 角色管理 (${characters.length}个角色)</h2>
                     <button class="btn btn-primary" onclick="openCharacterModal()">➕ 新建角色</button>
                 </div>
+                
+                ${loadProgressHTML}
                 
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div class="tabs">
@@ -1624,7 +1851,7 @@
                     </button>
                 </div>
                 
-                ${filtered.length === 0 ? `
+                ${filtered.length === 0 && !dataLoadState.characters.loading ? `
                     <div class="empty-state">
                         <div class="empty-state-icon">👤</div>
                         <h3>暂无角色</h3>
@@ -1654,6 +1881,11 @@
                     </div>
                 `}
             `;
+            
+            // 如果正在加载，确保进度UI被渲染
+            if (dataLoadState.characters.loading && characterLoadProgress.total > 0) {
+                characterLoadProgress.updateUI();
+            }
         }
 
         function openCharacterModal(character = null) {
