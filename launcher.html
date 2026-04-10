@@ -2097,6 +2097,47 @@
         .home-recommendation-refresh:hover {
             color: #fff;
         }
+
+        /* 模板管理样式 */
+        .template-card {
+            border-left: 4px solid transparent;
+        }
+        .template-card[data-type="trope"] {
+            border-left-color: #e94560;
+        }
+        .template-card[data-type="character"] {
+            border-left-color: #00d4ff;
+        }
+        .template-card[data-type="chapter"] {
+            border-left-color: #ffd700;
+        }
+        .template-card[data-type="outline"] {
+            border-left-color: #9b59b6;
+        }
+        .filter-btn {
+            background: #1a1a2e;
+            border: 1px solid #16213e;
+            color: #ccc;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background: #0f3460;
+        }
+        .filter-btn.active {
+            background: #e94560;
+            color: #fff;
+            border-color: #e94560;
+        }
+        .template-option {
+            transition: all 0.2s;
+        }
+        .template-option:hover {
+            background: #252542;
+        }
     </style>
 </head>
 <body>
@@ -2115,6 +2156,7 @@
                 <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
                 <a class="nav-item" data-page="scene"><i>📝</i>桥段生成</a>
                 <a class="nav-item" data-page="names"><i>✨</i>姓名生成</a>
+                <a class="nav-item" data-page="templates"><i>🎨</i>模板管理</a>
                 <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
             </nav>
         </aside>
@@ -3408,6 +3450,719 @@
             }
         }
 
+        // ==================== 预设模板数据 ====================
+        const defaultTemplates = [
+            // 章节结构模板
+            {
+                name: '开局三章模板',
+                type: 'chapter',
+                category: '章节结构',
+                description: '经典的网文开局三章结构，钩子→冲突→悬念',
+                tags: ['开局', '钩子', '冲突', '悬念'],
+                content: {
+                    chapter1: {
+                        title: '第一章：惊天开局',
+                        purpose: '用强钩子吸引读者',
+                        structure: [
+                            '开场即高能（战斗/危机/奇遇）',
+                            '展示主角的特殊之处',
+                            '埋下主线伏笔',
+                            '结尾留下悬念'
+                        ],
+                        wordCount: '3000-4000字',
+                        tips: '避免平淡铺垫，前三百字必须有吸引力'
+                    },
+                    chapter2: {
+                        title: '第二章：矛盾激化',
+                        purpose: '冲突升级，人物登场',
+                        structure: [
+                            '主角面临第一个挑战',
+                            '反派/对立势力登场',
+                            '展示世界观的一角',
+                            '主角做出关键选择'
+                        ],
+                        wordCount: '3000-4000字',
+                        tips: '冲突要具体，不能只是背景设定'
+                    },
+                    chapter3: {
+                        title: '第三章：悬念爆发',
+                        purpose: '让读者必须追读',
+                        structure: [
+                            '危机达到临界点',
+                            '金手指/外挂开始展现',
+                            '重要人物关系建立',
+                            '留下强烈悬念（断章）'
+                        ],
+                        wordCount: '3000-4000字',
+                        tips: '结尾必须让人忍不住点下一章'
+                    }
+                }
+            },
+            {
+                name: '经典逆袭模板',
+                type: 'chapter',
+                category: '章节结构',
+                description: '废物→机缘→打脸→成长的经典逆袭套路',
+                tags: ['逆袭', '打脸', '废物', '机缘'],
+                content: {
+                    phase1: {
+                        title: '第一阶段：绝境',
+                        purpose: '展示主角的悲惨处境',
+                        structure: [
+                            '主角被羞辱/欺压',
+                            '展示主角的隐忍',
+                            '埋下转折伏笔',
+                            '让读者产生同情和期待'
+                        ],
+                        wordCount: '2000-3000字'
+                    },
+                    phase2: {
+                        title: '第二阶段：转机',
+                        purpose: '金手指觉醒/贵人相助',
+                        structure: [
+                            '触发金手指/遇到机缘',
+                            '主角获得力量/知识',
+                            '开始改变处境',
+                            '反派察觉异常'
+                        ],
+                        wordCount: '3000-4000字'
+                    },
+                    phase3: {
+                        title: '第三阶段：打脸',
+                        purpose: '第一次复仇/逆袭',
+                        structure: [
+                            '反派再次挑衅',
+                            '主角展现实力',
+                            '周围人的震惊',
+                            '反派吃瘪'
+                        ],
+                        wordCount: '3000-4000字'
+                    },
+                    phase4: {
+                        title: '第四阶段：成长',
+                        purpose: '开启新地图/新目标',
+                        structure: [
+                            '解决当前矛盾',
+                            '获得新资源/信息',
+                            '引入更大世界观',
+                            '为下一阶段铺垫'
+                        ],
+                        wordCount: '3000-4000字'
+                    }
+                }
+            },
+            {
+                name: '起承转合模板',
+                type: 'chapter',
+                category: '章节结构',
+                description: '传统起承转合的章节结构模板',
+                tags: ['起承转合', '传统', '节奏'],
+                content: {
+                    opening: {
+                        title: '起：开篇引入',
+                        purpose: '建立场景和人物',
+                        keyPoints: [
+                            '交代时间地点',
+                            '主角登场',
+                            '展示当前状态',
+                            '引入初始事件'
+                        ],
+                        wordCount: '800-1200字'
+                    },
+                    development: {
+                        title: '承：情节发展',
+                        purpose: '推进故事，制造张力',
+                        keyPoints: [
+                            '矛盾逐渐显现',
+                            '人物关系变化',
+                            '铺垫高潮',
+                            '情感积累'
+                        ],
+                        wordCount: '1500-2000字'
+                    },
+                    twist: {
+                        title: '转：转折高潮',
+                        purpose: '情节反转，冲突爆发',
+                        keyPoints: [
+                            '意外事件发生',
+                            '真相揭露',
+                            '情绪爆发点',
+                            '局势逆转'
+                        ],
+                        wordCount: '1000-1500字'
+                    },
+                    conclusion: {
+                        title: '合：收尾过渡',
+                        purpose: '收束本段，引出下文',
+                        keyPoints: [
+                            '解决当前矛盾',
+                            '人物状态改变',
+                            '留下悬念',
+                            '过渡到下一章'
+                        ],
+                        wordCount: '500-800字'
+                    }
+                }
+            },
+            // 角色设定模板
+            {
+                name: '天才型主角模板',
+                type: 'character',
+                category: '角色设定',
+                description: '天赋异禀的主角设定模板',
+                tags: ['天才', '主角', '强者'],
+                content: {
+                    basicInfo: {
+                        name: '',
+                        age: '18-25岁',
+                        gender: '男',
+                        role: '主角'
+                    },
+                    personality: {
+                        core: '自信、骄傲但内敛',
+                        surface: '淡然从容，偶尔毒舌',
+                        inner: '强烈的责任感，隐藏的脆弱',
+                        growth: '从独来独往到学会信任'
+                    },
+                    background: {
+                        origin: '名门/隐世家族',
+                        childhood: '天赋过早显露，承受巨大期待',
+                        trauma: '曾因天赋招致灾祸',
+                        motivation: '追求更高境界，保护重要之人'
+                    },
+                    abilities: {
+                        talent: '某方面的绝世天赋',
+                        weakness: '情感经验匮乏/身体隐患',
+                        signature: '独特的技能/招式',
+                        growth: '从依赖天赋到领悟真谛'
+                    },
+                    relationships: {
+                        mentor: '严厉但关怀的师父',
+                        rival: '势均力敌的对手',
+                        love: '能理解他内心的伴侣',
+                        enemy: '嫉妒其天赋的反派'
+                    },
+                    plotHooks: [
+                        '天赋暴露引来追杀',
+                        '必须隐藏身份参加考核',
+                        '家族被灭，独自复仇',
+                        '遇到能匹敌的真正天才'
+                    ]
+                }
+            },
+            {
+                name: '废柴逆袭型主角模板',
+                type: 'character',
+                category: '角色设定',
+                description: '从废柴到强者的经典主角设定',
+                tags: ['废柴', '逆袭', '主角'],
+                content: {
+                    basicInfo: {
+                        name: '',
+                        age: '16-20岁',
+                        gender: '男',
+                        role: '主角'
+                    },
+                    personality: {
+                        core: '坚韧不拔，永不服输',
+                        surface: '表面谦卑，内心骄傲',
+                        inner: '极度渴望被认可',
+                        growth: '从自卑到自信，从隐忍到张扬'
+                    },
+                    background: {
+                        origin: '小家族/没落贵族',
+                        childhood: '被视为废物，受尽白眼',
+                        trauma: '至亲因保护他而死',
+                        motivation: '证明自我，守护所爱'
+                    },
+                    abilities: {
+                        initial: '被判定为废物的体质',
+                        awakening: '隐藏的特殊体质觉醒',
+                        cheat: '独特的金手指系统',
+                        growth: '一步步打破极限'
+                    },
+                    relationships: {
+                        supporter: '唯一相信他的亲人/朋友',
+                        bully: '长期欺压他的反派',
+                        mentor: '神秘的引路人',
+                        love: '不因实力而轻视他的人'
+                    },
+                    plotHooks: [
+                        '被退婚/逐出家门',
+                        '获得逆天机缘',
+                        '在考核中一鸣惊人',
+                        '揭开身世之谜'
+                    ]
+                }
+            },
+            {
+                name: '高冷女主模板',
+                type: 'character',
+                category: '角色设定',
+                description: '冰山美人型女主角设定',
+                tags: ['女主', '高冷', '冰山'],
+                content: {
+                    basicInfo: {
+                        name: '',
+                        age: '18-22岁',
+                        gender: '女',
+                        role: '女主'
+                    },
+                    personality: {
+                        core: '高傲冷漠，内心柔软',
+                        surface: '生人勿近，寡言少语',
+                        inner: '渴望温暖但害怕受伤',
+                        growth: '从封闭到敞开心扉'
+                    },
+                    background: {
+                        origin: '顶级势力/古老家族',
+                        childhood: '严格培养，缺乏温情',
+                        trauma: '曾被亲近之人背叛',
+                        motivation: '守护家族/追求大道'
+                    },
+                    appearance: {
+                        face: '倾国倾城，清冷绝艳',
+                        aura: '拒人千里的寒意',
+                        style: '素雅高贵，不事张扬',
+                        trademark: '标志性的冷漠眼神'
+                    },
+                    abilities: {
+                        talent: '顶级的修炼天赋',
+                        specialty: '冰系/剑术/琴艺等',
+                        weakness: '情感困扰会影响修为',
+                        potential: '遇到真爱后突飞猛进'
+                    },
+                    relationships: {
+                        family: '严厉但关心的长辈',
+                        pursuer: '众多追求者（她都不屑）',
+                        onlyOne: '唯一能让她动摇的男主',
+                        rival: '嫉妒她的世家千金'
+                    },
+                    plotHooks: [
+                        '被迫与"废物"订婚',
+                        '发现男主隐藏的实力',
+                        '只有男主能治愈她的隐患',
+                        '为救男主打破心防'
+                    ]
+                }
+            },
+            {
+                name: '反派Boss模板',
+                type: 'character',
+                category: '角色设定',
+                description: '有魅力的反派Boss设定',
+                tags: ['反派', 'Boss', '魅力反派'],
+                content: {
+                    basicInfo: {
+                        name: '',
+                        age: '25-40岁',
+                        gender: '男',
+                        role: '反派'
+                    },
+                    personality: {
+                        core: '偏执疯狂，为达目的不择手段',
+                        surface: '温文尔雅，魅力十足',
+                        inner: '曾经也是理想主义者',
+                        motive: '极端但自洽的执念'
+                    },
+                    background: {
+                        origin: '与主角相似的起点',
+                        past: '经历过巨大的背叛/痛苦',
+                        turning: '在某一刻彻底黑化',
+                        current: '建立庞大势力的掌权者'
+                    },
+                    abilities: {
+                        power: '压倒性的实力',
+                        intelligence: '极高的谋略',
+                        resources: '庞大的势力资源',
+                        weakness: '执念太深/情感软肋'
+                    },
+                    relationshipWithProtagonist: {
+                        similarity: '和主角走不同路的自己',
+                        dynamic: '互相理解却不得不战',
+                        impact: '让主角认清自己的内心',
+                        ending: '悲剧性的结局'
+                    },
+                    memorableLines: [
+                        '"如果当年遇到那个人是你，或许..."',
+                        '"这个世界欠我的，我要加倍讨回来！"',
+                        '"你以为你比我高尚多少？"'
+                    ]
+                }
+            },
+            // 桥段组合模板
+            {
+                name: '经典退婚流模板',
+                type: 'trope',
+                category: '桥段组合',
+                description: '退婚→打脸→逆袭的经典组合',
+                tags: ['退婚', '打脸', '经典'],
+                content: {
+                    scenes: [
+                        {
+                            name: '羞辱场景',
+                            purpose: '建立冲突，激发情绪',
+                            keyElements: [
+                                '对方当众撕毁婚约',
+                                '嘲讽主角废物',
+                                '主角隐忍不发',
+                                '周围人的嘲讽'
+                            ],
+                            emotion: '屈辱、愤怒、压抑'
+                        },
+                        {
+                            name: '金手指展现',
+                            purpose: '转折，让读者爽',
+                            keyElements: [
+                                '主角展现实力/潜力',
+                                '对方态度转变',
+                                '旁观者震惊',
+                                '主角拒绝复合'
+                            ],
+                            emotion: '反转、痛快、扬眉吐气'
+                        },
+                        {
+                            name: '后续发展',
+                            purpose: '开启主线',
+                            keyElements: [
+                                '对方后悔莫及',
+                                '新的追求/合作出现',
+                                '主角定下更高目标',
+                                '为后续剧情铺垫'
+                            ],
+                            emotion: '期待、爽感延续'
+                        }
+                    ],
+                    variants: [
+                        '门派驱逐版（废物弟子被逐）',
+                        '家族抛弃版（废柴被家族除名）',
+                        '婚约反套路版（主角主动退婚）'
+                    ],
+                    tips: '关键在于让对方后悔，而非单纯的复仇'
+                }
+            },
+            {
+                name: '拍卖会捡漏模板',
+                type: 'trope',
+                category: '桥段组合',
+                description: '拍卖会识别宝物→捡漏→被抢→反杀的完整套路',
+                tags: ['拍卖会', '捡漏', '扮猪吃虎'],
+                content: {
+                    scenes: [
+                        {
+                            name: '入场',
+                            purpose: '建立场景和冲突',
+                            keyElements: [
+                                '主角低调入场',
+                                '遇到轻视他的仇家',
+                                '发现被低估的宝物',
+                                '资金有限的困境'
+                            ],
+                            emotion: '期待、紧张'
+                        },
+                        {
+                            name: '竞拍',
+                            purpose: '智斗博弈',
+                            keyElements: [
+                                '与仇家竞价',
+                                '用计谋低价拿下',
+                                '仇家愤怒威胁',
+                                '揭露宝物真价值（可选）'
+                            ],
+                            emotion: '智斗的快感、捡漏的喜悦'
+                        },
+                        {
+                            name: '劫杀',
+                            purpose: '冲突升级',
+                            keyElements: [
+                                '离开时被埋伏',
+                                '对方实力强大',
+                                '主角陷入绝境',
+                                '反杀/逃脱的转折'
+                            ],
+                            emotion: '紧张、惊险'
+                        },
+                        {
+                            name: '收获',
+                            purpose: '爽感释放',
+                            keyElements: [
+                                '反杀成功',
+                                '获得宝物和战利品',
+                                '实力提升',
+                                '仇家恐惧/后悔'
+                            ],
+                            emotion: '爽快、满足'
+                        }
+                    ],
+                    tips: '宝物必须真的有价值，不能是鸡肋'
+                }
+            },
+            {
+                name: '宗门大比模板',
+                type: 'trope',
+                category: '桥段组合',
+                description: '宗门考核/比武的完整套路',
+                tags: ['宗门', '比武', '考核'],
+                content: {
+                    scenes: [
+                        {
+                            name: '报名',
+                            purpose: '引入规则和压力',
+                            keyElements: [
+                                '考核规则介绍',
+                                '各方势力关注',
+                                '主角被看低',
+                                '强敌名单出现'
+                            ],
+                            emotion: '期待、压力'
+                        },
+                        {
+                            name: '初赛',
+                            purpose: '展现实力，建立威名',
+                            keyElements: [
+                                '轻松击败杂鱼',
+                                '引起部分人注意',
+                                '遭遇小boss',
+                                '展露出人意料的实力'
+                            ],
+                            emotion: '爽感、期待升级'
+                        },
+                        {
+                            name: '复赛',
+                            purpose: '真正的考验',
+                            keyElements: [
+                                '遇到强劲对手',
+                                '陷入苦战',
+                                '突破/使用隐藏手段',
+                                '险胜或平局'
+                            ],
+                            emotion: '紧张、刺激'
+                        },
+                        {
+                            name: '决赛',
+                            purpose: '高潮对决',
+                            keyElements: [
+                                '最强对手登场',
+                                '关乎荣誉/资源的决战',
+                                '底牌尽出',
+                                '最终胜利'
+                            ],
+                            emotion: '高潮、满足'
+                        },
+                        {
+                            name: '后续',
+                            purpose: '开启新篇章',
+                            keyElements: [
+                                '获得丰厚奖励',
+                                '地位大幅提升',
+                                '新的机遇出现',
+                                '更大的舞台开启'
+                            ],
+                            emotion: '期待、兴奋'
+                        }
+                    ],
+                    tips: '每一轮都要比上一轮更强，不能重复'
+                }
+            },
+            // 大纲框架模板
+            {
+                name: '标准网文大纲框架',
+                type: 'outline',
+                category: '大纲框架',
+                description: '适用于大多数升级流网文的完整大纲框架',
+                tags: ['大纲', '框架', '升级流'],
+                content: {
+                    act1: {
+                        title: '第一幕：崛起',
+                        wordCount: '10-20万字',
+                        purpose: '建立主角，让读者入坑',
+                        keyEvents: [
+                            '开局钩子（危机/奇遇）',
+                            '获得金手指',
+                            '解决初始危机',
+                            '展现潜力，引起关注',
+                            '小范围成名'
+                        ],
+                        ending: '进入更大舞台'
+                    },
+                    act2: {
+                        title: '第二幕：成长',
+                        wordCount: '50-100万字',
+                        purpose: '主角快速成长',
+                        arcs: [
+                            {
+                                name: '第一小地图',
+                                events: ['新环境适应', '建立人脉', '遭遇挑战', '脱颖而出']
+                            },
+                            {
+                                name: '第二小地图',
+                                events: ['进入更高层次', '遇到更强对手', '生死危机', '突破升级']
+                            },
+                            {
+                                name: '中期高潮',
+                                events: ['大比/考核', '一战成名', '获得重要资源', '开启主线']
+                            }
+                        ],
+                        ending: '成为一方强者'
+                    },
+                    act3: {
+                        title: '第三幕：称霸',
+                        wordCount: '100-200万字',
+                        purpose: '在更大舞台上争霸',
+                        arcs: [
+                            {
+                                name: '州/域级别',
+                                events: ['进入州级舞台', '与顶级天才争锋', '揭开身世之谜', '获得传承']
+                            },
+                            {
+                                name: '世界级别',
+                                events: ['世界大比', '异族入侵', '拯救世界', '成为巅峰']
+                            }
+                        ],
+                        ending: '站在世界之巅'
+                    },
+                    epilogue: {
+                        title: '尾声：新世界',
+                        purpose: '收尾和展望',
+                        content: '飞升/进入新世界的伏笔'
+                    },
+                    characterArc: {
+                        protagonist: '从弱小到无敌',
+                        loveInterest: '从陌生到相知相守',
+                        mentor: '从引导到被超越',
+                        rival: '从轻视到惺惺相惜'
+                    }
+                }
+            },
+            {
+                name: '复仇文大纲框架',
+                type: 'outline',
+                category: '大纲框架',
+                description: '重生/复仇类型的大纲框架',
+                tags: ['复仇', '重生', '大纲'],
+                content: {
+                    act1: {
+                        title: '第一幕：重燃恨火',
+                        wordCount: '10-15万字',
+                        purpose: '建立复仇动机',
+                        keyEvents: [
+                            '前世悲惨结局（倒叙）',
+                            '重生归来',
+                            '确认时间线',
+                            '初步布局',
+                            '第一个仇人付出代价'
+                        ],
+                        ending: '确立复仇名单'
+                    },
+                    act2: {
+                        title: '第二幕：清算',
+                        wordCount: '50-80万字',
+                        purpose: '逐个清算仇敌',
+                        structure: '仇人名单逐个击破',
+                        keyEvents: [
+                            '识别前世恩人/仇人',
+                            '利用先知优势布局',
+                            '拯救前世遗憾',
+                            '让每个仇人得到应有下场',
+                            '逐渐接近幕后黑手'
+                        ],
+                        ending: '幕后黑手浮出水面'
+                    },
+                    act3: {
+                        title: '第三幕：终极对决',
+                        wordCount: '30-50万字',
+                        purpose: '最终复仇',
+                        keyEvents: [
+                            '幕后黑手实力强大',
+                            '主角陷入绝境',
+                            '突破自我',
+                            '最终决战',
+                            '彻底清算'
+                        ],
+                        ending: '复仇完成，开启新人生'
+                    },
+                    specialElements: {
+                        foresight: '如何合理运用前世记忆',
+                        redemption: '拯救前世遗憾的人物',
+                        karma: '让反派自食其果的设计',
+                        closure: '心理上的彻底解脱'
+                    }
+                }
+            },
+            {
+                name: '种田文大纲框架',
+                type: 'outline',
+                category: '大纲框架',
+                description: '慢节奏种田发展类大纲框架',
+                tags: ['种田', '发展', '慢节奏'],
+                content: {
+                    act1: {
+                        title: '第一幕：立足',
+                        wordCount: '15-25万字',
+                        purpose: '建立根据地',
+                        keyEvents: [
+                            '穿越/来到新世界',
+                            '获得初始资源/金手指',
+                            '建立第一个产业',
+                            '解决生存危机',
+                            '初步站稳脚跟'
+                        ],
+                        ending: '有稳定收入来源'
+                    },
+                    act2: {
+                        title: '第二幕：发展',
+                        wordCount: '80-150万字',
+                        purpose: '产业扩张',
+                        developmentAreas: [
+                            {
+                                area: '经济',
+                                stages: ['温饱', '小康', '富裕', '巨富']
+                            },
+                            {
+                                area: '势力',
+                                stages: ['个人', '家庭', '村落', '城镇', '州府']
+                            },
+                            {
+                                area: '技术',
+                                stages: ['原始', '改进', '创新', '引领']
+                            },
+                            {
+                                area: '人脉',
+                                stages: ['平民', '商人', '官员', '皇室']
+                            }
+                        ],
+                        keyEvents: [
+                            '产业升级',
+                            '解决各种危机',
+                            '收服人才',
+                            '扩大影响力',
+                            '建立势力'
+                        ],
+                        ending: '成为一方豪强'
+                    },
+                    act3: {
+                        title: '第三幕：盛世',
+                        wordCount: '50-100万字',
+                        purpose: '登顶与圆满',
+                        keyEvents: [
+                            '进入最高层圈子',
+                            '影响时代走向',
+                            '理想实现',
+                            '传承建立',
+                            '圆满结局'
+                        ],
+                        ending: '功成身退或开启新篇章'
+                    },
+                    focusPoints: {
+                        dailyLife: '温馨的日常细节',
+                        relationships: '慢热的情感发展',
+                        achievements: '一步步的成就感',
+                        conflicts: '外部威胁的解决'
+                    }
+                }
+            }
+        ];
+
         // ==================== 全局状态 ====================
         const db = new Database();
         const githubSync = new GitHubSync();
@@ -4555,6 +5310,9 @@
                             <button class="scene-action-btn regenerate" onclick="regenerateScene()">
                                 🔄 重新生成
                             </button>
+                            <button class="scene-action-btn" style="background: #0f3460;" onclick="saveSceneAsTemplate()">
+                                💾 保存为模板
+                            </button>
                         </div>
                     </div>
 
@@ -5060,6 +5818,28 @@
             }
         }
 
+        // 保存桥段为模板
+        async function saveSceneAsTemplate() {
+            const textarea = document.getElementById('sceneResultTextarea');
+            const content = textarea.value.trim();
+            const typeSelect = document.getElementById('sceneTypeSelect');
+            const typeName = typeSelect.value || '自定义桥段';
+
+            if (!content) {
+                showNotification('❌ 没有可保存的内容');
+                return;
+            }
+
+            const templateContent = {
+                type: typeName,
+                content: content,
+                tags: [],
+                createdFrom: 'scene_editor'
+            };
+
+            await showSaveTemplateDialog('trope', templateContent, `${typeName}模板`);
+        }
+
         // ==================== 角色管理页面 ====================
         async function renderCharacters(container, filterRole = 'all') {
             // 如果数据未加载且不在加载中，显示加载提示
@@ -5109,6 +5889,7 @@
                     <h2>👤 角色管理 (${characters.length}个角色)</h2>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary" onclick="showCharacterExportDialog()">📤 导出</button>
+                        <button class="btn btn-secondary" onclick="createCharacterFromTemplate()">🎨 从模板创建</button>
                         <button class="btn btn-primary" onclick="openCharacterModal()">➕ 新建角色</button>
                     </div>
                 </div>
@@ -5223,6 +6004,11 @@
                     </div>
                     ${isEdit ? `<input type="hidden" name="id" value="${character.id}">` : ''}
                 </form>
+                ${isEdit ? `
+                <div style="margin-top: 15px; text-align: right;">
+                    <button class="btn btn-secondary" onclick="saveCharacterAsTemplate()">💾 保存为模板</button>
+                </div>
+                ` : ''}
             `;
 
             modalCallback = async () => {
@@ -5299,6 +6085,52 @@
                 { value: 'markdown', label: '📝 Markdown格式', desc: '人类可读，适合分享' }
             ], (format) => {
                 exportCharacters(format);
+            });
+        }
+
+        // 保存角色为模板
+        async function saveCharacterAsTemplate() {
+            const form = document.getElementById('characterForm');
+            const formData = new FormData(form);
+            
+            const content = {
+                basicInfo: {
+                    name: '',
+                    age: '18-25岁',
+                    gender: formData.get('gender') || '男',
+                    role: formData.get('role') || '配角'
+                },
+                personality: {
+                    core: formData.get('personality') || '',
+                    description: formData.get('description') || ''
+                },
+                background: {
+                    book: formData.get('book') || '',
+                    author: formData.get('author') || ''
+                },
+                tags: formData.get('tags').split(/[,，]/).map(t => t.trim()).filter(t => t)
+            };
+
+            await showSaveTemplateDialog('character', content, `${formData.get('role') || '角色'}模板`);
+        }
+
+        // 从模板创建角色
+        async function createCharacterFromTemplate() {
+            await showTemplateSelector('character', (template) => {
+                const content = template.content;
+                const character = {
+                    name: '',
+                    role: content.basicInfo?.role || '配角',
+                    gender: content.basicInfo?.gender || '男',
+                    book: content.background?.book || '',
+                    personality: content.personality?.core || '',
+                    description: content.personality?.description || '',
+                    author: content.background?.author || '',
+                    tags: content.tags || []
+                };
+                
+                openCharacterModal(character);
+                showNotification(`✅ 已加载模板：${template.name}`);
             });
         }
 
@@ -5612,7 +6444,12 @@
             container.innerHTML = `
                 <div class="header">
                     <h2>📖 情节大纲</h2>
-                    <button class="btn btn-secondary" onclick="showPlotsExportDialog()">📤 导出</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="showTemplateSelector('outline', async (template) => {
+                            await applyOutlineTemplate(template);
+                        })">🎨 从模板创建</button>
+                        <button class="btn btn-secondary" onclick="showPlotsExportDialog()">📤 导出</button>
+                    </div>
                 </div>
                 <div class="plot-container">
                     <div class="works-sidebar">
@@ -5736,6 +6573,71 @@
                 const chapters = await loadVolumeChapters(volume.id);
                 chaptersData.push(...chapters);
             }
+        }
+
+        // 应用大纲模板
+        async function applyOutlineTemplate(template) {
+            const content = template.content;
+            
+            // 创建新作品
+            const workName = prompt('使用模板创建新作品\n\n作品名称：', `${template.name}_${new Date().toLocaleDateString()}`);
+            if (!workName) return;
+
+            const work = await db.add('works', { name: workName });
+            currentWorkId = work;
+
+            // 根据模板创建卷
+            if (content.act1) {
+                const vol1 = await db.add('volumes', {
+                    workId: work,
+                    volumeNumber: 1,
+                    title: content.act1.title || '第一卷',
+                    summary: content.act1.purpose || ''
+                });
+
+                // 创建章节
+                if (content.act1.keyEvents) {
+                    for (let i = 0; i < content.act1.keyEvents.length; i++) {
+                        await db.add('chapters', {
+                            volumeId: vol1,
+                            chapterNumber: i + 1,
+                            title: `第${i + 1}章：${content.act1.keyEvents[i].substring(0, 20)}...`,
+                            content: content.act1.keyEvents[i],
+                            wordCount: 0
+                        });
+                    }
+                }
+            }
+
+            if (content.act2) {
+                const vol2 = await db.add('volumes', {
+                    workId: work,
+                    volumeNumber: 2,
+                    title: content.act2.title || '第二卷',
+                    summary: content.act2.purpose || ''
+                });
+
+                // 创建关键章节
+                if (content.act2.keyEvents || content.act2.arcs) {
+                    const events = content.act2.keyEvents || 
+                        (content.act2.arcs ? content.act2.arcs.flatMap(a => a.events || []) : []);
+                    
+                    for (let i = 0; i < Math.min(events.length, 5); i++) {
+                        await db.add('chapters', {
+                            volumeId: vol2,
+                            chapterNumber: i + 1,
+                            title: `第${i + 1}章`,
+                            content: typeof events[i] === 'string' ? events[i] : events[i].name || '',
+                            wordCount: 0
+                        });
+                    }
+                }
+            }
+
+            await db.incrementTemplateUsage(template.id);
+            await initPlotData();
+            renderPlot(document.getElementById('mainContent'));
+            showNotification(`✅ 已使用模板 "${template.name}" 创建作品`);
         }
 
         // 同卷内重排序
@@ -7267,6 +8169,418 @@
             URL.revokeObjectURL(url);
         }
 
+        // ==================== 模板管理页面 ====================
+        let currentTemplateFilter = 'all';
+        let currentTemplateSearch = '';
+
+        async function renderTemplates(container) {
+            const templates = await db.getAllTemplates();
+            const filtered = filterTemplates(templates);
+
+            const categories = {
+                'trope': { name: '桥段模板', icon: '🎭' },
+                'character': { name: '角色模板', icon: '👤' },
+                'chapter': { name: '章节模板', icon: '📄' },
+                'outline': { name: '大纲模板', icon: '📋' }
+            };
+
+            container.innerHTML = `
+                <div class="header">
+                    <h2>🎨 模板管理</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="importTemplates()">
+                            📥 导入
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportAllTemplates()">
+                            📤 导出全部
+                        </button>
+                        <button class="btn btn-primary" onclick="initDefaultTemplates()">
+                            🔄 重置预设
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 8px;">
+                        <button class="filter-btn ${currentTemplateFilter === 'all' ? 'active' : ''}" onclick="setTemplateFilter('all')">
+                            全部 (${templates.length})
+                        </button>
+                        ${Object.entries(categories).map(([type, info]) => {
+                            const count = templates.filter(t => t.type === type).length;
+                            return `<button class="filter-btn ${currentTemplateFilter === type ? 'active' : ''}" onclick="setTemplateFilter('${type}')">
+                                ${info.icon} ${info.name} (${count})
+                            </button>`;
+                        }).join('')}
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <input type="text" class="search-input" placeholder="搜索模板..."
+                               value="${currentTemplateSearch}" oninput="searchTemplates(this.value)">
+                    </div>
+                </div>
+
+                ${filtered.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎨</div>
+                        <h3>暂无模板</h3>
+                        <p>点击"重置预设"加载系统预设模板，或在各功能页面保存自定义模板</p>
+                    </div>
+                ` : `
+                    <div class="card-grid">
+                        ${filtered.map(template => `
+                            <div class="card template-card" data-type="${template.type}">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                    <span class="category-tag">${categories[template.type]?.icon || '📄'} ${categories[template.type]?.name || template.type}</span>
+                                    <div class="card-actions">
+                                        <button class="action-btn" onclick="previewTemplate(${template.id})" title="预览">👁️</button>
+                                        <button class="action-btn" onclick="editTemplate(${template.id})" title="编辑">✏️</button>
+                                        <button class="action-btn" onclick="exportTemplate(${template.id})" title="导出">📤</button>
+                                        <button class="action-btn" onclick="deleteTemplate(${template.id})" title="删除">🗑️</button>
+                                    </div>
+                                </div>
+                                <h3 style="font-size: 16px; margin-bottom: 5px;">${template.name}</h3>
+                                <p style="font-size: 13px; color: #888; margin-bottom: 10px;">${template.description || '暂无描述'}</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-size: 12px; color: #666;">
+                                        ${template.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') || ''}
+                                    </div>
+                                    <div style="font-size: 12px; color: #666;">
+                                        ${template.usageCount > 0 ? `已使用 ${template.usageCount} 次` : '未使用'}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+
+                <input type="file" id="templateImportFile" style="display: none" accept=".json" onchange="handleTemplateImport(event)">
+            `;
+        }
+
+        function filterTemplates(templates) {
+            let filtered = templates;
+
+            if (currentTemplateFilter !== 'all') {
+                filtered = filtered.filter(t => t.type === currentTemplateFilter);
+            }
+
+            if (currentTemplateSearch) {
+                const query = currentTemplateSearch.toLowerCase();
+                filtered = filtered.filter(t =>
+                    (t.name && t.name.toLowerCase().includes(query)) ||
+                    (t.description && t.description.toLowerCase().includes(query)) ||
+                    (t.tags && t.tags.some(tag => tag.toLowerCase().includes(query)))
+                );
+            }
+
+            return filtered.sort((a, b) => {
+                // 按使用次数排序，使用多的在前
+                if (b.usageCount !== a.usageCount) {
+                    return b.usageCount - a.usageCount;
+                }
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+        }
+
+        function setTemplateFilter(filter) {
+            currentTemplateFilter = filter;
+            renderTemplates(document.getElementById('mainContent'));
+        }
+
+        function searchTemplates(query) {
+            currentTemplateSearch = query;
+            renderTemplates(document.getElementById('mainContent'));
+        }
+
+        // 初始化预设模板
+        async function initDefaultTemplates() {
+            if (!confirm('确定要加载预设模板吗？这不会删除您已有的自定义模板。')) return;
+
+            showNotification('🔄 正在加载预设模板...');
+
+            for (const template of defaultTemplates) {
+                // 检查是否已存在同名模板
+                const existing = await db.getAllTemplates(template.type);
+                const exists = existing.some(t => t.name === template.name);
+
+                if (!exists) {
+                    await db.addTemplate(template);
+                }
+            }
+
+            showNotification('✅ 预设模板加载完成');
+            renderTemplates(document.getElementById('mainContent'));
+        }
+
+        // 预览模板
+        async function previewTemplate(id) {
+            const template = await db.getTemplate(id);
+            if (!template) return;
+
+            const categories = {
+                'trope': { name: '桥段模板', icon: '🎭' },
+                'character': { name: '角色模板', icon: '👤' },
+                'chapter': { name: '章节模板', icon: '📄' },
+                'outline': { name: '大纲模板', icon: '📋' }
+            };
+
+            const content = JSON.stringify(template.content, null, 2);
+
+            showModal(`👁️ 预览：${template.name}`, `
+                <div style="margin-bottom: 15px;">
+                    <span class="category-tag">${categories[template.type]?.icon || '📄'} ${categories[template.type]?.name || template.type}</span>
+                </div>
+                <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="color: #aaa; margin-bottom: 10px;">${template.description || '暂无描述'}</p>
+                    <div style="margin-bottom: 10px;">
+                        ${template.tags?.map(tag => `<span class="tag" style="margin-right: 5px;">${tag}</span>`).join('') || ''}
+                    </div>
+                    <div style="font-size: 12px; color: #666;">
+                        使用次数: ${template.usageCount || 0} | 创建时间: ${new Date(template.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+                <div style="background: #0f0f23; padding: 15px; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                    <pre style="margin: 0; font-size: 12px; color: #00d4ff;">${escapeHtml(content)}</pre>
+                </div>
+            `, null);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 编辑模板
+        async function editTemplate(id) {
+            const template = await db.getTemplate(id);
+            if (!template) return;
+
+            showModal('✏️ 编辑模板', `
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label>模板名称</label>
+                        <input type="text" id="editTemplateName" class="form-input" value="${template.name}">
+                    </div>
+                    <div>
+                        <label>模板描述</label>
+                        <textarea id="editTemplateDesc" class="form-input" rows="3">${template.description || ''}</textarea>
+                    </div>
+                    <div>
+                        <label>标签（用逗号分隔）</label>
+                        <input type="text" id="editTemplateTags" class="form-input" value="${template.tags?.join(', ') || ''}">
+                    </div>
+                </div>
+            `, async () => {
+                const name = document.getElementById('editTemplateName').value.trim();
+                const description = document.getElementById('editTemplateDesc').value.trim();
+                const tags = document.getElementById('editTemplateTags').value.split(',').map(t => t.trim()).filter(t => t);
+
+                if (!name) {
+                    showNotification('❌ 请输入模板名称');
+                    return;
+                }
+
+                await db.updateTemplate(id, { name, description, tags });
+                showNotification('✅ 模板已更新');
+                renderTemplates(document.getElementById('mainContent'));
+            });
+        }
+
+        // 删除模板
+        async function deleteTemplate(id) {
+            const template = await db.getTemplate(id);
+            if (!template) return;
+
+            if (!confirm(`确定要删除模板 "${template.name}" 吗？`)) return;
+
+            await db.deleteTemplate(id);
+            showNotification('✅ 模板已删除');
+            renderTemplates(document.getElementById('mainContent'));
+        }
+
+        // 导出单个模板
+        async function exportTemplate(id) {
+            const template = await db.getTemplate(id);
+            if (!template) return;
+
+            const data = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                templates: [template]
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `template_${template.name.replace(/\s+/g, '_')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showNotification('✅ 模板已导出');
+        }
+
+        // 导出所有模板
+        async function exportAllTemplates() {
+            const data = await db.exportTemplates();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `all_templates_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showNotification(`✅ 已导出 ${data.count} 个模板`);
+        }
+
+        // 导入模板
+        function importTemplates() {
+            document.getElementById('templateImportFile').click();
+        }
+
+        async function handleTemplateImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                if (!data.templates || !Array.isArray(data.templates)) {
+                    throw new Error('Invalid template file');
+                }
+
+                const imported = await db.importTemplates(data);
+                showNotification(`✅ 成功导入 ${imported.length} 个模板`);
+                renderTemplates(document.getElementById('mainContent'));
+            } catch (e) {
+                showNotification('❌ 导入失败：' + e.message);
+            }
+
+            event.target.value = '';
+        }
+
+        // ==================== 模板选择器弹窗 ====================
+        let templateSelectorCallback = null;
+
+        async function showTemplateSelector(type, callback) {
+            templateSelectorCallback = callback;
+            const templates = await db.getAllTemplates(type);
+            const categories = {
+                'trope': { name: '桥段模板', icon: '🎭' },
+                'character': { name: '角色模板', icon: '👤' },
+                'chapter': { name: '章节模板', icon: '📄' },
+                'outline': { name: '大纲模板', icon: '📋' }
+            };
+            const typeName = categories[type]?.name || type;
+
+            if (templates.length === 0) {
+                showNotification('⚠️ 暂无此类型模板，请先保存或加载预设模板');
+                return;
+            }
+
+            const html = `
+                <div style="display: grid; gap: 10px; max-height: 400px; overflow-y: auto;">
+                    ${templates.map(t => `
+                        <div class="template-option" onclick="selectTemplate(${t.id})" style="
+                            background: #1a1a2e;
+                            padding: 15px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            border: 2px solid transparent;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.borderColor='#e94560'" onmouseout="this.style.borderColor='transparent'">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h4 style="margin: 0; font-size: 14px;">${t.name}</h4>
+                                <span style="font-size: 12px; color: #666;">使用 ${t.usageCount || 0} 次</span>
+                            </div>
+                            <p style="margin: 5px 0 0 0; font-size: 12px; color: #888;">${t.description || '暂无描述'}</p>
+                            ${t.tags?.length ? `<div style="margin-top: 8px;">${t.tags.map(tag => `<span class="tag" style="font-size: 11px;">${tag}</span>`).join('')}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            showModal(`🎨 选择${typeName}`, html, null);
+        }
+
+        async function selectTemplate(id) {
+            const template = await db.getTemplate(id);
+            if (template) {
+                await db.incrementTemplateUsage(id);
+                closeModal();
+                if (templateSelectorCallback) {
+                    templateSelectorCallback(template);
+                }
+            }
+        }
+
+        // ==================== 保存模板功能 ====================
+        async function showSaveTemplateDialog(type, content, defaultName = '') {
+            const categories = {
+                'trope': { name: '桥段模板', icon: '🎭' },
+                'character': { name: '角色模板', icon: '👤' },
+                'chapter': { name: '章节模板', icon: '📄' },
+                'outline': { name: '大纲模板', icon: '📋' }
+            };
+
+            // 预定义分类选项
+            const categoryOptions = {
+                'trope': ['桥段组合', '装逼打脸', '扮猪吃虎', '逆袭成长'],
+                'character': ['主角', '反派', '女主', '配角'],
+                'chapter': ['章节结构', '开局', '高潮', '过渡'],
+                'outline': ['升级流', '复仇', '种田', '悬疑']
+            };
+
+            const options = categoryOptions[type] || ['其他'];
+
+            showModal('💾 保存为模板', `
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label>模板名称 *</label>
+                        <input type="text" id="saveTemplateName" class="form-input" value="${defaultName}" placeholder="输入模板名称">
+                    </div>
+                    <div>
+                        <label>模板描述</label>
+                        <textarea id="saveTemplateDesc" class="form-input" rows="2" placeholder="描述这个模板的用途..."></textarea>
+                    </div>
+                    <div>
+                        <label>分类</label>
+                        <select id="saveTemplateCategory" class="form-input">
+                            ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label>标签（用逗号分隔）</label>
+                        <input type="text" id="saveTemplateTags" class="form-input" placeholder="标签1, 标签2, 标签3">
+                    </div>
+                </div>
+            `, async () => {
+                const name = document.getElementById('saveTemplateName').value.trim();
+                const description = document.getElementById('saveTemplateDesc').value.trim();
+                const category = document.getElementById('saveTemplateCategory').value;
+                const tags = document.getElementById('saveTemplateTags').value.split(',').map(t => t.trim()).filter(t => t);
+
+                if (!name) {
+                    showNotification('❌ 请输入模板名称');
+                    return;
+                }
+
+                const template = {
+                    name,
+                    type,
+                    category,
+                    description,
+                    content,
+                    tags
+                };
+
+                await db.addTemplate(template);
+                showNotification('✅ 模板已保存');
+            });
+        }
+
         // ==================== 历史记录页面 ====================
         async function renderHistory(container) {
             const history = await historyManager.getHistoryList();
@@ -8335,6 +9649,7 @@
                 case 'names': renderNameGenerator(main); break;
                 case 'favorites': renderFavorites(main); break;
                 case 'data': renderData(main); break;
+                case 'templates': renderTemplates(main); break;
             }
         }
 
