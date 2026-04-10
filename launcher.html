@@ -1439,26 +1439,27 @@
 
         // 加载世界观数据
         async function loadWorldviewData() {
-            const worldviewFiles = [
-                'worldview_2011_2017.json'
-            ];
-            
+            // 从 data.json 加载世界观数据
             try {
-                for (const file of worldviewFiles) {
-                    const response = await fetch(`./${file}`);
-                    if (response.ok) {
-                        const worldviews = await response.json();
+                const response = await fetch('./data.json?t=' + new Date().getTime());
+                if (response.ok) {
+                    const data = await response.json();
+                    const worldbuildingLibrary = data.worldbuildingLibrary;
+                    
+                    if (worldbuildingLibrary && worldbuildingLibrary.entries) {
+                        const worldviews = worldbuildingLibrary.entries;
                         
                         // 检查是否已存在
                         const existingSettings = await db.getAll('world_settings');
                         const existingTitles = new Set(existingSettings.map(s => s.title));
                         
                         let addedCount = 0;
+                        let skippedCount = 0;
+                        
                         for (const world of worldviews) {
                             const title = `${world.book} - 世界观`;
                             if (!existingTitles.has(title)) {
-                                const content = `
-**作者**: ${world.author}
+                                const content = `**作者**: ${world.author}
 **年份**: ${world.year}
 **背景类型**: ${world.backgroundType}
 **力量类型**: ${world.powerType}
@@ -1469,21 +1470,41 @@ ${world.culture}
 **世界特色**:
 ${world.features}
 
-**标签**: ${world.tags.join(', ')}
-                                `.trim();
+**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                                
+                                // 根据标签判断分类
+                                let category = 'other';
+                                const tags = world.tags || [];
+                                if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) {
+                                    category = 'cultivation';
+                                } else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) {
+                                    category = 'modern';
+                                } else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) {
+                                    category = 'scifi';
+                                } else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) {
+                                    category = 'apocalypse';
+                                } else if (tags.some(t => ['历史', '架空历史', '穿越', '门阀', '士族'].includes(t))) {
+                                    category = 'history';
+                                } else if (tags.some(t => ['奇幻', '魔法', '西方', '魔兽'].includes(t))) {
+                                    category = 'magic';
+                                } else if (tags.some(t => ['灵异', '民俗', '盗墓', '克苏鲁'].includes(t))) {
+                                    category = 'horror';
+                                }
                                 
                                 await db.add('world_settings', {
-                                    category: 'other',
+                                    category: category,
                                     title: title,
                                     content: content
                                 });
                                 addedCount++;
+                            } else {
+                                skippedCount++;
                             }
                         }
-                        console.log(`已加载 ${addedCount} 条新世界观从 ${file} (共${worldviews.length}条)`);
-                    } else {
-                        console.warn(`世界观文件 ${file} 加载失败: ${response.status}`);
+                        console.log(`世界观库加载完成: 新增 ${addedCount} 条, 跳过 ${skippedCount} 条 (总计 ${worldviews.length} 条)`);
                     }
+                } else {
+                    console.warn(`data.json 加载失败: ${response.status}`);
                 }
             } catch (error) {
                 console.error('加载世界观数据失败:', error);
