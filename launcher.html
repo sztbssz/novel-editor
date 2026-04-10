@@ -1398,6 +1398,21 @@
             });
         });
 
+        // 带超时的fetch
+        async function fetchWithTimeout(url, timeout = 10000) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
         // 加载角色数据
         async function loadCharacterData() {
             const baseUrl = 'https://sztbssz.github.io/novel-editor/';
@@ -1409,33 +1424,56 @@
                 'characters_2021_2026_full.json'
             ];
             
-            try {
-                for (const file of characterFiles) {
-                    const response = await fetch(`${baseUrl}${file}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        // 处理不同格式：数组或对象（带 characters 字段）
-                        let characters = Array.isArray(data) ? data : (data.characters || []);
+            console.log('开始加载角色数据...');
+            let totalLoaded = 0;
+            let totalFailed = 0;
+            
+            for (const file of characterFiles) {
+                let retries = 3;
+                let success = false;
+                
+                while (retries > 0 && !success) {
+                    try {
+                        console.log(`加载 ${file}... (剩余重试: ${retries})`);
+                        const response = await fetchWithTimeout(`${baseUrl}${file}`, 15000);
                         
-                        // 检查是否已存在
-                        const existingChars = await db.getAll('characters');
-                        const existingNames = new Set(existingChars.map(c => c.name));
-                        
-                        let addedCount = 0;
-                        for (const char of characters) {
-                            if (!existingNames.has(char.name)) {
-                                await db.add('characters', char);
-                                addedCount++;
+                        if (response.ok) {
+                            const data = await response.json();
+                            let characters = Array.isArray(data) ? data : (data.characters || []);
+                            
+                            const existingChars = await db.getAll('characters');
+                            const existingNames = new Set(existingChars.map(c => c.name));
+                            
+                            let addedCount = 0;
+                            for (const char of characters) {
+                                if (!existingNames.has(char.name)) {
+                                    await db.add('characters', char);
+                                    addedCount++;
+                                }
                             }
+                            
+                            totalLoaded += addedCount;
+                            console.log(`✅ ${file}: 新增 ${addedCount} 个角色`);
+                            success = true;
+                        } else {
+                            throw new Error(`HTTP ${response.status}`);
                         }
-                        console.log(`已加载 ${addedCount} 个新角色从 ${file} (共${characters.length}个)`);
-                    } else {
-                        console.warn(`角色文件 ${file} 加载失败: ${response.status}`);
+                    } catch (error) {
+                        retries--;
+                        console.warn(`❌ ${file} 加载失败: ${error.message}`);
+                        if (retries > 0) {
+                            await new Promise(r => setTimeout(r, 1000));
+                        } else {
+                            totalFailed++;
+                        }
                     }
                 }
-            } catch (error) {
-                console.error('加载角色数据失败:', error);
+                
+                // 每个文件加载后延迟，避免并发过多
+                await new Promise(r => setTimeout(r, 200));
             }
+            
+            console.log(`角色数据加载完成: 成功 ${totalLoaded} 个, 失败 ${totalFailed} 个文件`);
         }
 
         // 加载世界观数据
