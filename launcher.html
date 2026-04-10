@@ -2918,27 +2918,20 @@
             
             if (generatedNames.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-names-state">
-                        <div class="empty-names-state-icon">✨</div>
-                        <h3>输入角色描述，生成专属名字</h3>
-                        <p>例如："一个冷酷无情的剑客，出身贫寒，性格坚毅"</p>
+                    <div style="text-align:center;padding:60px 20px;color:#666;">
+                        <div style="font-size:32px;margin-bottom:10px;">✨</div>
+                        <p>输入描述，点击生成</p>
                     </div>
                 `;
                 return;
             }
             
             container.innerHTML = `
-                <div class="names-result-title">
-                    <span>🎲 为你生成的5个名字</span>
-                    <span style="font-size: 13px; color: #888;">点击卡片复制</span>
-                </div>
-                <div class="names-grid">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;">
                     ${generatedNames.map((item, index) => `
-                        <div class="name-card" onclick="copyName(${index})" id="nameCard${index}">
-                            <span class="name-style-tag">${item.style}</span>
-                            <div class="name-text">${item.name}</div>
-                            <div class="name-meaning">${item.meaning}</div>
-                            <span class="copy-hint">📋 点击复制</span>
+                        <div class="name-card" onclick="copyName(${index})" id="nameCard${index}" style="padding:20px;cursor:pointer;">
+                            <div style="font-size:24px;font-weight:600;color:#fff;margin-bottom:8px;">${item.name}</div>
+                            <div style="font-size:12px;color:#888;">${item.meaning}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -2951,31 +2944,8 @@
             if (!name) return;
             
             navigator.clipboard.writeText(name).then(() => {
-                const card = document.getElementById(`nameCard${index}`);
-                if (card) {
-                    card.classList.add('copied');
-                    const hint = card.querySelector('.copy-hint');
-                    if (hint) hint.textContent = '✅ 已复制';
-                }
                 showNotification(`已复制：${name}`);
-                
-                setTimeout(() => {
-                    if (card) {
-                        card.classList.remove('copied');
-                        const hint = card.querySelector('.copy-hint');
-                        if (hint) hint.textContent = '📋 点击复制';
-                    }
-                }, 1500);
             });
-        }
-
-        // 切换名字类型
-        function setNameType(type) {
-            currentNameType = type;
-            document.querySelectorAll('.name-type-option').forEach(el => {
-                el.classList.remove('active');
-            });
-            document.querySelector(`.name-type-option[data-type="${type}"]`)?.classList.add('active');
         }
 
         // 渲染起名字页面
@@ -2983,45 +2953,38 @@
             container.innerHTML = `
                 <div class="header">
                     <h2>✨ 起名字</h2>
-                    <p style="color: #888; font-size: 13px;">根据角色描述智能生成名字</p>
                 </div>
                 
-                <div class="name-generator-container">
-                    <div class="name-input-section">
-                        <div class="name-input-label">📝 描述角色的性格、身份、背景等信息</div>
+                <div style="max-width:800px;margin:0 auto;">
+                    <div style="background:#16213e;border-radius:12px;padding:20px;margin-bottom:20px;">
                         <textarea 
-                            class="name-input-textarea" 
                             id="nameDescription" 
-                            placeholder="例如：一个冷酷无情的剑客，出身贫寒，性格坚毅，行走江湖十年，从不留活口..."
-                        </textarea>
+                            placeholder="输入角色描述，如：一个冷酷无情的剑客"
+                            style="width:100%;min-height:80px;padding:15px;background:#1a1a2e;border:1px solid #0f3460;border-radius:8px;color:#fff;font-size:14px;resize:vertical;margin-bottom:15px;"
+                        ></textarea>
                         
-                        <div class="name-type-selector">
-                            <div class="name-type-option active" data-type="chinese" onclick="setNameType('chinese')">
-                                <input type="radio" name="nameType" value="chinese" checked>
-                                <span>🇨🇳 中文姓名</span>
-                            </div>
-                            <div class="name-type-option" data-type="western" onclick="setNameType('western')">
-                                <input type="radio" name="nameType" value="western">
-                                <span>🌍 西方名字</span>
-                            </div>
+                        <div style="display:flex;gap:10px;">
+                            <select id="nameTypeSelect" onchange="currentNameType = this.value" 
+                                style="padding:10px 15px;background:#1a1a2e;border:1px solid #0f3460;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;"
+                            >
+                                <option value="chinese">中文姓名</option>
+                                <option value="western">西方名字</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="generateNames()" style="flex:1;">
+                                生成名字
+                            </button>
                         </div>
-                        
-                        <button class="btn btn-primary generate-btn" onclick="generateNames()">
-                            ✨ 生成名字
-                        </button>
                     </div>
                     
-                    <div class="names-result-section" id="namesResultContainer">
-                        <div class="empty-names-state">
-                            <div class="empty-names-state-icon">✨</div>
-                            <h3>输入角色描述，生成专属名字</h3>
-                            <p>例如："一个冷酷无情的剑客，出身贫寒，性格坚毅"</p>
+                    <div id="namesResultContainer" style="background:#16213e;border-radius:12px;padding:20px;min-height:150px;">
+                        <div style="text-align:center;padding:60px 20px;color:#666;">
+                            <div style="font-size:32px;margin-bottom:10px;">✨</div>
+                            <p>输入描述，点击生成</p>
                         </div>
                     </div>
                 </div>
             `;
         }
-
         // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
