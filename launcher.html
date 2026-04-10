@@ -2366,8 +2366,12 @@
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
             currentTropeDetail = null;
-            // 重新渲染整个页面以确保状态一致
-            await renderPlot(document.getElementById('mainContent'));
+            // 根据当前页面决定渲染方式
+            if (currentPage === 'plot') {
+                await renderPlot(document.getElementById('mainContent'));
+            } else {
+                await renderTrope(document.getElementById('mainContent'));
+            }
         }
         
         // 打开桥段详情弹窗
