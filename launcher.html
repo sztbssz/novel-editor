@@ -704,6 +704,181 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
+
+        /* 桥段编辑器样式 */
+        .scene-editor-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .scene-type-section {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+        .scene-type-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .scene-type-select {
+            width: 100%;
+            padding: 15px;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .scene-type-select:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+        .scene-type-desc {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.05);
+            border-left: 3px solid #00d4ff;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.6;
+            min-height: 60px;
+        }
+        .scene-generate-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .scene-generate-btn {
+            padding: 16px 50px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #e94560, #ff6b8a);
+            border: none;
+            border-radius: 30px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+        }
+        .scene-generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+        }
+        .scene-generate-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .scene-result-section {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 30px;
+            min-height: 300px;
+        }
+        .scene-result-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+        }
+        .scene-result-meta {
+            font-size: 13px;
+            color: #888;
+            background: #1a1a2e;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .scene-result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .scene-result-meta .meta-label {
+            color: #00d4ff;
+        }
+        .scene-result-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            line-height: 1.8;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        .scene-result-textarea:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+        .scene-result-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .scene-action-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .scene-action-btn.copy {
+            background: #e94560;
+            color: #fff;
+        }
+        .scene-action-btn.copy:hover {
+            background: #d63a54;
+        }
+        .scene-action-btn.regenerate {
+            background: #0f3460;
+            color: #fff;
+        }
+        .scene-action-btn.regenerate:hover {
+            background: #1a4a7a;
+        }
+        .scene-empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #666;
+        }
+        .scene-empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .scene-empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .scene-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .scene-tag {
+            padding: 5px 12px;
+            background: rgba(233, 69, 96, 0.15);
+            border-radius: 15px;
+            font-size: 12px;
+            color: #e94560;
+        }
     </style>
 </head>
 <body>
@@ -719,6 +894,7 @@
                 <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
                 <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
                 <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
+                <a class="nav-item" data-page="scene"><i>📝</i>桥段编辑器</a>
                 <a class="nav-item" data-page="names"><i>✨</i>起名字</a>
                 <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
             </nav>
@@ -1785,8 +1961,279 @@
                 ${charLoadHint}
             `;
         }
-        
-        // 角色管理页面
+
+        // ==================== 桥段编辑器页面 ====================
+        let currentSceneTrope = null; // 当前生成的桥段
+        let currentSceneSubType = ''; // 当前选择的子类型
+
+        // 桥段编辑器页面
+        async function renderSceneEditor(container) {
+            // 确保桥段数据已加载
+            if (!dataLoadState.tropes.loaded) {
+                await loadTropeData();
+            }
+
+            // 获取所有子类型
+            const subTypes = getAllSubTypes();
+
+            container.innerHTML = `
+                <div class="header">
+                    <h2>📝 桥段编辑器</h2>
+                    <span style="color:#888;font-size:14px">根据类型生成约200字桥段文字</span>
+                </div>
+
+                <div class="scene-editor-container">
+                    <!-- 类型选择区 -->
+                    <div class="scene-type-section">
+                        <div class="scene-type-label">选择桥段类型</div>
+                        <select class="scene-type-select" id="sceneTypeSelect" onchange="onSceneTypeChange()">
+                            <option value="">-- 请选择桥段类型 --</option>
+                            ${subTypes.map(st => `<option value="${st.name}" data-desc="${st.desc || ''}">${st.name}</option>`).join('')}
+                        </select>
+                        <div class="scene-type-desc" id="sceneTypeDesc">
+                            请选择一个桥段类型，系统将随机生成该类型的桥段内容
+                        </div>
+                    </div>
+
+                    <!-- 生成按钮 -->
+                    <div class="scene-generate-section">
+                        <button class="scene-generate-btn" id="sceneGenerateBtn" onclick="generateScene()">
+                            ✨ 生成桥段
+                        </button>
+                    </div>
+
+                    <!-- 结果显示区 -->
+                    <div class="scene-result-section" id="sceneResultSection" style="display:none;">
+                        <div class="scene-result-title">
+                            <span>🎬 生成结果</span>
+                            <span style="font-size:13px;color:#888" id="sceneResultCount"></span>
+                        </div>
+                        <div class="scene-result-meta" id="sceneResultMeta"></div>
+                        <textarea class="scene-result-textarea" id="sceneResultTextarea" placeholder="生成的桥段内容将显示在这里..."></textarea>
+                        <div class="scene-tags" id="sceneTags"></div>
+                        <div class="scene-result-actions">
+                            <button class="scene-action-btn copy" onclick="copySceneContent()">
+                                📋 复制内容
+                            </button>
+                            <button class="scene-action-btn regenerate" onclick="regenerateScene()">
+                                🔄 重新生成
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div class="scene-empty-state" id="sceneEmptyState">
+                        <div class="scene-empty-state-icon">🎭</div>
+                        <h3>选择类型并生成桥段</h3>
+                        <p>从上方选择一种桥段类型，点击"生成桥段"按钮即可生成约200字的桥段内容</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 获取所有子类型
+        function getAllSubTypes() {
+            if (!tropesData || !tropesData.categories) return [];
+
+            const subTypes = [];
+            const seen = new Set();
+
+            // 必须包含的核心类型
+            const requiredTypes = ['装逼打脸', '废物逆袭', '天降机缘', '无敌流', '无限流', 
+                                   '武魂觉醒', '历史改写', '民俗禁忌', '闷声发大财', '金手指'];
+
+            // 从 categories 中提取子类型
+            tropesData.categories.forEach(cat => {
+                if (cat.subTypes) {
+                    cat.subTypes.forEach(st => {
+                        const name = st.name || st;
+                        if (!seen.has(name)) {
+                            seen.add(name);
+                            subTypes.push({
+                                name: name,
+                                category: cat.name,
+                                desc: getSubTypeDescription(name)
+                            });
+                        }
+                    });
+                }
+            });
+
+            // 确保核心类型存在
+            requiredTypes.forEach(type => {
+                if (!seen.has(type)) {
+                    subTypes.push({
+                        name: type,
+                        category: '核心类型',
+                        desc: getSubTypeDescription(type)
+                    });
+                }
+            });
+
+            // 按名称排序
+            return subTypes.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+        }
+
+        // 获取子类型描述
+        function getSubTypeDescription(subType) {
+            const descriptions = {
+                '装逼打脸': '主角展现隐藏实力，让轻视他的人震惊后悔的经典桥段',
+                '废物逆袭': '主角从废材状态崛起，打破他人偏见的励志桥段',
+                '天降机缘': '主角意外获得宝物、传承或奇遇，开启变强之路',
+                '无敌流': '主角拥有绝对实力，横扫一切对手的爽文桥段',
+                '无限流': '主角穿梭于不同副本世界，完成任务求生的桥段',
+                '武魂觉醒': '主角觉醒特殊武魂或血脉，获得强大力量',
+                '历史改写': '穿越者利用先知优势改变历史走向的桥段',
+                '民俗禁忌': '涉及民间传说、禁忌规则的悬疑恐怖桥段',
+                '闷声发大财': '主角低调积累实力，暗中布局的苟道桥段',
+                '金手指': '主角获得系统、神器等特殊辅助的桥段',
+                '扮猪吃老虎': '主角隐藏真实实力，关键时刻爆发的桥段',
+                '智斗博弈': '主角运用智慧策略，与对手进行心理较量的桥段',
+                '绝境翻盘': '主角在绝境中找到生机，反败为胜的桥段',
+                '身份揭晓': '主角隐藏身份曝光，震惊众人的桥段',
+                '全场震惊': '主角展现惊人实力或成就，让在场所有人震惊',
+                '护短名场面': '主角为保护亲友，强势出手护短的桥段',
+                '重生复仇': '重生者利用前世记忆报复仇人的桥段',
+                '穿越改命': '穿越者改变命运，避免悲剧发生的桥段',
+                '能力觉醒': '主角觉醒特殊能力，开启非凡人生',
+                '系统流': '主角获得系统辅助，通过完成任务变强',
+                '序列体系': '通过晋升序列等级获得力量的克苏鲁风格设定',
+                '神秘组织': '主角建立或加入神秘组织，幕后操控局势',
+                '末日危机': '面对末日威胁，主角带领人类求生的桥段',
+                '民俗禁忌': '涉及民间禁忌和诡异规则的恐怖桥段',
+                '家族兴衰': '主角带领家族从衰落到兴盛的群像桥段',
+                '种田经营': '主角经营产业、发展势力的慢热桥段',
+                '问道本心': '主角在修行中坚守本心，追求真我的哲学桥段',
+                '探案流': '主角通过推理侦破案件，揭开真相的桥段',
+                '智斗流': '主角运用情商和智慧化解危机的桥段',
+                '捡漏淘宝': '主角慧眼识珠，低价买到珍贵物品的桥段',
+                '经典场景': '网文中广为流传、极具代表性的经典场景'
+            };
+
+            return descriptions[subType] || `${subType}类型的经典网文桥段`;
+        }
+
+        // 桥段类型改变
+        function onSceneTypeChange() {
+            const select = document.getElementById('sceneTypeSelect');
+            const descDiv = document.getElementById('sceneTypeDesc');
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (select.value) {
+                const desc = selectedOption.getAttribute('data-desc') || getSubTypeDescription(select.value);
+                descDiv.innerHTML = `<strong style="color:#00d4ff">${select.value}</strong>：${desc}`;
+                currentSceneSubType = select.value;
+            } else {
+                descDiv.textContent = '请选择一个桥段类型，系统将随机生成该类型的桥段内容';
+                currentSceneSubType = '';
+            }
+        }
+
+        // 生成桥段
+        function generateScene() {
+            const select = document.getElementById('sceneTypeSelect');
+            const subType = select.value;
+
+            if (!subType) {
+                showNotification('请先选择一个桥段类型');
+                return;
+            }
+
+            // 查找匹配该类型的桥段
+            const matchingTropes = tropesData.tropes?.filter(t => t.subType === subType) || [];
+
+            if (matchingTropes.length > 0) {
+                // 从本地库中随机选择一个
+                currentSceneTrope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
+                displaySceneResult(currentSceneTrope);
+            } else {
+                // 本地没有匹配的，AI生成（模拟）
+                currentSceneTrope = generateAIScene(subType);
+                displaySceneResult(currentSceneTrope);
+            }
+        }
+
+        // AI 生成桥段（备用）
+        function generateAIScene(subType) {
+            const aiTemplates = {
+                '装逼打脸': '主角在众人面前展现出隐藏已久的实力，一招击败曾嘲笑他的对手。围观群众从轻视变为震惊，曾经看不起主角的人纷纷跪地求饶。主角淡然一笑，转身离去，留下一个潇洒的背影和满地的惊叹。',
+                '废物逆袭': '曾被判定为废物的少年，在一次意外中觉醒天赋。他忍受着常人难以想象的痛苦修炼，终于在宗门大比中一鸣惊人。那些曾经欺辱过他的人目瞪口呆，而主角只是平静地说：这只是开始。',
+                '天降机缘': '主角在绝境中意外跌落悬崖，却在一处隐秘山洞中发现上古传承。神秘的老者残魂传授绝世功法，赠送神兵利器。主角获得逆天改命的资本，从此踏上强者之路。',
+                '无敌流': '面对强敌的围攻，主角站在原地纹丝不动。当所有攻击落在他身上时，竟连衣角都无法掀起。他轻轻一挥手，所有敌人如落叶般飞散。这就是绝对实力的差距，令人绝望的强大。',
+                '无限流': '白光闪过，主角被传送到一个陌生的空间。脑海中响起冰冷的提示音：欢迎进入死亡游戏，完成任务即可回归现实世界。四周是同样迷茫的参与者，而危险已经悄然逼近。',
+                '武魂觉醒': '觉醒仪式上，主角双手放在水晶球上，却迟迟没有反应。就在众人准备嘲笑时，一道金光冲天而起，传说中的神级武魂显现。整个广场陷入死寂，随后爆发出震天的惊呼声。',
+                '历史改写': '穿越者站在城墙上，看着即将到来的敌军。他深知按照历史，这座城将在今日沦陷。但这一次不同了，他提前布置的火炮阵列已经就位，历史将从这一刻开始改写。',
+                '民俗禁忌': '深夜，主角独自走在乡间小路上。路旁的纸人突然转过头，露出诡异的笑容。他想起了村里的老人说过的话：走夜路千万别回头，也别答应陌生人的呼唤。但现在，似乎有人在他耳边轻轻吹气...',
+                '闷声发大财': '在别人拼命争抢宝物时，主角悄悄退到角落，取走了一块不起眼的石头。没有人知道，这块石头中蕴含着上古神兽的精血。低调行事，暗中积累，这才是真正的生存之道。',
+                '金手指': '一道金光闪过，主角脑海中响起机械的声音：系统绑定成功。从此他可以通过完成任务获得奖励，兑换各种神奇道具。虽然前路依旧艰险，但他已经有了改变命运的底气。'
+            };
+
+            const content = aiTemplates[subType] || `主角在${subType}的过程中，展现出非凡的才能和毅力。面对重重困难和质疑，他始终坚持自己的信念，最终突破极限，创造出令人惊叹的奇迹。这一桥段展现了主角的成长与蜕变，是${subType}类型的经典呈现。`;
+
+            return {
+                title: `${subType}桥段`,
+                content: content,
+                book: 'AI生成',
+                author: '桥段编辑器',
+                year: new Date().getFullYear(),
+                tags: [subType, 'AI生成'],
+                subType: subType,
+                isAI: true
+            };
+        }
+
+        // 显示桥段结果
+        function displaySceneResult(trope) {
+            const emptyState = document.getElementById('sceneEmptyState');
+            const resultSection = document.getElementById('sceneResultSection');
+            const textarea = document.getElementById('sceneResultTextarea');
+            const metaDiv = document.getElementById('sceneResultMeta');
+            const tagsDiv = document.getElementById('sceneTags');
+
+            emptyState.style.display = 'none';
+            resultSection.style.display = 'block';
+
+            // 填充内容
+            textarea.value = trope.content;
+
+            // 元信息
+            metaDiv.innerHTML = `
+                <span><span class="meta-label">📖</span> ${trope.book}</span>
+                <span><span class="meta-label">✍️</span> ${trope.author}</span>
+                <span><span class="meta-label">📅</span> ${trope.year}</span>
+                <span><span class="meta-label">🎭</span> ${trope.subType}</span>
+                ${trope.isAI ? '<span style="color:#e94560">🤖 AI生成</span>' : ''}
+            `;
+
+            // 标签
+            if (trope.tags && trope.tags.length > 0) {
+                tagsDiv.innerHTML = trope.tags.map(tag => `<span class="scene-tag">${tag}</span>`).join('');
+            }
+
+            // 统计字数
+            const count = trope.content.length;
+            document.getElementById('sceneResultCount').textContent = `约 ${count} 字`;
+        }
+
+        // 复制桥段内容
+        function copySceneContent() {
+            const textarea = document.getElementById('sceneResultTextarea');
+            textarea.select();
+            document.execCommand('copy');
+            showNotification('✅ 内容已复制到剪贴板');
+        }
+
+        // 重新生成桥段
+        function regenerateScene() {
+            if (currentSceneSubType) {
+                const select = document.getElementById('sceneTypeSelect');
+                select.value = currentSceneSubType;
+                generateScene();
+                showNotification('🔄 已重新生成桥段');
+            }
+        }
+
+        // ==================== 角色管理页面 ====================
         async function renderCharacters(container, filterRole = 'all') {
             // 如果数据未加载且不在加载中，显示加载提示
             if (!dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
@@ -3198,6 +3645,7 @@
                 case 'world': renderWorld(main); break;
                 case 'plot': renderPlot(main); break;
                 case 'trope': renderTrope(main); break;
+                case 'scene': renderSceneEditor(main); break;
                 case 'names': renderNameGenerator(main); break;
                 case 'data': renderData(main); break;
             }
