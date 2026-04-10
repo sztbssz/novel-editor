@@ -2070,6 +2070,47 @@
             console.log(`✅ 导入完成: 新增 ${addedCount} 个，跳过 ${skippedCount} 个`);
         }
 
+        // 导入世界观数据到DB
+        async function importWorldviewToDB(data, onProgress = null) {
+            if (!data.worldbuildingLibrary || !data.worldbuildingLibrary.entries) return;
+            
+            const worldviews = data.worldbuildingLibrary.entries;
+            const existingSettings = await db.getAll('world_settings');
+            const existingTitles = new Set(existingSettings.map(s => s.title));
+            
+            let addedCount = 0;
+            const total = worldviews.length;
+            
+            for (let i = 0; i < worldviews.length; i++) {
+                const world = worldviews[i];
+                const title = `${world.book} - 世界观`;
+                
+                if (!existingTitles.has(title)) {
+                    const content = `**作者**: ${world.author}\n**年份**: ${world.year}\n**背景类型**: ${world.backgroundType}\n**力量类型**: ${world.powerType}\n\n**文化习俗**:\n${world.culture}\n\n**世界特色**:\n${world.features}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                    
+                    let category = 'other';
+                    const tags = world.tags || [];
+                    if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
+                    else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
+                    else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
+                    else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
+                    else if (tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
+                    else if (tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
+                    else if (tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
+                    
+                    await db.add('world_settings', { category, title, content });
+                    addedCount++;
+                }
+                
+                if (onProgress && i % 3 === 0) {
+                    onProgress(30 + (i / total) * 70);
+                }
+            }
+            
+            if (onProgress) onProgress(100);
+            console.log(`✅ 世界观导入完成: 新增 ${addedCount} 条`);
+        }
+
         // 加载世界观数据（带UI）
         async function loadWorldviewDataWithUI() {
             if (dataLoadState.worldview.loading || dataLoadState.worldview.loaded) return;
@@ -4370,9 +4411,43 @@
             const world = await db.getAll('world_settings');
             const plots = await db.getAll('plots');
             
+            // 获取智能缓存状态
+            const charCacheVersion = await smartCache.getLocalVersion('characters_all.json');
+            const worldCacheVersion = await smartCache.getLocalVersion('data.json');
+            
+            const charVersionText = charCacheVersion ? 
+                `v${charCacheVersion.version} · ${new Date(charCacheVersion.cachedAt).toLocaleDateString('zh-CN')}` : '无缓存';
+            const worldVersionText = worldCacheVersion ? 
+                `v${worldCacheVersion.version} · ${new Date(worldCacheVersion.cachedAt).toLocaleDateString('zh-CN')}` : '无缓存';
+            
             container.innerHTML = `
                 <div class="header">
                     <h2>💾 数据管理</h2>
+                </div>
+                
+                <div class="card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <span class="card-title">📦 智能缓存状态</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
+                            <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #00d4ff;">
+                                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">👤 角色数据缓存</div>
+                                <div style="font-size: 16px; color: #fff; font-weight: 500;">${charVersionText}</div>
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">${dataLoadState.characters.cached ? '✅ 本地可用' : '⚠️ 未缓存'}</div>
+                            </div>
+                            <div style="background: #1a1a2e; padding: 15px; border-radius: 8px; border-left: 3px solid #00d4ff;">
+                                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">🌍 世界观数据缓存</div>
+                                <div style="font-size: 16px; color: #fff; font-weight: 500;">${worldVersionText}</div>
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">${dataLoadState.worldview.cached ? '✅ 本地可用' : '⚠️ 未缓存'}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" onclick="checkAllUpdates()">🔍 检查更新</button>
+                            <button class="btn btn-secondary" onclick="forceRefreshData()">🔄 强制刷新数据</button>
+                            <button class="btn btn-danger" onclick="clearAllSmartCache()">🗑️ 清除所有缓存</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="card" style="margin-bottom: 30px;">
@@ -4404,13 +4479,41 @@
                             <button class="btn btn-primary" onclick="exportData()">📤 导出数据</button>
                             <button class="btn btn-secondary" onclick="importData()">📥 导入数据</button>
                             <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空数据</button>
-                            <button class="btn btn-secondary" onclick="clearCacheOnly()">🧹 清除缓存</button>
+                            <button class="btn btn-secondary" onclick="clearCacheOnly()">🧹 清除旧缓存</button>
                         </div>
                     </div>
                 </div>
                 
                 <input type="file" id="importFile" style="display: none" accept=".json" onchange="handleImport(event)">
+                <div id="loadingStatus"></div>
             `;
+        }
+        
+        // 清除所有智能缓存
+        async function clearAllSmartCache() {
+            if (!confirm('确定要清除所有智能缓存吗？这将删除已下载的角色和世界观数据。')) return;
+            
+            try {
+                showLoadingStatus('🗑️ 正在清除缓存...');
+                await smartCache.clearAll();
+                await db.clear('characters');
+                await db.clear('world_settings');
+                
+                // 重置加载状态
+                dataLoadState.characters.loaded = false;
+                dataLoadState.characters.cached = false;
+                dataLoadState.characters.data = null;
+                dataLoadState.worldview.loaded = false;
+                dataLoadState.worldview.cached = false;
+                dataLoadState.worldview.data = null;
+                
+                hideLoadingStatus();
+                showNotification('✅ 缓存已清除');
+                renderData(document.getElementById('mainContent'));
+            } catch (e) {
+                hideLoadingStatus();
+                showNotification('❌ 清除失败: ' + e.message);
+            }
         }
         
         async function exportData() {
@@ -4586,18 +4689,46 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await db.init();
             await cacheManager.init();
+            await smartCache.init();
             
-            // 检查本地缓存
-            const cachedChars = await db.getAll('characters');
-            const cachedWorlds = await db.getAll('world_settings');
+            console.log('🔧 系统初始化完成，开始加载数据...');
             
-            if (cachedChars.length > 0) {
+            // 智能缓存：优先从本地读取，同时后台检查更新
+            const [charData, worldData] = await Promise.all([
+                smartCache.getData('characters_all.json'),
+                smartCache.getData('data.json')
+            ]);
+            
+            if (charData) {
+                console.log('✅ 智能缓存：角色数据已就绪');
+                dataLoadState.characters.data = charData;
+                dataLoadState.characters.cached = true;
                 dataLoadState.characters.loaded = true;
-                console.log(`✅ 本地已有 ${cachedChars.length} 个角色`);
+                // 后台导入到IndexedDB
+                importCharactersToDB(charData.characters || []).catch(e => console.warn('后台导入角色失败:', e));
             }
-            if (cachedWorlds.length > 0) {
+            
+            if (worldData) {
+                console.log('✅ 智能缓存：世界观数据已就绪');
+                dataLoadState.worldview.data = worldData;
+                dataLoadState.worldview.cached = true;
                 dataLoadState.worldview.loaded = true;
-                console.log(`✅ 本地已有 ${cachedWorlds.length} 条世界观`);
+                // 后台导入到IndexedDB
+                importWorldviewToDB(worldData).catch(e => console.warn('后台导入世界观失败:', e));
+            }
+            
+            // 如果本地没有缓存，预加载数据
+            if (!charData || !worldData) {
+                console.log('🔄 首次使用，正在预加载数据...');
+                setTimeout(() => {
+                    if (!charData) loadCharactersSmart(false).catch(e => console.warn('预加载角色失败:', e));
+                    if (!worldData) loadWorldviewSmart(false).catch(e => console.warn('预加载世界观失败:', e));
+                }, 500);
+            } else {
+                // 有缓存时，后台检查更新
+                setTimeout(() => {
+                    checkAllUpdates();
+                }, 2000);
             }
             
             // 加载桥段数据（首页需要）
