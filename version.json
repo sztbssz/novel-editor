@@ -1,0 +1,14 @@
+{
+  "characters_all.json": {
+    "version": "1.0.0",
+    "updated": "2026-04-10T22:00:00Z",
+    "hash": "characters_data_v1",
+    "size": 0
+  },
+  "data.json": {
+    "version": "1.0.0", 
+    "updated": "2026-04-10T22:00:00Z",
+    "hash": "worldview_data_v1",
+    "size": 0
+  }
+}
