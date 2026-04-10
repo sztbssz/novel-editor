@@ -895,7 +895,7 @@
                 <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
                 <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
                 <a class="nav-item" data-page="scene"><i>📝</i>桥段生成</a>
-                <a class="nav-item" data-page="names"><i>✨</i>起名字</a>
+                <a class="nav-item" data-page="names"><i>✨</i>姓名生成</a>
                 <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
             </nav>
         </aside>
@@ -1028,7 +1028,452 @@
             tropes: { loaded: false, loading: false, error: null, data: null }
         };
 
-        // ==================== IndexedDB 缓存管理 ====================
+        // ==================== 智能缓存管理 ====================
+        class SmartCacheManager {
+            constructor() {
+                this.dbName = 'NovelEditorSmartCache';
+                this.dbVersion = 2;
+                this.db = null;
+                this.versionUrl = 'https://sztbssz.github.io/novel-editor/version.json';
+                this.cacheStatus = {
+                    characters: { hasCache: false, version: null, lastUpdated: null, isChecking: false },
+                    worldview: { hasCache: false, version: null, lastUpdated: null, isChecking: false }
+                };
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        console.log('✅ 智能缓存管理器初始化完成');
+                        resolve();
+                    };
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        // 数据存储
+                        if (!db.objectStoreNames.contains('dataCache')) {
+                            const store = db.createObjectStore('dataCache', { keyPath: 'key' });
+                            store.createIndex('timestamp', 'timestamp', { unique: false });
+                        }
+                        // 版本信息存储
+                        if (!db.objectStoreNames.contains('versionInfo')) {
+                            const vStore = db.createObjectStore('versionInfo', { keyPath: 'key' });
+                        }
+                    };
+                });
+            }
+
+            // 获取本地缓存数据
+            async getData(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('dataCache', 'readonly');
+                    const store = tx.objectStore('dataCache');
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result?.data || null);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            // 保存缓存数据
+            async setData(key, data, versionInfo) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dataCache', 'versionInfo'], 'readwrite');
+                    const dataStore = tx.objectStore('dataCache');
+                    const versionStore = tx.objectStore('versionInfo');
+                    
+                    // 保存数据
+                    dataStore.put({
+                        key: key,
+                        data: data,
+                        timestamp: Date.now()
+                    });
+                    
+                    // 保存版本信息
+                    versionStore.put({
+                        key: key,
+                        version: versionInfo.version,
+                        updated: versionInfo.updated,
+                        hash: versionInfo.hash,
+                        cachedAt: Date.now()
+                    });
+                    
+                    tx.oncomplete = () => {
+                        this.cacheStatus[key] = {
+                            hasCache: true,
+                            version: versionInfo.version,
+                            lastUpdated: versionInfo.updated,
+                            isChecking: false
+                        };
+                        resolve();
+                    };
+                    tx.onerror = () => reject(tx.error);
+                });
+            }
+
+            // 获取本地版本信息
+            async getLocalVersion(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction('versionInfo', 'readonly');
+                    const store = tx.objectStore('versionInfo');
+                    const request = store.get(key);
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result) {
+                            this.cacheStatus[key] = {
+                                hasCache: true,
+                                version: result.version,
+                                lastUpdated: result.updated,
+                                cachedAt: result.cachedAt,
+                                isChecking: false
+                            };
+                        }
+                        resolve(result);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            // 获取远程版本信息
+            async getRemoteVersion() {
+                try {
+                    const response = await fetchWithRetry(this.versionUrl + '?t=' + Date.now(), {
+                        retries: 2,
+                        timeout: 10000
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (e) {
+                    console.warn('获取远程版本失败:', e);
+                }
+                return null;
+            }
+
+            // 检查是否需要更新
+            async checkUpdate(key) {
+                this.cacheStatus[key].isChecking = true;
+                
+                const [localVersion, remoteVersions] = await Promise.all([
+                    this.getLocalVersion(key),
+                    this.getRemoteVersion()
+                ]);
+                
+                this.cacheStatus[key].isChecking = false;
+                
+                if (!remoteVersions || !remoteVersions[key]) {
+                    return { needsUpdate: false, reason: 'no_remote' };
+                }
+                
+                const remote = remoteVersions[key];
+                
+                if (!localVersion) {
+                    return { needsUpdate: true, reason: 'no_cache', remoteVersion: remote };
+                }
+                
+                if (localVersion.version !== remote.version || localVersion.hash !== remote.hash) {
+                    return { needsUpdate: true, reason: 'version_mismatch', remoteVersion: remote };
+                }
+                
+                return { needsUpdate: false, reason: 'up_to_date', remoteVersion: remote };
+            }
+
+            // 清除指定缓存
+            async clearCache(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dataCache', 'versionInfo'], 'readwrite');
+                    tx.objectStore('dataCache').delete(key);
+                    tx.objectStore('versionInfo').delete(key);
+                    tx.oncomplete = () => {
+                        this.cacheStatus[key] = { hasCache: false, version: null, lastUpdated: null, isChecking: false };
+                        resolve();
+                    };
+                    tx.onerror = () => reject(tx.error);
+                });
+            }
+
+            // 清除所有缓存
+            async clearAll() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dataCache', 'versionInfo'], 'readwrite');
+                    tx.objectStore('dataCache').clear();
+                    tx.objectStore('versionInfo').clear();
+                    tx.oncomplete = () => {
+                        this.cacheStatus = {
+                            characters: { hasCache: false, version: null, lastUpdated: null, isChecking: false },
+                            worldview: { hasCache: false, version: null, lastUpdated: null, isChecking: false }
+                        };
+                        resolve();
+                    };
+                    tx.onerror = () => reject(tx.error);
+                });
+            }
+
+            // 获取缓存状态文本
+            getStatusText(key) {
+                const status = this.cacheStatus[key];
+                if (status.isChecking) return '🔍 检查更新中...';
+                if (!status.hasCache) return '⚠️ 无本地缓存';
+                const date = status.cachedAt ? new Date(status.cachedAt).toLocaleDateString('zh-CN') : '未知';
+                return `✅ 已缓存 (v${status.version || '?'}, ${date})`;
+            }
+        }
+
+        const smartCache = new SmartCacheManager();
+
+        // ==================== 缓存状态UI管理 ====================
+        const cacheStatusUI = {
+            showCacheStatus(containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                container.innerHTML = `
+                    <div class="cache-status-panel" style="background:#16213e;border-radius:12px;padding:20px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                            <h3 style="font-size:16px;color:#00d4ff;">📦 数据缓存状态</h3>
+                            <button class="btn btn-secondary" onclick="checkAllUpdates()" style="padding:6px 12px;font-size:12px;">
+                                🔄 检查更新
+                            </button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                            <div class="cache-item" style="background:#1a1a2e;padding:12px;border-radius:8px;">
+                                <div style="font-size:13px;color:#888;margin-bottom:5px;">👤 角色数据</div>
+                                <div style="font-size:14px;color:#fff;" id="cacheStatus-characters">
+                                    ${smartCache.getStatusText('characters_all.json')}
+                                </div>
+                            </div>
+                            <div class="cache-item" style="background:#1a1a2e;padding:12px;border-radius:8px;">
+                                <div style="font-size:13px;color:#888;margin-bottom:5px;">🌍 世界观数据</div>
+                                <div style="font-size:14px;color:#fff;" id="cacheStatus-data">
+                                    ${smartCache.getStatusText('data.json')}
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cacheUpdateNotice" style="display:none;margin-top:15px;padding:12px;background:rgba(233,69,96,0.1);border-radius:8px;border-left:3px solid #e94560;">
+                            <div style="font-size:13px;color:#e94560;"></div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            updateStatus(key, message) {
+                const el = document.getElementById(`cacheStatus-${key === 'characters_all.json' ? 'characters' : 'data'}`);
+                if (el) el.textContent = message;
+            },
+
+            showUpdateNotice(message) {
+                const notice = document.getElementById('cacheUpdateNotice');
+                if (notice) {
+                    notice.style.display = 'block';
+                    notice.querySelector('div').textContent = message;
+                }
+            },
+
+            hideUpdateNotice() {
+                const notice = document.getElementById('cacheUpdateNotice');
+                if (notice) notice.style.display = 'none';
+            }
+        };
+
+        // 检查所有更新
+        async function checkAllUpdates() {
+            showLoadingStatus('🔍 正在检查更新...');
+            
+            try {
+                const [charUpdate, worldUpdate] = await Promise.all([
+                    smartCache.checkUpdate('characters_all.json'),
+                    smartCache.checkUpdate('data.json')
+                ]);
+                
+                let hasUpdates = false;
+                let messages = [];
+                
+                if (charUpdate.needsUpdate) {
+                    hasUpdates = true;
+                    messages.push('角色数据有新版本');
+                }
+                if (worldUpdate.needsUpdate) {
+                    hasUpdates = true;
+                    messages.push('世界观数据有新版本');
+                }
+                
+                // 更新UI状态
+                cacheStatusUI.updateStatus('characters_all.json', smartCache.getStatusText('characters_all.json'));
+                cacheStatusUI.updateStatus('data.json', smartCache.getStatusText('data.json'));
+                
+                if (hasUpdates) {
+                    cacheStatusUI.showUpdateNotice(`发现更新: ${messages.join(', ')}，请使用刷新按钮更新数据`);
+                    showNotification('📦 发现数据更新');
+                } else {
+                    cacheStatusUI.hideUpdateNotice();
+                    showNotification('✅ 数据已是最新版本');
+                }
+            } catch (e) {
+                showNotification('❌ 检查更新失败: ' + e.message);
+            } finally {
+                hideLoadingStatus();
+            }
+        }
+
+        // ==================== 智能数据加载 ====================
+        async function loadCharactersSmart(forceUpdate = false) {
+            const key = 'characters_all.json';
+            
+            // 1. 先尝试读取本地缓存（无论网络如何，先给用户显示）
+            let localData = null;
+            if (!forceUpdate) {
+                localData = await smartCache.getData(key);
+                if (localData) {
+                    console.log('✅ 从智能缓存加载角色数据');
+                    dataLoadState.characters.data = localData;
+                    dataLoadState.characters.cached = true;
+                    await importCharactersToDB(localData.characters || [], (loaded, total) => {
+                        characterLoadProgress.updateProgress(loaded, total);
+                    });
+                    dataLoadState.characters.loaded = true;
+                    characterLoadProgress.showSuccess(localData.characters?.length || 0);
+                }
+            }
+            
+            // 2. 异步检查更新
+            smartCache.cacheStatus[key].isChecking = true;
+            const updateCheck = await smartCache.checkUpdate(key);
+            smartCache.cacheStatus[key].isChecking = false;
+            
+            // 3. 如果需要更新，下载新数据
+            if (updateCheck.needsUpdate || forceUpdate) {
+                console.log(`🔄 需要更新角色数据，原因: ${updateCheck.reason}`);
+                characterLoadProgress.showLoading(0, 100);
+                
+                try {
+                    const response = await fetchWithCDNRetry('characters_all.json?t=' + Date.now());
+                    if (response.ok) {
+                        const data = await response.json();
+                        const versionInfo = updateCheck.remoteVersion || { version: '1.0.0', updated: new Date().toISOString(), hash: 'manual' };
+                        
+                        // 保存到智能缓存
+                        await smartCache.setData(key, data, versionInfo);
+                        
+                        // 更新状态
+                        dataLoadState.characters.data = data;
+                        dataLoadState.characters.cached = true;
+                        
+                        // 清空并重新导入到IndexedDB
+                        await db.clear('characters');
+                        await importCharactersToDB(data.characters || [], (loaded, total) => {
+                            characterLoadProgress.updateProgress(loaded, total);
+                        });
+                        
+                        characterLoadProgress.showSuccess(data.characters?.length || 0);
+                        dataLoadState.characters.loaded = true;
+                        
+                        if (updateCheck.reason !== 'no_cache') {
+                            showNotification('✅ 角色数据已更新到最新版本');
+                        }
+                    }
+                } catch (e) {
+                    console.error('更新角色数据失败:', e);
+                    if (!localData) {
+                        characterLoadProgress.showError('加载失败: ' + e.message);
+                    }
+                }
+            } else {
+                console.log('✅ 角色数据已是最新版本');
+            }
+            
+            // 更新UI状态显示
+            cacheStatusUI.updateStatus(key, smartCache.getStatusText(key));
+        }
+
+        async function loadWorldviewSmart(forceUpdate = false) {
+            const key = 'data.json';
+            
+            // 1. 先尝试读取本地缓存
+            let localData = null;
+            if (!forceUpdate) {
+                localData = await smartCache.getData(key);
+                if (localData) {
+                    console.log('✅ 从智能缓存加载世界观数据');
+                    dataLoadState.worldview.data = localData;
+                    dataLoadState.worldview.cached = true;
+                    await importWorldviewToDB(localData);
+                    dataLoadState.worldview.loaded = true;
+                }
+            }
+            
+            // 2. 异步检查更新
+            smartCache.cacheStatus[key].isChecking = true;
+            const updateCheck = await smartCache.checkUpdate(key);
+            smartCache.cacheStatus[key].isChecking = false;
+            
+            // 3. 如果需要更新
+            if (updateCheck.needsUpdate || forceUpdate) {
+                console.log(`🔄 需要更新世界观数据，原因: ${updateCheck.reason}`);
+                
+                try {
+                    const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
+                    if (response.ok) {
+                        const data = await response.json();
+                        const versionInfo = updateCheck.remoteVersion || { version: '1.0.0', updated: new Date().toISOString(), hash: 'manual' };
+                        
+                        // 保存到智能缓存
+                        await smartCache.setData(key, data, versionInfo);
+                        
+                        // 更新状态
+                        dataLoadState.worldview.data = data;
+                        dataLoadState.worldview.cached = true;
+                        
+                        // 清空并重新导入
+                        await db.clear('world_settings');
+                        await importWorldviewToDB(data);
+                        
+                        dataLoadState.worldview.loaded = true;
+                        
+                        if (updateCheck.reason !== 'no_cache') {
+                            showNotification('✅ 世界观数据已更新到最新版本');
+                        }
+                    }
+                } catch (e) {
+                    console.error('更新世界观数据失败:', e);
+                }
+            }
+            
+            // 更新UI状态显示
+            cacheStatusUI.updateStatus(key, smartCache.getStatusText(key));
+        }
+
+        // 导入世界观数据
+        async function importWorldviewToDB(data) {
+            const worldbuildingLibrary = data.worldbuildingLibrary;
+            if (!worldbuildingLibrary || !worldbuildingLibrary.entries) return;
+            
+            const worldviews = worldbuildingLibrary.entries;
+            const existingSettings = await db.getAll('world_settings');
+            const existingTitles = new Set(existingSettings.map(s => s.title));
+            
+            for (const world of worldviews) {
+                const title = `${world.book} - 世界观`;
+                
+                if (!existingTitles.has(title)) {
+                    const content = `**作者**: ${world.author}\n**年份**: ${world.year}\n**背景类型**: ${world.backgroundType}\n**力量类型**: ${world.powerType}\n\n**文化习俗**:\n${world.culture}\n\n**世界特色**:\n${world.features}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                    
+                    let category = 'other';
+                    const tags = world.tags || [];
+                    if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
+                    else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
+                    else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
+                    else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
+                    else if (tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
+                    else if (tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
+                    else if (tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
+                    
+                    await db.add('world_settings', { category, title, content });
+                }
+            }
+        }
+
+        // ==================== IndexedDB 缓存管理（兼容旧版）====================
         class CacheManager {
             constructor() {
                 this.dbName = 'NovelEditorCache';
@@ -1683,22 +2128,53 @@
 
         // 加载桥段数据（首页初始化时加载）
         async function loadTropeData() {
-            if (dataLoadState.tropes.loaded) return;
+            if (dataLoadState.tropes.loaded && tropesData) return;
+            
+            console.log('🎭 开始加载桥段数据...');
             
             try {
                 const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
                 
                 if (response.ok) {
                     const data = await response.json();
-                    tropesData = data;
-                    dataLoadState.tropes.loaded = true;
-                    console.log('✅ 桥段数据加载完成');
+                    console.log('📦 桥段数据原始响应:', data);
+                    
+                    // 验证数据结构
+                    if (data && data.categories && Array.isArray(data.categories)) {
+                        tropesData = data;
+                        dataLoadState.tropes.loaded = true;
+                        console.log(`✅ 桥段数据加载完成: ${data.categories.length} 个类别`);
+                        return true;
+                    } else {
+                        console.warn('⚠️ 桥段数据格式不正确，使用默认数据');
+                        tropesData = getDefaultTropeData();
+                        dataLoadState.tropes.loaded = true;
+                        return false;
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (e) {
-                console.error('加载桥段数据失败:', e);
+                console.error('❌ 加载桥段数据失败:', e);
                 tropesData = getDefaultTropeData();
                 dataLoadState.tropes.loaded = true;
+                console.log('⚠️ 已加载默认桥段数据');
+                return false;
             }
+        }
+
+        // 强制刷新桥段数据
+        async function refreshTropeData() {
+            console.log('🔄 强制刷新桥段数据...');
+            dataLoadState.tropes.loaded = false;
+            tropesData = null;
+            await loadTropeData();
+            
+            // 刷新页面显示
+            if (currentPage === 'trope') {
+                renderTrope(document.getElementById('mainContent'));
+            }
+            showNotification('✅ 桥段素材库已刷新');
         }
 
         // 强制刷新数据
@@ -1709,11 +2185,11 @@
             try {
                 showLoadingStatus('🔄 正在刷新数据...');
                 
-                // 清除缓存
-                await cacheManager.clear('characters_all');
-                await cacheManager.clear('worldview_all');
+                // 清除智能缓存
+                await smartCache.clearCache('characters_all.json');
+                await smartCache.clearCache('data.json');
                 
-                // 清除IndexedDB中的角色和世界观数据（强制重新导入）
+                // 清除IndexedDB中的角色和世界观数据
                 try {
                     await db.clear('characters');
                     await db.clear('world_settings');
@@ -1730,15 +2206,19 @@
                 
                 // 根据当前页面重新加载
                 if (currentPage === 'characters') {
-                    await loadCharacterDataWithUI();
+                    await loadCharactersSmart(true);
                 } else if (currentPage === 'world') {
-                    await loadWorldviewDataWithUI();
+                    await loadWorldviewSmart(true);
                 } else {
-                    // 如果是其他页面，重新加载当前页
-                    loadPage(currentPage);
-                    showNotification('✅ 数据已刷新');
+                    // 如果是其他页面，使用智能缓存加载
+                    await Promise.all([
+                        loadCharactersSmart(false),
+                        loadWorldviewSmart(false)
+                    ]);
                 }
                 
+                loadPage(currentPage);
+                showNotification('✅ 数据已刷新');
                 hideLoadingStatus();
             } catch (e) {
                 console.error('刷新失败:', e);
@@ -1978,7 +2458,7 @@
 
             container.innerHTML = `
                 <div class="header">
-                    <h2>📝 桥段编辑器</h2>
+                    <h2>📝 桥段生成</h2>
                     <span style="color:#888;font-size:14px">根据类型生成约200字桥段文字</span>
                 </div>
 
@@ -3043,23 +3523,57 @@
         
         // 桥段素材页面
         async function renderTrope(container) {
+            // 确保桥段数据已加载
+            if (!tropesData) {
+                console.log('⏳ 桥段数据尚未加载，尝试加载...');
+                await loadTropeData();
+            }
+            
+            // 如果仍然没有数据，显示加载中或错误状态
             if (!tropesData) {
                 container.innerHTML = `
                     <div class="header"><h2>🎭 桥段素材库</h2></div>
                     <div class="empty-state">
-                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
-                        <h3>正在加载桥段数据...</h3>
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>数据加载失败</h3>
+                        <p style="color: #888; margin: 10px 0;">无法加载桥段素材数据</p>
+                        <button class="btn btn-primary" onclick="refreshTropeData()" style="margin-top: 15px;">
+                            🔄 重新加载
+                        </button>
                     </div>
                 `;
                 return;
             }
             
+            // 验证数据结构
             const categories = tropesData.categories || [];
+            
+            if (categories.length === 0) {
+                container.innerHTML = `
+                    <div class="header" style="flex-direction: column; align-items: flex-start;">
+                        <h2>🎭 桥段素材库</h2>
+                        <p style="color: #e94560; font-size: 13px; margin-top: 5px;">⚠️ 数据为空，请检查 data.json 文件</p>
+                    </div>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>暂无桥段类别</h3>
+                        <button class="btn btn-secondary" onclick="refreshTropeData()" style="margin-top: 15px;">
+                            🔄 刷新数据
+                        </button>
+                    </div>
+                `;
+                return;
+            }
             
             container.innerHTML = `
                 <div class="header" style="flex-direction: column; align-items: flex-start;">
-                    <h2>🎭 桥段素材库</h2>
-                    <p style="color: #888; font-size: 13px; margin-top: 5px;">${categories.length}个类别</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2>🎭 桥段素材库</h2>
+                        <button class="btn btn-secondary" onclick="refreshTropeData()" title="刷新数据">
+                            🔄
+                        </button>
+                    </div>
+                    <p style="color: #888; font-size: 13px; margin-top: 5px;">${categories.length} 个类别</p>
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -3235,7 +3749,6 @@
                 {name: '兰斯洛特', meaning: '骑士精神，侠义之士'},
                 {name: '梅林', meaning: '隼，智慧导师'},
                 {name: '罗兰', meaning: '国土之名，英勇骑士'},
-                {name: '亚瑟', meaning: '石熊，王者之气'},
                 {name: '德雷克', meaning: '龙，强大威严'},
                 {name: '格雷厄姆', meaning: '灰色家园，沉稳内敛'},
                 {name: '沃尔特', meaning: '军队统治者，统帅之才'},
@@ -3252,7 +3765,6 @@
                 {name: '菲利普', meaning: '爱马者，骑士精神'},
                 {name: '雷蒙德', meaning: '明智的保护者，守护者'},
                 // 凯尔特/北欧名
-                {name: '康纳', meaning: '猎犬，忠诚勇敢'},
                 {name: '肖恩', meaning: '上帝仁慈，蒙恩之人'},
                 {name: '帕特里克', meaning: '贵族，出身高贵'},
                 {name: '多诺万', meaning: '黑暗战士，神秘战士'},
@@ -3285,7 +3797,6 @@
                 {name: '亚历山大', meaning: '人类的保护者，守护者'},
                 {name: '克里斯托斯', meaning: '受膏者，神圣之人'},
                 {name: '德米特里', meaning: '属于德墨忒尔，丰收之神'},
-                {name: '埃里克', meaning: '永远的统治者'},
                 {name: '乔治', meaning: '农夫，土地工作者'},
                 {name: '赫克托', meaning: '坚守者，忠诚卫士'},
                 {name: '伊卡洛斯', meaning: '飞翔者，追梦之人'},
@@ -3335,7 +3846,6 @@
                 {name: '诺曼', meaning: '北方人，维京后裔'},
                 {name: '珀西', meaning: '刺梨，坚韧'},
                 {name: '拉尔夫', meaning: '狼之顾问，智者'},
-                {name: '雷金纳德', meaning: '顾问统治者'},
                 {name: '鲁伯特', meaning: '明亮的，光明'},
                 {name: '斯坦利', meaning: '石楠草地，原野'},
                 {name: '斯图尔特', meaning: '管家，管理者'},
@@ -3525,7 +4035,6 @@
                 {name: '琥珀', meaning: '琥珀，温暖'},
                 {name: '杰德', meaning: '翡翠，玉石'},
                 {name: '珍珠', meaning: '珍珠，珍贵'},
-                {name: '玛格丽特', meaning: '珍珠'},
                 {name: '乔伊斯', meaning: '快乐的，喜悦'}
             ]
         };
@@ -4035,3 +4544,4 @@
     </script>
 </body>
 </html>
+html>
