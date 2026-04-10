@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "description": "2016-2020年热门小说角色数据库 - 第一批",
+  "updated": "2026-04-10",
+  "characters": [
+    {
+      "name": "楚风",
+      "role_type": "protagonist",
+      "gender": "男",
+      "age": 20,
+      "personality": "坚韧执着、重情重义、有担当",
+      "background": "《圣墟》男主角，地球青年，在灵气复苏时代崛起。本为普通人，后在神秘力量引导下踏上修炼之路。性格顽强，面对绝境永不放弃，对朋友忠诚，对爱情专一。",
+      "abilities": ["神秘呼吸法", "场域造诣", "进化之力"],
+      "goals": "揭开地球尘封的秘密，找到失踪的亲友",
+      "notes": "圣墟",
+      "source": "圣墟 | 辰东 | 2016"
+    },
+    {
+      "name": "秦瑶",
+      "role_type": "protagonist",
+      "gender": "女",
+      "age": 18,
+      "personality": "温柔善良、善解人意、坚韧不拔",
+      "background": "《圣墟》女主角之一，与楚风在修炼路上相识相知，共同面对种种挑战。性格温婉，内心却有着不输男子的坚韧。",
+      "abilities": ["修炼天赋", "治疗能力"],
+      "goals": "守护所爱之人，追求更高境界",
+      "notes": "圣墟",
+      "source": "圣墟 | 辰东 | 2016"
+    },
+    {
+      "name": "阳间大能",
+      "role_type": "antagonist",
+      "gender": "男",
+      "age": 未知,
+      "personality": "冷酷无情、野心勃勃、深不可测",
+      "background": "《圣墟》重要反派，来自阳间的强大存在，对地球有不可告人的企图。实力深不可测，是楚风成长路上的主要对手之一。",
+      "abilities": ["阳间秘法", "无上神通"],
+      "goals": "掌控地球，获取造化",
+      "notes": "圣墟",
+      "source": "圣墟 | 辰东 | 2016"
+    },
+    {
+      "name": "妖妖",
+      "role_type": "supporting",
+      "gender": "女",
+      "age": 未知,
+      "personality": "神秘莫测、实力强大、亦正亦邪",
+      "background": "《圣墟》重要配角，上古大能转世，实力强大。在楚风成长过程中多次相助，身份神秘。",
+      "abilities": ["上古秘术", "灵魂之力"],
+      "goals": "恢复前世记忆与实力",
+      "notes": "圣墟",
+      "source": "圣墟 | 辰东 | 2016"
+    },
+    {
+      "name": "黄牛",
+      "role_type": "supporting",
+      "gender": "男",
+      "age": 未知,
+      "personality": "贪财好色、嘴硬心软、重义气",
+      "background": "《圣墟》重要配角，楚风的好兄弟。外表粗犷，实则心地善良，多次在关键时刻帮助楚风。",
+      "abilities": ["蛮力", "防御力"],
+      "goals": "跟随楚风闯荡天下",
+      "notes": "圣墟",
+      "source": "圣墟 | 辰东 | 2016"
+    },
+    {
+      "name": "秦牧",
+      "role_type": "protagonist",
+      "gender": "男",
+      "age": 16,
+      "personality": "机智狡黠、心思缜密、重情重义",
+      "background": "《牧神记》男主角，被残老村的九位残疾老人收养长大。天生没有灵根，却凭借过人智慧和毅力走出一条独特的修行之路。表面玩世不恭，内心极有主见。",
+      "abilities": ["霸体", "神识", "造物之术"],
+      "goals": "解开自身身世之谜，守护残老村",
+      "notes": "牧神记",
+      "source": "牧神记 | 宅猪 | 2016"
+    },
+    {
+      "name": "灵毓秀",
+      "role_type": "protagonist",
+      "gender": "女",
+      "age": 16,
+      "personality": "聪慧机敏、外柔内刚、敢爱敢恨",
+      "background": "《牧神记》女主角，延康国公主。与秦牧相识于微末，共同经历诸多磨难。性格独立，不依附于男子，有自己的追求和理想。",
+      "abilities": ["修炼天赋", "治国才能"],
+      "goals": "辅佐秦牧，共建太平盛世",
+      "notes": "牧神记",
+      "source": "牧神记 | 宅猪 | 2016"
+    },
+    {
+      "name": "延康国师",
+      "role_type": "antagonist",
+      "gender": "男",
+      "age": 40,
+      "personality": "野心勃勃、老谋深算、心狠手辣",
+      "background": "《牧神记》重要反派，延康国实际掌权者。对秦牧既有利用也有忌惮，是复杂的权谋型人物。",
+      "abilities": ["权谋之术", "高深修为"],
+      "goals": "称霸天下，统一延康",
+      "notes": "牧神记",
+      "source": "牧神记 | 宅猪 | 2016"
+    },
+    {
+      "name": "司婆婆",
+      "role_type": "supporting",
+      "gender": "女",
+      "age": 未知,
+      "personality": "刀子嘴豆腐心、疼爱晚辈、实力强大",
+      "background": "《牧神记》重要配角，残老村九老之一。对秦牧视如己出，虽然嘴上不饶人，实则极其疼爱秦牧。",
+      "abilities": ["医术", "毒术"],
+      "goals": "守护残老村，看着秦牧成长",
+      "notes": "牧神记",
+      "source": "牧神记 | 宅猪 | 2016"
+    },
+    {
+      "name": "村长",
+      "role_type": "supporting",
+      "gender": "男",
+      "age": 未知,
+      "personality": "德高望重、智慧深沉、爱护晚辈",
+      "background": "《牧神记》重要配角，残老村村长。虽身体残疾，却是九老之首，对秦牧的成长影响深远。",
+      "abilities": ["无上剑道", "智慧"],
+      "goals": "培养秦牧成才",
+      "notes": "牧神记",
+      "source": "牧神记 | 宅猪 | 2016"
+    }
+  ]
+}
