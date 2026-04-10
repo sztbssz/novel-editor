@@ -1617,14 +1617,15 @@
 
         .name-type-selector {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             margin-bottom: 25px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .name-type-btn {
-            padding: 12px 30px;
-            font-size: 16px;
+            padding: 10px 20px;
+            font-size: 14px;
             border: 2px solid #0f3460;
             background: #1a1a2e;
             color: #888;
@@ -5826,6 +5827,12 @@
                         <button class="name-type-btn ${currentNameType === 'western' ? 'active' : ''}" onclick="switchNameType('western')">
                             🌍 西方名
                         </button>
+                        <button class="name-type-btn ${currentNameType === 'modern' ? 'active' : ''}" onclick="switchNameType('modern')">
+                            🏙️ 现代名
+                        </button>
+                        <button class="name-type-btn ${currentNameType === 'ancient' ? 'active' : ''}" onclick="switchNameType('ancient')">
+                            🏛️ 古代名
+                        </button>
                     </div>
 
                     <div class="name-style-selector">
@@ -5864,7 +5871,7 @@
 
         function switchNameType(type) {
             currentNameType = type;
-            renderNameGenerator(document.getElementById('mainContent'));
+            renderNameGenerator(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function switchGender(gender) {
@@ -5896,7 +5903,7 @@
                         type: '中文名'
                     });
                 }
-            } else {
+            } else if (currentNameType === 'western') {
                 const db = currentGender === 'male' ? nameDatabase.westernMale : nameDatabase.westernFemale;
                 const shuffled = [...db].sort(() => 0.5 - Math.random());
                 names.push(...shuffled.slice(0, 12).map(item => ({
@@ -5904,12 +5911,53 @@
                     style: '西方名',
                     type: '西方名'
                 })));
+            } else if (currentNameType === 'modern') {
+                // 现代名字 - 使用现代常见姓氏 + 时尚用字
+                const modernSurnames = ['李', '王', '张', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高', '林', '何', '郭', '马', '罗'];
+                const modernMaleChars = ['宇', '轩', '浩', '然', '泽', '睿', '晨', '逸', '辰', '昊', '俊', '杰', '皓', '一', '博', '文', '子', '涵', '梓', '航'];
+                const modernFemaleChars = ['梓', '涵', '欣', '怡', '诗', '雅', '梦', '琪', '雨', '萱', '子', '晴', '语', '桐', '若', '溪', '思', '妍', '佳', '瑶'];
+                const chars = currentGender === 'male' ? modernMaleChars : modernFemaleChars;
+                
+                for (let i = 0; i < 12; i++) {
+                    const surname = modernSurnames[Math.floor(Math.random() * modernSurnames.length)];
+                    const char1 = chars[Math.floor(Math.random() * chars.length)];
+                    const char2 = chars[Math.floor(Math.random() * chars.length)];
+                    const name = Math.random() > 0.4 ? surname + char1 : surname + char1 + char2;
+                    
+                    names.push({
+                        name,
+                        meaning: '现代时尚风格，寓意美好',
+                        style: '现代名',
+                        type: '现代名'
+                    });
+                }
+            } else if (currentNameType === 'ancient') {
+                // 古代名字 - 使用古风姓氏 + 古典用字
+                const ancientSurnames = ['慕容', '欧阳', '上官', '司徒', '诸葛', '司马', '南宫', '夏侯', '轩辕', '令狐', '皇甫', '宇文', '独孤', '东方', '百里', '尉迟', '长孙', '拓跋', '耶律', '完颜'];
+                const ancientMaleChars = ['渊', '墨', '卿', '尘', '离', '殇', '璃', '陌', '瑾', '瑜', '轩', '辕', '枫', '羽', '寒', '霜', '夜', '影', '剑', '箫'];
+                const ancientFemaleChars = ['婉', '清', '瑶', '月', '雪', '霜', '璃', '裳', '烟', '雨', '芷', '若', '萱', '琴', '舞', '诗', '画', '音', '容', '华'];
+                const chars = currentGender === 'male' ? ancientMaleChars : ancientFemaleChars;
+                
+                for (let i = 0; i < 12; i++) {
+                    const surname = ancientSurnames[Math.floor(Math.random() * ancientSurnames.length)];
+                    const char1 = chars[Math.floor(Math.random() * chars.length)];
+                    const char2 = chars[Math.floor(Math.random() * chars.length)];
+                    const name = Math.random() > 0.3 ? surname + char1 : surname + char1 + char2;
+                    
+                    names.push({
+                        name,
+                        meaning: '古风雅致，韵味悠长',
+                        style: '古代名',
+                        type: '古代名'
+                    });
+                }
             }
 
             generatedNames = names;
 
             // 记录历史
-            historyManager.addHistory('name', Date.now(), `${currentNameType === 'chinese' ? '中文' : '西方'}${currentGender === 'male' ? '男' : '女'}名生成`, 'generate', {
+            const typeLabels = { chinese: '中文', western: '西方', modern: '现代', ancient: '古代' };
+            historyManager.addHistory('name', Date.now(), `${typeLabels[currentNameType] || currentNameType}${currentGender === 'male' ? '男' : '女'}名生成`, 'generate', {
                 style,
                 gender: currentGender,
                 count: names.length
