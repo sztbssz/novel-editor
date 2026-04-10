@@ -320,6 +320,162 @@
             justify-content: flex-end;
             gap: 10px;
         }
+
+        /* 桥段详情弹窗 */
+        .trope-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1500;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .trope-detail-modal.active {
+            display: flex;
+        }
+        
+        .trope-detail-content {
+            background: #16213e;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        .trope-detail-header {
+            padding: 24px 30px 16px;
+            border-bottom: 1px solid #0f3460;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .trope-detail-header h3 {
+            font-size: 20px;
+            color: #fff;
+            margin: 0;
+            flex: 1;
+            padding-right: 15px;
+        }
+        
+        .trope-detail-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .trope-detail-close:hover {
+            color: #fff;
+            background: rgba(233, 69, 96, 0.2);
+        }
+        
+        .trope-detail-body {
+            padding: 24px 30px;
+        }
+        
+        .trope-detail-content-text {
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            line-height: 1.8;
+            color: #ddd;
+            font-size: 14px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .trope-detail-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 12px 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #00d4ff;
+        }
+        
+        .trope-detail-source-label {
+            color: #00d4ff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .trope-detail-source-info {
+            color: #aaa;
+            font-size: 13px;
+        }
+        
+        .trope-detail-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .trope-detail-tag {
+            padding: 5px 12px;
+            background: rgba(233, 69, 96, 0.15);
+            border-radius: 15px;
+            font-size: 12px;
+            color: #e94560;
+        }
+        
+        .trope-detail-footer {
+            padding: 16px 30px 24px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .trope-detail-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .trope-detail-btn-copy {
+            background: #e94560;
+            color: #fff;
+        }
+        
+        .trope-detail-btn-copy:hover {
+            background: #d63a54;
+        }
+        
+        .trope-detail-btn-close {
+            background: #0f3460;
+            color: #fff;
+        }
+        
+        .trope-detail-btn-close:hover {
+            background: #1a4a7a;
+        }
         
         /* 空状态 */
         .empty-state {
@@ -750,6 +906,30 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
                 <button class="btn btn-primary" id="modalConfirm" onclick="confirmModal()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 桥段详情弹窗 -->
+    <div class="trope-detail-modal" id="tropeDetailModal" onclick="closeTropeDetailModalOnOverlay(event)">
+        <div class="trope-detail-content" onclick="event.stopPropagation()">
+            <div class="trope-detail-header">
+                <h3 id="tropeDetailTitle">桥段标题</h3>
+                <button class="trope-detail-close" onclick="closeTropeDetailModal()">&times;</button>
+            </div>
+            <div class="trope-detail-body">
+                <div id="tropeDetailContent" class="trope-detail-content-text">桥段内容</div>
+                <div class="trope-detail-source">
+                    <span class="trope-detail-source-label">📚 出处</span>
+                    <span id="tropeDetailSource" class="trope-detail-source-info">书名 · 作者 · 年份</span>
+                </div>
+                <div id="tropeDetailTags" class="trope-detail-tags">
+                    <!-- 动态生成标签 -->
+                </div>
+            </div>
+            <div class="trope-detail-footer">
+                <button class="trope-detail-btn trope-detail-btn-copy" onclick="copyTropeDetailContent()">📋 复制内容</button>
+                <button class="trope-detail-btn trope-detail-btn-close" onclick="closeTropeDetailModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -1185,6 +1365,7 @@
         let currentPage = 'home';
         let modalCallback = null;
         let tropesData = null;
+        let currentTropeDetail = null; // 当前显示的桥段详情
         
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1971,7 +2152,6 @@
         // ==================== 情节大纲 ====================
         let currentTropeFilter = 'all';
         let currentSubTypeFilter = null;
-        let currentTropeDetail = null; // 当前查看的桥段详情
         let tropeSearchQuery = '';
         let showTropePanel = false;
         
@@ -2086,39 +2266,6 @@
                 return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
             }
 
-            // 第四级：桥段详情视图
-            if (currentTropeDetail) {
-                const trope = currentTropeDetail;
-                const category = tropesData.categories.find(c => c.id === trope.category);
-                return `
-                    <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
-                        <span style="color:#888;cursor:pointer;" onclick="backToTropeList()">${category?.name || trope.category}</span>
-                        <span style="color:#666;margin:0 8px;">></span>
-                        <span style="color:#888;cursor:pointer;" onclick="backToTropeList()">${trope.subType}</span>
-                        <span style="color:#666;margin:0 8px;">></span>
-                        <span style="color:#00d4ff;">${trope.title}</span>
-                    </div>
-                    <div class="trope-item" style="background:#1a4a7a;padding:20px;">
-                        <div class="trope-item-title" style="font-size:18px;margin-bottom:15px;color:#fff;">${trope.title}</div>
-                        <div style="background:#0f3460;padding:15px;border-radius:8px;margin-bottom:15px;line-height:1.8;color:#ddd;">
-                            ${trope.content}
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                            <div style="font-size:13px;color:#888;">
-                                <span style="color:#e94560;">出处：</span>《${trope.book}》${trope.author} · ${trope.year}年
-                            </div>
-                            <div style="display:flex;gap:8px;">
-                                ${trope.tags?.map(tag => `<span style="padding:3px 8px;background:#16213e;border-radius:4px;font-size:11px;color:#00d4ff;">${tag}</span>`).join('') || ''}
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:10px;">
-                            <button class="btn btn-primary" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制内容</button>
-                            <button class="btn btn-secondary" onclick="backToTropeList()">返回列表</button>
-                        </div>
-                    </div>
-                `;
-            }
-
             // 第三级：桥段列表（带编号）
             if (currentSubTypeFilter) {
                 let filtered = tropesData.tropes || [];
@@ -2153,18 +2300,13 @@
                 }
                 
                 return html + filtered.map((trope, index) => {
-                    // 生成简要概括（取前50字）
-                    const summary = trope.content.substring(0, 50) + (trope.content.length > 50 ? '...' : '');
-                    // 安全编码 trope 数据
-                    const tropeJson = encodeURIComponent(JSON.stringify(trope));
+                    // 只显示标题和序号，点击后弹出详情
                     return `
-                        <div class="trope-item" style="cursor:pointer;" onclick="showTropeDetail('${tropeJson}')">
+                        <div class="trope-item" style="cursor:pointer;" onclick='openTropeDetailModal(${JSON.stringify(trope).replace(/'/g, "&#39;")})'>
                             <div class="trope-item-header">
                                 <span style="background:#e94560;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${index + 1}</span>
                                 <span class="trope-item-title" style="margin-left:10px;">${trope.title}</span>
                             </div>
-                            <div style="color:#888;font-size:13px;margin-top:8px;line-height:1.5;">${summary}</div>
-                            <div style="margin-top:8px;font-size:11px;color:#666;">《${trope.book}》</div>
                         </div>
                     `;
                 }).join('');
@@ -2228,22 +2370,57 @@
             await renderPlot(document.getElementById('mainContent'));
         }
         
-        // 显示桥段详情
-        async function showTropeDetail(tropeJson) {
-            // 解码 trope 数据
-            try {
-                currentTropeDetail = JSON.parse(decodeURIComponent(tropeJson));
-            } catch (e) {
-                console.error('解析桥段数据失败:', e);
-                return;
+        // 打开桥段详情弹窗
+        function openTropeDetailModal(trope) {
+            currentTropeDetail = trope;
+            
+            document.getElementById('tropeDetailTitle').textContent = trope.title;
+            document.getElementById('tropeDetailContent').textContent = trope.content;
+            document.getElementById('tropeDetailSource').textContent = `《${trope.book}》${trope.author} · ${trope.year}年`;
+            
+            // 渲染标签
+            const tagsContainer = document.getElementById('tropeDetailTags');
+            if (trope.tags && trope.tags.length > 0) {
+                tagsContainer.innerHTML = trope.tags.map(tag => 
+                    `<span class="trope-detail-tag">${tag}</span>`
+                ).join('');
+            } else {
+                tagsContainer.innerHTML = '';
             }
-            await renderPlot(document.getElementById('mainContent'));
+            
+            document.getElementById('tropeDetailModal').classList.add('active');
         }
         
-        // 返回桥段列表
-        async function backToTropeList() {
+        // 关闭桥段详情弹窗
+        function closeTropeDetailModal() {
+            document.getElementById('tropeDetailModal').classList.remove('active');
             currentTropeDetail = null;
-            await renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 点击遮罩层关闭弹窗
+        function closeTropeDetailModalOnOverlay(event) {
+            if (event.target.id === 'tropeDetailModal') {
+                closeTropeDetailModal();
+            }
+        }
+        
+        // 复制桥段内容
+        function copyTropeDetailContent() {
+            if (!currentTropeDetail) return;
+            
+            const text = `${currentTropeDetail.title}：${currentTropeDetail.content}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('桥段已复制到剪贴板');
+            }).catch(err => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showNotification('桥段已复制到剪贴板');
+            });
         }
         
         function copyTropeContent(title, content) {
@@ -2620,6 +2797,13 @@
         document.getElementById('modal').addEventListener('click', (e) => {
             if (e.target.id === 'modal') {
                 closeModal();
+            }
+        });
+
+        // ESC键关闭桥段详情弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeTropeDetailModal();
             }
         });
     </script>
