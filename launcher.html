@@ -1644,8 +1644,22 @@
                     const tx = this.db.transaction('dataCache', 'readonly');
                     const store = tx.objectStore('dataCache');
                     const request = store.get(key);
-                    request.onsuccess = () => resolve(request.result?.data || null);
-                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        const result = request.result;
+                        if (result && result.data) {
+                            const dataSize = JSON.stringify(result.data).length;
+                            const cachedDate = new Date(result.timestamp).toLocaleString('zh-CN');
+                            console.log(`✅ [缓存命中] ${key}: ${(dataSize/1024).toFixed(2)}KB, 缓存时间: ${cachedDate}`);
+                            resolve(result.data);
+                        } else {
+                            console.log(`⚠️ [缓存未命中] ${key}: 无本地缓存数据`);
+                            resolve(null);
+                        }
+                    };
+                    request.onerror = () => {
+                        console.error(`❌ [缓存错误] ${key}:`, request.error);
+                        reject(request.error);
+                    };
                 });
             }
 
@@ -1764,6 +1778,68 @@
                     };
                     tx.onerror = () => reject(tx.error);
                 });
+            }
+
+            // 获取缓存统计信息
+            async getCacheStats(key) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dataCache', 'versionInfo'], 'readonly');
+                    const dataStore = tx.objectStore('dataCache');
+                    const versionStore = tx.objectStore('versionInfo');
+                    
+                    const dataRequest = dataStore.get(key);
+                    const versionRequest = versionStore.get(key);
+                    
+                    let dataResult = null;
+                    let versionResult = null;
+                    
+                    dataRequest.onsuccess = () => {
+                        dataResult = dataRequest.result;
+                        if (versionResult !== undefined) checkComplete();
+                    };
+                    
+                    versionRequest.onsuccess = () => {
+                        versionResult = versionRequest.result;
+                        if (dataResult !== undefined) checkComplete();
+                    };
+                    
+                    const checkComplete = () => {
+                        if (!dataResult || !versionResult) {
+                            resolve(null);
+                            return;
+                        }
+                        
+                        const dataSize = JSON.stringify(dataResult.data).length;
+                        const stats = {
+                            key: key,
+                            version: versionResult.version,
+                            hash: versionResult.hash,
+                            cachedAt: versionResult.cachedAt,
+                            lastUpdated: versionResult.updated,
+                            dataSize: dataSize,
+                            dataSizeFormatted: dataSize > 1048576 
+                                ? (dataSize / 1048576).toFixed(2) + ' MB'
+                                : (dataSize / 1024).toFixed(2) + ' KB',
+                            age: Date.now() - versionResult.cachedAt,
+                            ageFormatted: this.formatAge(Date.now() - versionResult.cachedAt)
+                        };
+                        resolve(stats);
+                    };
+                    
+                    tx.onerror = () => reject(tx.error);
+                });
+            }
+            
+            formatAge(ms) {
+                const seconds = Math.floor(ms / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+                
+                if (days > 0) return `${days}天前`;
+                if (hours > 0) return `${hours}小时前`;
+                if (minutes > 0) return `${minutes}分钟前`;
+                return `${seconds}秒前`;
             }
 
             // 清除所有缓存
@@ -3469,9 +3545,219 @@
                 descDiv.innerHTML = `<strong style="color:#00d4ff">${select.value}</strong>：${desc}`;
                 currentSceneSubType = select.value;
             } else {
-                descDiv.textContent = '请选择一个桥段类型，系统将随机生成该类型的桥段内容';
+                descDiv.textContent = '请选择一个桥段类型，AI将分析经典案例结构，仿写生成原创桥段';
                 currentSceneSubType = '';
             }
+        }
+
+        // 获取仿写模板（基于桥段类型的结构模板）
+        function getRewriteTemplate(subType) {
+            const templates = {
+                '装逼打脸': {
+                    structure: ['场景设定', '嘲讽/轻视', '实力展现', '震惊反应', '淡然离场'],
+                    scenarios: ['宗门选拔', '拍卖会', '比武大会', '家族聚会', '街头偶遇', '任务考核'],
+                    characters: ['外门弟子', '世家公子', '天才少年', '宗门长老', '神秘散修', '商会少主'],
+                    abilities: ['隐藏修为', '上古传承', '神兵利器', '绝世功法', '血脉觉醒', '系统辅助']
+                },
+                '扮猪吃老虎': {
+                    structure: ['伪装示弱', '对方嚣张', '关键时刻', '真实实力', '局势逆转', '隐藏更深'],
+                    scenarios: ['擂台比武', '生死赌斗', '探险寻宝', '宗门试炼', '商会竞价', '秘境争夺'],
+                    characters: ['低调散修', '隐世高手', '伪装废柴', '神秘来客', '退隐宗师', '转世大能'],
+                    abilities: ['封印实力', '伪装境界', '底牌暗藏', '后手准备', '隐藏身份', '真实修为']
+                },
+                '废物逆袭': {
+                    structure: ['废物标签', '受尽屈辱', '奇遇觉醒', '苦修蜕变', '一鸣惊人', '证明自我'],
+                    scenarios: ['家族大典', '宗门考核', '城市大比', '学院测试', '门派选拔', '天才聚会'],
+                    characters: ['被弃少年', '落魄天才', '废柴少主', '没落嫡子', '被欺杂役', '废物赘婿'],
+                    abilities: ['血脉觉醒', '功法突破', '体质变异', '神识觉醒', '天赋觉醒', '传承继承']
+                },
+                '天降机缘': {
+                    structure: ['绝境逢生', '意外发现', '机缘降临', '艰难获取', '蜕变开始', '命运转折'],
+                    scenarios: ['悬崖坠落', '山洞探险', '古墓寻宝', '废墟探索', '深山奇遇', '海底发现'],
+                    characters: ['落魄少年', '逃亡之人', '探险散修', '寻宝猎人', '被困修士', '濒死者'],
+                    abilities: ['上古传承', '神兵认主', '灵兽契约', '功法顿悟', '体质改造', '记忆觉醒']
+                },
+                '智斗博弈': {
+                    structure: ['局势分析', '对手出招', '巧妙化解', '反将一军', '智慧碾压', '掌控全局'],
+                    scenarios: ['朝堂争辩', '商业谈判', '生死赌局', '阴谋诡计', '陷阱埋伏', '心理博弈'],
+                    characters: ['谋士军师', '智囊策士', '商业奇才', '阴谋高手', '心理大师', '布局之人'],
+                    abilities: ['谋略算计', '洞察人心', '预判对手', '布局深远', '言辞犀利', '智商压制']
+                },
+                '越级反杀': {
+                    structure: ['强敌来袭', '实力悬殊', '险象环生', '极限突破', '反败为胜', '震惊全场'],
+                    scenarios: ['生死决斗', '宗门之战', '家族冲突', '势力争锋', '夺宝之争', '复仇之战'],
+                    characters: ['弱小学徒', '低阶修士', '被追杀者', '弱势一方', '孤立无援', '以弱敌强'],
+                    abilities: ['临阵突破', '秘法爆发', '以命搏命', '战术精妙', '底牌尽出', '绝境求生']
+                },
+                '绝境翻盘': {
+                    structure: ['陷入绝境', '无路可退', '背水一战', '抓住生机', '逆转乾坤', '绝地反击'],
+                    scenarios: ['围剿包围', '封印之地', '必死之局', '生死边缘', '极限试炼', '绝境求生'],
+                    characters: ['被困之人', '孤独求败', '绝境探险者', '受困者', '濒死之人', '最后的希望'],
+                    abilities: ['意志爆发', '潜能觉醒', '绝境领悟', '置之死地', '意志不屈', '奇迹降临']
+                },
+                '全场震惊': {
+                    structure: ['众人质疑', '压力山大', '关键时刻', '惊人表现', '全场寂静', '震撼全场'],
+                    scenarios: ['宗门大会', '家族聚会', '天才聚会', '公开测试', '盛大典礼', '重要场合'],
+                    characters: ['被质疑者', '被嘲笑者', '不被看好', '默默无闻', '隐藏天才', '低调归来'],
+                    abilities: ['惊人天赋', '超乎想象', '突破记录', '创造奇迹', '震撼表现', '难以置信']
+                },
+                '身份揭晓': {
+                    structure: ['隐藏身份', '被人轻视', '关键时刻', '身份暴露', '身份尊贵', '局势大变'],
+                    scenarios: ['宫廷宴会', '贵族聚会', '宗门大会', '重要场合', '危机时刻', '关键时刻'],
+                    characters: ['伪装平民', '隐藏贵族', '隐匿强者', '退隐高人', '低调大能', '神秘人物'],
+                    abilities: ['显赫身份', '高贵血统', '强大背景', '惊人来历', '尊贵地位', '隐藏势力']
+                },
+                '护短名场面': {
+                    structure: ['亲友受欺', '隐忍不发', '对方过分', '强势出手', '霸道护短', '震慑全场'],
+                    scenarios: ['宗门冲突', '家族争斗', '街头冲突', '比武场合', '争端现场', '保护现场'],
+                    characters: ['强大护短者', '霸道强者', '护犊之人', '强大靠山', '强势庇护者', '强势出头'],
+                    abilities: ['强大实力', '霸道手段', '强势威慑', '绝对保护', '不容侵犯', '强势碾压']
+                },
+                '重生复仇': {
+                    structure: ['前世悲惨', '重生归来', '仇人犹在', '布局复仇', '逐一清算', '大仇得报'],
+                    scenarios: ['仇人得意', '昔日场景', '命运转折', '复仇时刻', '清算旧账', '改变命运'],
+                    characters: ['重生者', '复仇者', '先知先觉', '前世受害者', '归来之人', '命运改写者'],
+                    abilities: ['前世记忆', '先知优势', '布局深远', '复仇决心', '改变命运', '扭转乾坤']
+                },
+                '穿越改命': {
+                    structure: ['穿越异世', '身处困境', '先知优势', '改变剧情', '规避悲剧', '掌握命运'],
+                    scenarios: ['剧情节点', '命运转折', '危机时刻', '关键事件', '改变命运', '改写历史'],
+                    characters: ['穿越者', '先知者', '剧情破坏者', '命运改写者', '异界来客', '变数之人'],
+                    abilities: ['剧情先知', '现代知识', '打破命运', '规避悲剧', '掌控未来', '改写剧情']
+                },
+                '金手指': {
+                    structure: ['平凡起步', '金手指觉醒', '初次使用', '快速成长', '优势显现', '与众不同'],
+                    scenarios: ['觉醒时刻', '初次尝试', '困境使用', '快速崛起', '与众不同', '逆天改命'],
+                    characters: ['获得金手指者', '系统宿主', '天选之人', '开挂者', '特殊能力者', '与众不同者'],
+                    abilities: ['系统辅助', '特殊能力', '逆天功能', '作弊手段', '快速成长', '独特优势']
+                },
+                '闷声发大财': {
+                    structure: ['低调行事', '暗中观察', '发现机遇', '暗中获取', '不为人知', '默默积累'],
+                    scenarios: ['众人争抢', '低调角落', '无人问津', '暗中获取', '默默收获', '低调积累'],
+                    characters: ['低调者', '观察者', '暗中行动者', '捡漏者', '默默积累者', '不起眼之人'],
+                    abilities: ['眼光独到', '低调隐忍', '暗中获利', '不被注意', '默默变强', '隐藏实力']
+                },
+                '捡漏淘宝': {
+                    structure: ['慧眼识珠', '众人不识', '低价获取', '真正价值', '暗自欣喜', '收益巨大'],
+                    scenarios: ['跳蚤市场', '古玩市场', '拍卖会', '废品站', '旧货市场', '交易市场'],
+                    characters: ['识货之人', '淘宝者', '捡漏高手', '眼光独到者', '鉴宝专家', '淘宝猎人'],
+                    abilities: ['鉴别能力', '眼光独到', '知识渊博', '见识广博', '经验丰富', '独具慧眼']
+                },
+                '武魂觉醒': {
+                    structure: ['觉醒仪式', '众人期待', '出现异象', '武魂显现', '等级惊人', '震惊全场'],
+                    scenarios: ['觉醒大典', '武魂测试', '觉醒仪式', '觉醒现场', '觉醒时刻', '觉醒测试'],
+                    characters: ['觉醒者', '被期待者', '武魂天才', '隐藏天才', '觉醒之人', '天选之子'],
+                    abilities: ['顶级武魂', '稀有武魂', '变异武魂', '双生武魂', '神级武魂', '特殊武魂']
+                },
+                '无限流': {
+                    structure: ['进入副本', '任务发布', '危机四伏', '探索求生', '完成任务', '回归现实'],
+                    scenarios: ['恐怖副本', '求生副本', '解谜副本', '战斗副本', '生存挑战', '死亡游戏'],
+                    characters: ['轮回者', '求生者', '资深者', '新人', '队长', '智者'],
+                    abilities: ['副本经验', '特殊技能', '道具装备', '团队配合', '智慧谋略', '生存本能']
+                },
+                '规则怪谈破解': {
+                    structure: ['规则出现', '诡异现象', '寻找规律', '试探规则', '发现真相', '破解规则'],
+                    scenarios: ['怪谈空间', '诡异场所', '规则世界', '恐怖场所', '诡异事件', '规则领域'],
+                    characters: ['被困者', '求生者', '解密者', '观察者', '幸存者', '破解者'],
+                    abilities: ['逻辑推理', '观察入微', '冷静分析', '大胆假设', '细心求证', '破解规则']
+                },
+                '历史改写': {
+                    structure: ['穿越历史', '知晓未来', '关键时刻', '暗中布局', '改变历史', '创造新局'],
+                    scenarios: ['历史节点', '关键战役', '朝代更替', '重大事件', '命运转折', '历史时刻'],
+                    characters: ['穿越者', '先知者', '幕后推手', '改变历史者', '暗中布局者', '历史改写者'],
+                    abilities: ['历史知识', '先知优势', '现代思维', '战略眼光', '布局深远', '改变大势']
+                },
+                '民俗禁忌': {
+                    structure: ['禁忌规则', '诡异事件', '探寻真相', '发现秘密', '面对恐惧', '破解诡异'],
+                    scenarios: ['诡异村庄', '禁忌之地', '恐怖传说', '民间怪谈', '诡异事件', '恐怖场所'],
+                    characters: ['探险者', '幸存者', '知情者', '调查者', '误入者', '破解者'],
+                    abilities: ['民俗知识', '破解禁忌', '面对恐惧', '寻找真相', '生存能力', '破除迷信']
+                }
+            };
+
+            return templates[subType] || {
+                structure: ['场景设定', '冲突爆发', '关键转折', '高潮爆发', '结局落定', '余韵悠长'],
+                scenarios: ['宗门', '城市', '荒野', '秘境', '战场', '宫廷'],
+                characters: ['主角', '对手', '旁观者', '重要配角', '神秘人物', '关键人物'],
+                abilities: ['实力', '智慧', '勇气', '决心', '底牌', '突破']
+            };
+        }
+
+        // 仿写生成桥段
+        function rewriteScene(subType, examples) {
+            const template = getRewriteTemplate(subType);
+            const scenario = template.scenarios[Math.floor(Math.random() * template.scenarios.length)];
+            const char1 = template.characters[Math.floor(Math.random() * template.characters.length)];
+            const char2 = template.characters[Math.floor(Math.random() * template.characters.length)];
+            const ability = template.abilities[Math.floor(Math.random() * template.abilities.length)];
+
+            // 基于结构生成仿写内容
+            const variations = [
+                generateVariation1(subType, scenario, char1, char2, ability),
+                generateVariation2(subType, scenario, char1, char2, ability),
+                generateVariation3(subType, scenario, char1, char2, ability)
+            ];
+
+            return variations[Math.floor(Math.random() * variations.length)];
+        }
+
+        // 生成变体1
+        function generateVariation1(subType, scenario, char1, char2, ability) {
+            const scenes = {
+                '装逼打脸': `${scenario}现场，${char1}静静站在角落，目光淡然。周围人议论纷纷，有人冷笑道："区区${char1}也敢来此？"话音未落，${char1}身上忽然爆发出一股惊人气息，${ability}显露无遗。全场瞬间寂静，方才嘲笑之人面色惨白，双腿发软。${char1}淡淡扫视众人，转身离去，留下满场震撼。`,
+                '扮猪吃老虎': `${scenario}之上，${char1}刻意收敛气息，装作普通${char2}。对手嚣张跋扈，不断出言嘲讽。就在胜负将分之际，${char1}眼中精光一闪，${ability}骤然爆发，一招制敌。对手难以置信地看着这一切，而${char1}早已收起气息，仿佛什么都没发生。`,
+                '废物逆袭': `曾经的${char1}受尽白眼，被所有人视为废物。今日${scenario}开启，众人依旧嘲笑不断。然而当测试开始，${char1}体内${ability}轰然觉醒，耀眼的光芒直冲云霄。曾经嘲笑他的人目瞪口呆，而${char1}只是平静地说：这，只是开始。`,
+                '天降机缘': `${char1}跌入${scenario}深处，本以为必死无疑，却意外发现一处隐秘空间。古老的传承在黑暗中闪烁，${ability}静静等待着有缘人。当${char1}触碰到那道光芒时，命运从此改变，一段传奇即将开启。`,
+                '智斗博弈': `${scenario}之中，${char2}步步紧逼，招式阴险毒辣。${char1}神色从容，每一个应对都恰到好处。当对手自以为得计时，${char1}微微一笑，${ability}展现，原来早已布局深远。局势瞬间逆转，${char2}陷入绝境。`,
+                '越级反杀': `${char2}的实力远超${char1}，所有人都认为这将是一场单方面的碾压。然而${char1}眼中战意燃烧，${ability}在绝境中爆发。一招之差，胜负逆转，${char2}轰然倒下，而${char1}屹立场中，浑身浴血却气势如虹。`,
+                '绝境翻盘': `${char1}被困${scenario}，四面楚歌，看似无路可退。生死关头，${ability}在绝境中升华。那是不屈的意志，是向死而生的勇气。当${char1}再次睁开眼时，局势已然逆转，生机重现在眼前。`,
+                '全场震惊': `${scenario}现场，所有人都认为${char1}必败无疑。质疑声、嘲笑声此起彼伏。然而当结果揭晓的那一刻，${ability}展现出的威力让全场鸦雀无声。那是超出所有人认知的力量，${char1}用实际行动证明了一切。`
+            };
+
+            return scenes[subType] || `${scenario}之中，${char1}面对${char2}的挑衅，不慌不忙。关键时刻，${ability}展现，局势瞬间逆转，震惊全场。`;
+        }
+
+        // 生成变体2
+        function generateVariation2(subType, scenario, char1, char2, ability) {
+            const scenes = {
+                '装逼打脸': `${scenario}上，${char2}趾高气扬地宣布${char1}没有资格参加。众人投来或怜悯或嘲笑的目光。${char1}不发一言，只是轻轻展现出${ability}，那股威压让${char2}瞬间闭嘴，额头冷汗直冒。有时候，实力就是最好的回应。`,
+                '扮猪吃老虎': `众人眼中的${char1}不过是个普通${char2}，没人把他放在眼里。直到${scenario}的最后关头，当所有人都束手无策时，${char1}悄然出手，${ability}震惊四座。原来，真正的强者一直隐藏在人群之中。`,
+                '废物逆袭': `${scenario}的大门前，${char1}再次被人拦住："废物没有资格进入。"面对这样的羞辱，他没有争辩，只是用行动回应。当${ability}在他体内苏醒的那一刻，曾经所有的屈辱都将化为前进的动力。`,
+                '天降机缘': `命运的转折往往在最绝望的时刻降临。当${char1}跌入${scenario}的深渊，本以为生命将终结于此，却意外触发了沉睡千年的${ability}。那一刻，黑暗被光芒驱散，新的命运篇章就此展开。`,
+                '智斗博弈': `${scenario}的棋局中，${char2}自以为掌控全局。殊不知${char1}早已看穿一切，每一步退让都是布局，每一次示弱都是诱敌。当${ability}终于展现，对手才惊觉自己早已落入圈套，悔之晚矣。`,
+                '越级反杀': `实力悬殊的对决，${char1}身上的伤口越来越多。${char2}狂笑着认为胜券在握，却不知真正的战斗才刚刚开始。当${ability}在极限中觉醒，弱小的身影爆发出惊人的力量，一击逆转战局。`,
+                '绝境翻盘': `${scenario}的绝境中，${char1}退无可退。身后是万丈深渊，面前是强敌环伺。就在这生死一线间，${ability}轰然爆发，那是置之死地而后生的决绝，是破釜沉舟的勇气，最终创造了不可能的奇迹。`,
+                '全场震惊': `质疑的目光如芒刺在背，${char1}却神色如常。当${scenario}的考验降临，所有人都等着看他的笑话。然而当${ability}展现的那一刻，所有的嘲笑都凝固在脸上，取而代之的是难以置信的震惊。`
+            };
+
+            return scenes[subType] || `在${scenario}的紧要关头，${char1}凭借${ability}力挽狂澜，让${char2}和所有围观者都大吃一惊。`;
+        }
+
+        // 生成变体3
+        function generateVariation3(subType, scenario, char1, char2, ability) {
+            const scenes = {
+                '装逼打脸': `众人齐聚${scenario}，${char2}当众羞辱${char1}，言语刻薄至极。就在所有人等着看好戏时，${char1}淡然一笑，${ability}缓缓释放。那股威压让全场噤声，方才还嚣张的${char2}面色如土，恨不得找个地缝钻进去。`,
+                '扮猪吃老虎': `${scenario}中危机四伏，${char1}一直低调行事，被${char2}视为可欺之辈。然而当真正的危险降临，所有人都束手无策之际，${char1}展现${ability}，轻描淡写间化解危机，让所有人都重新认识了这位"弱者"。`,
+                '废物逆袭': `曾经的屈辱历历在目，${char1}在${scenario}上再次面对那些嘲笑过他的人。这一次，${ability}在他体内奔腾咆哮，耀眼的光芒证明了谁才是真正的废物。那些曾经高高在上的面孔，此刻只剩下震惊与羞愧。`,
+                '天降机缘': `${char1}在${scenario}中迷失方向，却在无意间闯入一处神秘之地。这里藏着改变命运的${ability}，古老的传承选择了这位看似平凡的少年。当他再次走出时，已然脱胎换骨，开启了全新的征程。`,
+                '智斗博弈': `面对${char2}的步步紧逼，${char1}始终从容不迫。在${scenario}的博弈中，每一次交锋都是智慧的碰撞。当${ability}最终施展，精妙的布局让对手恍然大悟，原来从一开始就已经输了。`,
+                '越级反杀': `这是一场毫无悬念的对决，${char2}的实力碾压${char1}。然而战斗从不是单纯的数字比较，当${ability}在绝境中觉醒，${char1}用意志和信念创造了奇迹。那一战，弱者战胜了强者，信念战胜了现实。`,
+                '绝境翻盘': `${scenario}的绝境中，${char1}面对着必死的结局。然而真正的强者从不向命运低头，${ability}在生死边缘升华，爆发出了超越极限的力量。当尘埃落定，站着的人只有一个，那就是永不言弃的${char1}。`,
+                '全场震惊': `当${char1}出现在${scenario}时，没有人看好他，包括曾经的友人。但当${ability}展现的那一刻，所有的质疑都烟消云散。那惊艳的表现不仅震惊了全场，更证明了真正的实力无需言语，行动便是最好的回答。`
+            };
+
+            return scenes[subType] || `${scenario}中，不被看好的${char1}凭借${ability}创造了奇迹，让所有质疑者都闭上了嘴。`;
+        }
+
+        // 切换参考例子折叠
+        function toggleReferenceSection() {
+            const content = document.getElementById('sceneReferenceContent');
+            const toggle = document.getElementById('referenceToggle');
+            const isCollapsed = content.style.display === 'none';
+            
+            content.style.display = isCollapsed ? 'block' : 'none';
+            toggle.textContent = isCollapsed ? '▼' : '▶';
+            toggle.classList.toggle('collapsed', !isCollapsed);
         }
 
         // 生成桥段

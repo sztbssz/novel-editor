@@ -1,0 +1,13 @@
+# 每日桥段采集定时任务配置
+# 安装方法：crontab -e 编辑后粘贴以下内容
+
+# 每天凌晨3点执行桥段采集
+0 3 * * * cd /root/.openclaw/workspace/novel-editor && /usr/bin/python3 collect_tropes.py >> /root/.openclaw/workspace/novel-editor/cron.log 2>&1
+
+# 每天凌晨3:30执行哈希表优化（可选）
+# 30 3 * * * cd /root/.openclaw/workspace/novel-editor && /usr/bin/python3 dedup.py --rebuild >> /root/.openclaw/workspace/novel-editor/cron.log 2>&1
+
+# 说明：
+# - 采集结果会记录到 trope_collection.log
+# - 错误信息会记录到 cron.log
+# - 如需修改执行时间，调整第一个数字（0-23小时）
