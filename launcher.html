@@ -2224,7 +2224,11 @@
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
             currentTropeDetail = null;
-            renderPlot(document.getElementById('mainContent'));
+            // 强制立即更新视图
+            const panelBody = document.querySelector('.trope-list');
+            if (panelBody) {
+                panelBody.innerHTML = renderTropeItems();
+            }
         }
         
         // 显示桥段详情
