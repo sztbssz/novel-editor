@@ -722,6 +722,9 @@
                 <a class="nav-item" data-page="plot">
                     <i>📖</i>情节大纲
                 </a>
+                <a class="nav-item" data-page="trope">
+                    <i>🎭</i>桥段素材
+                </a>
                 <a class="nav-item" data-page="data">
                     <i>💾</i>数据管理
                 </a>
@@ -1598,6 +1601,9 @@
                 case 'plot':
                     renderPlot(main);
                     break;
+                case 'trope':
+                    renderTrope(main);
+                    break;
                 case 'data':
                     renderData(main);
                     break;
@@ -2278,6 +2284,120 @@
             }
         }
         
+        // ==================== 桥段素材 ====================
+        async function renderTrope(container) {
+            const categories = tropesData?.categories || [];
+            
+            // 渲染类别筛选按钮
+            const filterButtons = categories.map(cat => `
+                <button class="tab ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropeByCategory('${cat.id}')">
+                    ${cat.name}
+                </button>
+            `).join('');
+            
+            container.innerHTML = `
+                <div class="header" style="flex-direction: column; align-items: flex-start;">
+                    <h2>🎭 桥段素材库</h2>
+                    <p style="color: #888; font-size: 13px; margin-top: 5px;">${categories.length}个类别 · 共收录经典桥段子类型</p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="tab ${currentTropeFilter === 'all' ? 'active' : ''}" onclick="filterTropeByCategory('all')">全部</button>
+                    ${filterButtons}
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="tropeSearch" placeholder="搜索桥段类别或子类型..." 
+                        style="width: 100%; padding: 10px 15px; background: #1a1a2e; border: 1px solid #333; border-radius: 6px; color: #fff;"
+                        value="${tropeSearchQuery}"
+                        oninput="onTropeSearch(this.value)"
+                    >
+                </div>
+                
+                <div id="tropeContent">
+                    ${renderTropeContent()}
+                </div>
+            `;
+        }
+        
+        function renderTropeContent() {
+            if (!tropesData || !tropesData.categories) {
+                return '<div style="text-align:center;color:#888;padding:40px;">加载中...</div>';
+            }
+            
+            let categoriesToShow = tropesData.categories;
+            
+            // 按类别筛选
+            if (currentTropeFilter !== 'all') {
+                categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
+            }
+            
+            // 按搜索词筛选
+            if (tropeSearchQuery) {
+                const q = tropeSearchQuery.toLowerCase();
+                categoriesToShow = categoriesToShow.filter(c => 
+                    c.name.toLowerCase().includes(q) ||
+                    c.subTypes?.some(s => s.name.toLowerCase().includes(q))
+                );
+            }
+            
+            if (categoriesToShow.length === 0) {
+                return '<div style="text-align:center;color:#888;padding:40px;">未找到匹配的桥段类别</div>';
+            }
+            
+            return categoriesToShow.map(cat => {
+                let subTypes = cat.subTypes || [];
+                
+                // 如果搜索词匹配子类型，高亮显示
+                if (tropeSearchQuery) {
+                    const q = tropeSearchQuery.toLowerCase();
+                    subTypes = subTypes.filter(s => 
+                        s.name.toLowerCase().includes(q) ||
+                        cat.name.toLowerCase().includes(q)
+                    );
+                }
+                
+                if (subTypes.length === 0) return '';
+                
+                return `
+                    <div style="margin-bottom: 24px; background: #1a1a2e; border-radius: 10px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333;">
+                            <div style="font-size: 15px; font-weight: 600; color: #e94560;">
+                                ${cat.name}
+                            </div>
+                            <div style="font-size: 12px; color: #888;">
+                                ${subTypes.length}个
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
+                            ${subTypes.map(sub => `
+                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showTropeDetail('${cat.name}', '${sub.name.replace(/'/g, "\\'")}')">
+                                    <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterTropeByCategory(categoryId) {
+            currentTropeFilter = categoryId;
+            renderTrope(document.getElementById('mainContent'));
+        }
+        
+        function onTropeSearch(query) {
+            tropeSearchQuery = query;
+            const contentDiv = document.getElementById('tropeContent');
+            if (contentDiv) {
+                contentDiv.innerHTML = renderTropeContent();
+            }
+        }
+        
+        function showTropeDetail(categoryName, subTypeName) {
+            showNotification(`${categoryName} · ${subTypeName}`);
+        }
+
         // ==================== 数据管理 ====================
         async function renderData(container) {
             const chars = await db.getAll('characters');
