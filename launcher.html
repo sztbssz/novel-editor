@@ -1384,6 +1384,7 @@
             
             // 加载角色数据
             await loadCharacterData();
+            await loadWorldviewData();
             
             loadPage('home');
             
@@ -1433,6 +1434,59 @@
                 }
             } catch (error) {
                 console.error('加载角色数据失败:', error);
+            }
+        }
+
+        // 加载世界观数据
+        async function loadWorldviewData() {
+            const worldviewFiles = [
+                'worldview_2011_2017.json'
+            ];
+            
+            try {
+                for (const file of worldviewFiles) {
+                    const response = await fetch(`./${file}`);
+                    if (response.ok) {
+                        const worldviews = await response.json();
+                        
+                        // 检查是否已存在
+                        const existingSettings = await db.getAll('world_settings');
+                        const existingTitles = new Set(existingSettings.map(s => s.title));
+                        
+                        let addedCount = 0;
+                        for (const world of worldviews) {
+                            const title = `${world.book} - 世界观`;
+                            if (!existingTitles.has(title)) {
+                                const content = `
+**作者**: ${world.author}
+**年份**: ${world.year}
+**背景类型**: ${world.backgroundType}
+**力量类型**: ${world.powerType}
+
+**文化习俗**:
+${world.culture}
+
+**世界特色**:
+${world.features}
+
+**标签**: ${world.tags.join(', ')}
+                                `.trim();
+                                
+                                await db.add('world_settings', {
+                                    category: 'other',
+                                    title: title,
+                                    content: content
+                                });
+                                addedCount++;
+                            }
+                        }
+                        console.log(`已加载 ${addedCount} 条新世界观从 ${file} (共${worldviews.length}条)`);
+                    } else {
+                        console.warn(`世界观文件 ${file} 加载失败: ${response.status}`);
+                    }
+                }
+            } catch (error) {
+                console.error('加载世界观数据失败:', error);
             }
         }
 
