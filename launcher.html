@@ -262,6 +262,260 @@
         .detail-modal.closing .detail-modal-content {
             animation: scaleOut 0.2s ease forwards;
         }
+
+        /* ==================== 全局搜索样式 ==================== */
+        .search-trigger {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #0f3460;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #888;
+            font-size: 14px;
+        }
+        .search-trigger:hover {
+            background: #1a4a7a;
+            color: #fff;
+        }
+        .search-trigger-icon {
+            font-size: 16px;
+        }
+        .search-trigger-shortcut {
+            font-size: 12px;
+            padding: 2px 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #666;
+        }
+        .search-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 80px;
+            animation: fadeIn 0.2s ease;
+        }
+        .search-modal.active {
+            display: flex;
+        }
+        .search-container {
+            width: 90%;
+            max-width: 700px;
+            background: #16213e;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .search-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #0f3460;
+            background: #1a1a2e;
+        }
+        .search-header-icon {
+            font-size: 20px;
+            color: #888;
+        }
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-input::placeholder {
+            color: #666;
+        }
+        .search-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .search-close:hover {
+            color: #fff;
+            background: rgba(233, 69, 96, 0.2);
+        }
+        .search-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .search-category {
+            border-bottom: 1px solid #0f3460;
+        }
+        .search-category:last-child {
+            border-bottom: none;
+        }
+        .search-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: #1a1a2e;
+            font-size: 13px;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .search-category-count {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: #0f3460;
+            border-radius: 10px;
+            color: #00d4ff;
+        }
+        .search-results {
+            padding: 8px 0;
+        }
+        .search-result-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .search-result-item:hover {
+            background: #1a1a2e;
+            border-left-color: #e94560;
+        }
+        .search-result-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f3460;
+            border-radius: 8px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .search-result-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .search-result-title {
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-desc {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .search-result-meta {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .search-result-highlight {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        .search-show-more {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            color: #00d4ff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .search-show-more:hover {
+            background: #0f3460;
+        }
+        .search-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .search-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .search-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+        .search-loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #0f3460;
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .search-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: #1a1a2e;
+            border-top: 1px solid #0f3460;
+            font-size: 12px;
+            color: #666;
+        }
+        .search-footer-hints {
+            display: flex;
+            gap: 16px;
+        }
+        .search-footer-hint {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .search-footer-key {
+            padding: 2px 6px;
+            background: #0f3460;
+            border-radius: 4px;
+            font-size: 11px;
+        }
         .empty-state { text-align: center; padding: 60px 20px; }
         .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
         .empty-state h3 { font-size: 20px; margin-bottom: 10px; color: #fff; }
@@ -1242,6 +1496,34 @@
             </div>
             <div class="detail-modal-footer">
                 <button class="detail-modal-btn detail-modal-btn-close" onclick="closeDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局搜索弹窗 -->
+    <div class="search-modal" id="searchModal" onclick="closeSearchModalOnOverlay(event)">
+        <div class="search-container" onclick="event.stopPropagation()">
+            <div class="search-header">
+                <span class="search-header-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索桥段、角色、世界观..." autocomplete="off">
+                <button class="search-close" onclick="closeSearchModal()">&times;</button>
+            </div>
+            <div class="search-body" id="searchResults">
+                <!-- 搜索结果将动态插入这里 -->
+            </div>
+            <div class="search-footer">
+                <div class="search-footer-hints">
+                    <span class="search-footer-hint">
+                        <span class="search-footer-key">↑↓</span> 选择
+                    </span>
+                    <span class="search-footer-hint">
+                        <span class="search-footer-key">↵</span> 打开
+                    </span>
+                    <span class="search-footer-hint">
+                        <span class="search-footer-key">Esc</span> 关闭
+                    </span>
+                </div>
+                <div id="searchResultCount"></div>
             </div>
         </div>
     </div>
@@ -2775,9 +3057,16 @@
             container.innerHTML = `
                 <div class="header">
                     <h2>🏠 概览</h2>
-                    <button class="btn btn-secondary" onclick="openGitHubSettings()">
-                        🔧 ${githubSync.isConfigured() ? '同步设置' : '启用云同步'}
-                    </button>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="search-trigger" onclick="openSearchModal()">
+                            <span class="search-trigger-icon">🔍</span>
+                            <span>搜索</span>
+                            <span class="search-trigger-shortcut">Ctrl K</span>
+                        </div>
+                        <button class="btn btn-secondary" onclick="openGitHubSettings()">
+                            🔧 ${githubSync.isConfigured() ? '同步设置' : '启用云同步'}
+                        </button>
+                    </div>
                 </div>
                 
                 ${syncStatusHtml}
@@ -2826,9 +3115,189 @@
             `;
         }
 
+        // 获取桥段子类型描述
+        function getSubTypeDescription(name) {
+            const descriptions = {
+                '装逼打脸': '主角展示实力，让看不起他的人震惊',
+                '扮猪吃老虎': '隐藏实力，关键时刻一鸣惊人',
+                '智斗博弈': '双方互相算计，斗智斗勇',
+                '越级反杀': '以弱胜强，击败强大的对手',
+                '绝境翻盘': '在绝境中找到转机，反败为胜',
+                '废物逆袭': '从被人看不起到让人刮目相看',
+                '身份揭晓': '隐藏的身份被揭露，震惊众人',
+                '全场震惊': '主角的表现让所有人震惊',
+                '降维打击': '用高维度的能力碾压对手',
+                '快意恩仇': '有仇必报，恩怨分明',
+                '护短名场面': '保护自己的人，不惜一切代价',
+                '闷声发大财': '低调行事，暗中获得巨大利益',
+                '捡漏淘宝': '在别人忽视的地方发现宝物',
+                '天降机缘': '意外获得难得的机遇',
+                '截胡机缘': '抢先一步获得他人的机缘',
+                '后手反制': '预留后手，关键时刻反制对手',
+                '幕后黑手': '暗中操控一切的黑手现身',
+                '致命背叛': '信任的人突然背叛',
+                '绝地反杀': '在绝境中完成反杀',
+                '绝境求生': '在绝境中寻找生机',
+                '绝境突破': '在绝境中突破自我',
+                '绝境悟道': '在绝境中领悟真理',
+                '死而复生': '死后复活，重返人间',
+                '转世重生': '转世后重新开始',
+                '重生复仇': '重生后向仇人复仇',
+                '重生弥补遗憾': '重生后弥补前世的遗憾',
+                '穿越逆袭': '穿越后改变命运',
+                '穿越争霸': '穿越后在异世界争霸',
+                '穿越恋爱': '穿越后经历浪漫爱情',
+                '系统觉醒': '系统觉醒，获得金手指',
+                '系统任务': '完成系统发布的任务',
+                '系统升级': '系统升级，获得更强能力',
+                '金手指开启': '开启金手指，获得特殊能力',
+                '金手指进化': '金手指进化，能力增强',
+                '金手指限制': '金手指有限制，需要克服困难',
+                '修炼突破': '修炼中突破瓶颈',
+                '渡劫飞升': '渡劫后飞升成仙',
+                '悟道升级': '领悟大道，境界提升',
+                '炼丹炼器': '炼制丹药或法宝',
+                '阵法布置': '布置阵法，攻防一体',
+                '收服灵宠': '收服强大的灵宠',
+                '寻找法宝': '寻找强大的法宝',
+                '探索秘境': '探索神秘的秘境',
+                '获得传承': '获得前辈的传承',
+                '门派大比': '参加门派间的比试',
+                '宗门争斗': '宗门之间的争斗',
+                '正邪大战': '正道与邪道的大战',
+                '仙魔大战': '仙界与魔界的大战',
+                '人妖大战': '人类与妖族的大战',
+                '神魔大战': '神与魔的大战',
+                '天道之争': '争夺天道的控制权',
+                '气运之争': '争夺天地气运',
+                '天命之子': '被天命选中的主角',
+                '逆天改命': '逆天而行，改变命运',
+                '因果循环': '因果报应，循环往复',
+                '宿命对决': '命中注定的对决',
+                '时空穿越': '穿越时空，改变历史',
+                '平行世界': '平行世界的冒险',
+                '时间循环': '陷入时间循环',
+                '空间跳跃': '在不同空间跳跃',
+                '维度入侵': '高维生物入侵低维',
+                '末世求生': '在末世中求生',
+                '丧尸围城': '被丧尸包围的危机',
+                '资源争夺': '争夺有限的资源',
+                '基地建设': '建设生存基地',
+                '团队组建': '组建生存团队',
+                '科技升级': '科技水平升级',
+                '异能觉醒': '觉醒特殊能力',
+                '基因进化': '基因发生进化',
+                '机械改造': '身体进行机械改造',
+                '人工智能': '与人工智能的互动',
+                '赛博朋克': '赛博朋克风格的故事',
+                '虚拟现实': '在虚拟世界冒险',
+                '游戏世界': '进入游戏世界',
+                '无限流副本': '在无限流副本中闯关',
+                '规则怪谈': '在规则怪谈中求生',
+                '恐怖逃生': '在恐怖场景中逃生',
+                '悬疑推理': '解开悬疑案件的真相',
+                '密室逃脱': '从密室中逃脱',
+                '狼人杀': '在狼人杀游戏中求生',
+                '剧本杀': '在剧本杀中找出真相',
+                '宫廷斗争': '在宫廷中勾心斗角',
+                '权谋算计': '各方势力的权谋斗争',
+                '谍战潜伏': '在敌营中潜伏',
+                '商业竞争': '商业场上的竞争',
+                '职场斗争': '职场上的明争暗斗',
+                '家族恩怨': '家族之间的恩怨情仇',
+                '黑帮火拼': '黑帮之间的火拼',
+                '警匪追逐': '警察与匪徒的追逐',
+                '战争场面': '激烈的战争场面',
+                '英雄救美': '英雄救美的经典桥段',
+                '误会解除': '误会最终得以解除',
+                '久别重逢': '久别之后的重逢',
+                '相爱相杀': '既相爱又相杀的关系',
+                '暗恋告白': '暗恋最终告白',
+                '分手复合': '分手后重新复合',
+                '三角恋情': '三人之间的情感纠葛',
+                '禁忌之恋': '不被允许的爱情',
+                '契约婚姻': '因契约而结合的婚姻',
+                '先婚后爱': '先结婚后恋爱',
+                '追妻火葬场': '追妻追到火葬场',
+                '虐恋情深': '虐心又深情的爱情',
+                '甜宠日常': '甜蜜宠爱的日常',
+                '养成系': '从小培养的感情',
+                '青梅竹马': '从小一起长大的感情',
+                '欢喜冤家': '打打闹闹的感情',
+                '破镜重圆': '分开后重新在一起',
+                '替身文学': '替身与真爱的故事',
+                '白月光': '心中永远的白月光',
+                '朱砂痣': '刻骨铭心的朱砂痣',
+                '天降竹马': '天降的青梅竹马',
+                '年上年下': '年龄差恋爱',
+                '强强联手': '强者之间的联手',
+                '双A对决': '两个强者之间的对决',
+                '师徒情深': '师徒之间的深厚感情',
+                '兄弟情义': '兄弟之间的情义',
+                '姐妹情深': '姐妹之间的深情',
+                '父子情深': '父子之间的深情',
+                '母女情深': '母女之间的深情',
+                '知遇之恩': '知遇之恩的报答',
+                '救命之恩': '救命之恩的报答',
+                '养育之恩': '养育之恩的报答',
+                '师徒反目': '师徒之间的反目',
+                '兄弟阋墙': '兄弟之间的争斗',
+                '姐妹反目': '姐妹之间的反目',
+                '父子成仇': '父子成为仇人',
+                '母女成仇': '母女成为仇人',
+                '背叛与原谅': '背叛后的原谅',
+                '牺牲与奉献': '为了他人牺牲自己',
+                '守护与陪伴': '默默守护与陪伴',
+                '等待与守候': '长久的等待与守候',
+                '寻找与追寻': '不懈地寻找与追寻',
+                '失而复得': '失去后重新获得',
+                '得而复失': '获得后又失去',
+                '求而不得': '追求却得不到',
+                '舍生取义': '为了正义舍弃生命',
+                '大义灭亲': '为了大义牺牲亲人',
+                '家国情怀': '对家国的深厚情怀',
+                '民族大义': '民族的大义与担当',
+                '历史使命': '肩负的历史使命',
+                '时代变革': '时代的变革与选择',
+                '个人成长': '个人的成长与蜕变',
+                '自我救赎': '自我救赎的旅程',
+                '自我发现': '发现自己的真实身份',
+                '自我超越': '超越自我的极限',
+                '自我牺牲': '为了更大的利益牺牲自己',
+                '信念坚守': '坚守自己的信念',
+                '理想追求': '追求自己的理想',
+                '梦想实现': '梦想最终得以实现',
+                '初心不改': '始终不改初心',
+                '归来复仇': '归来向仇人复仇',
+                '王者归来': '王者归来重整山河',
+                '东山再起': '失败后重新崛起',
+                '浴火重生': '经历磨难后重生',
+                '涅槃重生': '涅槃后获得新生',
+                '化茧成蝶': '经历蜕变成为更好的自己',
+                '脱胎换骨': '彻底改变，焕然一新',
+                '浪子回头': '浪子回头金不换',
+                '改邪归正': '从邪恶转向正义',
+                '弃暗投明': '离开黑暗投向光明',
+                '迷途知返': '迷失后重新找到方向',
+                '真相大白': '真相最终大白',
+                '水落石出': '事情的真相终于清楚',
+                '拨云见日': '拨开云雾见到光明',
+                '柳暗花明': '在困境中看到希望',
+                '绝处逢生': '在绝境中获得生机',
+                '逢凶化吉': '遇到凶险却化为吉祥',
+                '转危为安': '从危险转为安全',
+                '化险为夷': '化解危险成为平安',
+                '因祸得福': '因灾祸而获得福气',
+                '塞翁失马': '坏事变好事',
+                '否极泰来': '坏运走到头好运就来了'
+            };
+            return descriptions[name] || '经典网文桥段类型';
+        }
+
         // ==================== 桥段编辑器页面 ====================
         let currentSceneTrope = null; // 当前生成的桥段
         let currentSceneSubType = ''; // 当前选择的子类型
+        let currentReferenceExamples = []; // 当前参考的例子
 
         // 桥段编辑器页面
         async function renderSceneEditor(container) {
@@ -2843,7 +3312,7 @@
             container.innerHTML = `
                 <div class="header">
                     <h2>📝 桥段生成</h2>
-                    <span style="color:#888;font-size:14px">根据类型生成约200字桥段文字</span>
+                    <span style="color:#888;font-size:14px">AI仿写生成原创桥段（约200字）</span>
                 </div>
 
                 <div class="scene-editor-container">
@@ -2855,7 +3324,7 @@
                             ${subTypes.map(st => `<option value="${st.name}" data-desc="${st.desc || ''}">${st.name}</option>`).join('')}
                         </select>
                         <div class="scene-type-desc" id="sceneTypeDesc">
-                            请选择一个桥段类型，系统将随机生成该类型的桥段内容
+                            请选择一个桥段类型，AI将分析经典案例结构，仿写生成原创桥段
                         </div>
                     </div>
 
@@ -2866,13 +3335,25 @@
                         </button>
                     </div>
 
-                    <!-- 结果显示区 -->
+                    <!-- 参考例子区（可折叠） -->
+                    <div class="scene-reference-section" id="sceneReferenceSection" style="display:none;">
+                        <div class="scene-reference-header" onclick="toggleReferenceSection()">
+                            <span>📚 参考例子（点击展开/折叠）</span>
+                            <span class="scene-reference-toggle" id="referenceToggle">▼</span>
+                        </div>
+                        <div class="scene-reference-content" id="sceneReferenceContent">
+                            <div class="scene-reference-list" id="sceneReferenceList"></div>
+                        </div>
+                    </div>
+
+                    <!-- 生成结果区 -->
                     <div class="scene-result-section" id="sceneResultSection" style="display:none;">
                         <div class="scene-result-title">
-                            <span>🎬 生成结果</span>
+                            <span>🎬 原创桥段</span>
                             <span style="font-size:13px;color:#888" id="sceneResultCount"></span>
                         </div>
                         <div class="scene-result-meta" id="sceneResultMeta"></div>
+                        <div class="scene-original-tag">✨ AI仿写生成 · 结构相似 · 内容原创</div>
                         <textarea class="scene-result-textarea" id="sceneResultTextarea" placeholder="生成的桥段内容将显示在这里..."></textarea>
                         <div class="scene-tags" id="sceneTags"></div>
                         <div class="scene-result-actions">
@@ -2889,7 +3370,7 @@
                     <div class="scene-empty-state" id="sceneEmptyState">
                         <div class="scene-empty-state-icon">🎭</div>
                         <h3>选择类型并生成桥段</h3>
-                        <p>从上方选择一种桥段类型，点击"生成桥段"按钮即可生成约200字的桥段内容</p>
+                        <p>从上方选择一种桥段类型，AI将分析经典案例的结构特征，仿写生成约200字的原创桥段内容</p>
                     </div>
                 </div>
             `;
@@ -5427,6 +5908,374 @@
             }
         }
         
+        // ==================== 全局搜索功能 ====================
+        let searchDebounceTimer = null;
+        let searchResultsData = [];
+        let searchSelectedIndex = -1;
+        
+        // 打开搜索弹窗
+        function openSearchModal() {
+            document.getElementById('searchModal').classList.add('active');
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchInput').focus();
+            document.getElementById('searchResults').innerHTML = `
+                <div class="search-empty">
+                    <div class="search-empty-icon">🔍</div>
+                    <p>输入关键词开始搜索</p>
+                    <p style="font-size:12px;color:#666;margin-top:8px;">支持搜索桥段、角色、世界观和已生成的名字</p>
+                </div>
+            `;
+            searchResultsData = [];
+            searchSelectedIndex = -1;
+            updateSearchResultCount();
+        }
+        
+        // 关闭搜索弹窗
+        function closeSearchModal() {
+            document.getElementById('searchModal').classList.remove('active');
+            searchResultsData = [];
+            searchSelectedIndex = -1;
+        }
+        
+        // 点击遮罩关闭
+        function closeSearchModalOnOverlay(event) {
+            if (event.target.id === 'searchModal') {
+                closeSearchModal();
+            }
+        }
+        
+        // 更新搜索结果计数
+        function updateSearchResultCount() {
+            const count = searchResultsData.length;
+            document.getElementById('searchResultCount').textContent = count > 0 ? `找到 ${count} 个结果` : '';
+        }
+        
+        // 搜索防抖
+        function debounceSearch(query) {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+            searchDebounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        }
+        
+        // 执行搜索
+        async function performSearch(query) {
+            if (!query || query.trim().length === 0) {
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="search-empty">
+                        <div class="search-empty-icon">🔍</div>
+                        <p>输入关键词开始搜索</p>
+                        <p style="font-size:12px;color:#666;margin-top:8px;">支持搜索桥段、角色、世界观和已生成的名字</p>
+                    </div>
+                `;
+                searchResultsData = [];
+                searchSelectedIndex = -1;
+                updateSearchResultCount();
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('searchResults').innerHTML = `
+                <div class="search-loading">
+                    <div class="search-loading-spinner"></div>
+                    <p>正在搜索..."${query}"</p>
+                </div>
+            `;
+            
+            const results = await searchAllData(query.trim());
+            searchResultsData = results;
+            searchSelectedIndex = -1;
+            renderSearchResults(results);
+            updateSearchResultCount();
+        }
+        
+        // 搜索所有数据
+        async function searchAllData(query) {
+            const results = [];
+            const lowerQuery = query.toLowerCase();
+            
+            // 1. 搜索桥段素材库
+            if (tropesData && tropesData.categories) {
+                tropesData.categories.forEach(cat => {
+                    if (cat.subTypes) {
+                        cat.subTypes.forEach(sub => {
+                            const name = sub.name || sub;
+                            const desc = sub.description || getSubTypeDescription(name);
+                            if (fuzzyMatch(name + ' ' + desc, lowerQuery)) {
+                                results.push({
+                                    type: 'trope',
+                                    category: '桥段',
+                                    icon: '🎭',
+                                    title: name,
+                                    desc: desc,
+                                    categoryName: cat.name,
+                                    data: sub
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // 2. 搜索角色数据库
+            const characters = await db.getAll('characters');
+            characters.forEach(char => {
+                const searchText = `${char.name} ${char.role} ${char.personality} ${char.description} ${char.book} ${(char.tags || []).join(' ')}`;
+                if (fuzzyMatch(searchText, lowerQuery)) {
+                    results.push({
+                        type: 'character',
+                        category: '角色',
+                        icon: '👤',
+                        title: char.name,
+                        desc: char.description || char.personality || '暂无描述',
+                        meta: `${char.role || '配角'} · ${char.book || '未知出处'}`,
+                        data: char
+                    });
+                }
+            });
+            
+            // 3. 搜索世界观数据
+            const worldSettings = await db.getAll('world_settings');
+            worldSettings.forEach(setting => {
+                const searchText = `${setting.title} ${setting.content} ${setting.category}`;
+                if (fuzzyMatch(searchText, lowerQuery)) {
+                    results.push({
+                        type: 'worldview',
+                        category: '世界观',
+                        icon: '🌍',
+                        title: setting.title,
+                        desc: setting.content ? setting.content.substring(0, 100) + '...' : '暂无内容',
+                        meta: setting.category || '其他设定',
+                        data: setting
+                    });
+                }
+            });
+            
+            // 4. 搜索已生成的名字
+            if (generatedNames && generatedNames.length > 0) {
+                generatedNames.forEach(nameObj => {
+                    if (fuzzyMatch(nameObj.name + ' ' + nameObj.meaning, lowerQuery)) {
+                        results.push({
+                            type: 'name',
+                            category: '名字',
+                            icon: '✨',
+                            title: nameObj.name,
+                            desc: nameObj.meaning,
+                            meta: nameObj.style,
+                            data: nameObj
+                        });
+                    }
+                });
+            }
+            
+            return results;
+        }
+        
+        // 模糊匹配（支持中文分词）
+        function fuzzyMatch(text, query) {
+            if (!text) return false;
+            const lowerText = text.toLowerCase();
+            
+            // 直接包含
+            if (lowerText.includes(query)) return true;
+            
+            // 中文分词匹配（简单实现）
+            const queryChars = query.split('');
+            let matchCount = 0;
+            for (const char of queryChars) {
+                if (lowerText.includes(char)) {
+                    matchCount++;
+                }
+            }
+            // 如果大部分字符都匹配，也算匹配
+            if (matchCount >= queryChars.length * 0.7) return true;
+            
+            return false;
+        }
+        
+        // 渲染搜索结果
+        function renderSearchResults(results) {
+            if (results.length === 0) {
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="search-empty">
+                        <div class="search-empty-icon">😕</div>
+                        <p>未找到相关结果</p>
+                        <p style="font-size:12px;color:#666;margin-top:8px;">尝试使用其他关键词</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 按类别分组
+            const grouped = {};
+            results.forEach(item => {
+                if (!grouped[item.category]) {
+                    grouped[item.category] = [];
+                }
+                grouped[item.category].push(item);
+            });
+            
+            const categoryOrder = ['桥段', '角色', '世界观', '名字'];
+            let html = '';
+            
+            categoryOrder.forEach(category => {
+                const items = grouped[category];
+                if (!items || items.length === 0) return;
+                
+                const displayItems = items.slice(0, 5);
+                const hasMore = items.length > 5;
+                
+                html += `
+                    <div class="search-category">
+                        <div class="search-category-header">
+                            <span>${category}</span>
+                            <span class="search-category-count">${items.length}</span>
+                        </div>
+                        <div class="search-results">
+                            ${displayItems.map((item, idx) => `
+                                <div class="search-result-item" 
+                                     data-type="${item.type}"
+                                     data-index="${results.indexOf(item)}"
+                                     onclick="handleSearchResultClick('${item.type}', ${item.data.id || 0})">
+                                    <div class="search-result-icon">${item.icon}</div>
+                                    <div class="search-result-content">
+                                        <div class="search-result-title">${highlightText(item.title, document.getElementById('searchInput').value)}</div>
+                                        <div class="search-result-desc">${highlightText(item.desc, document.getElementById('searchInput').value)}</div>
+                                        ${item.meta ? `<div class="search-result-meta">${item.meta}</div>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${hasMore ? `
+                                <div class="search-show-more" onclick="showMoreResults('${category}', ${JSON.stringify(items.slice(5)).replace(/"/g, '&quot;')})">
+                                    查看全部 ${items.length} 个结果 →
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('searchResults').innerHTML = html;
+        }
+        
+        // 高亮搜索关键词
+        function highlightText(text, query) {
+            if (!text || !query) return text;
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$\u0026');
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            return text.replace(regex, '<span class="search-result-highlight">$1</span>');
+        }
+        
+        // 处理搜索结果点击
+        async function handleSearchResultClick(type, id) {
+            closeSearchModal();
+            
+            switch (type) {
+                case 'trope':
+                    loadPage('trope');
+                    showNotification('已跳转到桥段素材库');
+                    break;
+                case 'character':
+                    if (!dataLoadState.characters.loaded) {
+                        await loadCharacterDataWithUI();
+                    }
+                    loadPage('characters');
+                    // 高亮显示角色
+                    setTimeout(() => {
+                        const charCard = document.querySelector(`[onclick*="openCharacterDetail(${id})"]`);
+                        if (charCard) {
+                            charCard.style.border = '2px solid #00d4ff';
+                            charCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => {
+                                charCard.style.border = '';
+                            }, 3000);
+                        }
+                    }, 100);
+                    break;
+                case 'worldview':
+                    if (!dataLoadState.worldview.loaded) {
+                        await loadWorldviewDataWithUI();
+                    }
+                    loadPage('world');
+                    // 高亮显示世界观
+                    setTimeout(() => {
+                        const worldCard = document.querySelector(`[onclick*="openWorldviewDetail(${id})"]`);
+                        if (worldCard) {
+                            worldCard.style.border = '2px solid #00d4ff';
+                            worldCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => {
+                                worldCard.style.border = '';
+                            }, 3000);
+                        }
+                    }, 100);
+                    break;
+                case 'name':
+                    loadPage('names');
+                    showNotification('已跳转到姓名生成器');
+                    break;
+            }
+        }
+        
+        // 显示更多结果
+        function showMoreResults(category, items) {
+            // 展开该类别所有结果
+            const categoryEl = document.querySelector(`.search-category:has(.search-category-header span:first-child:contains("${category}"))`);
+            if (categoryEl) {
+                const resultsEl = categoryEl.querySelector('.search-results');
+                const moreBtn = categoryEl.querySelector('.search-show-more');
+                
+                const html = items.map((item, idx) => `
+                    <div class="search-result-item" 
+                         data-type="${item.type}"
+                         onclick="handleSearchResultClick('${item.type}', ${item.data.id || 0})">
+                        <div class="search-result-icon">${item.icon}</div>
+                        <div class="search-result-content">
+                            <div class="search-result-title">${highlightText(item.title, document.getElementById('searchInput').value)}</div>
+                            <div class="search-result-desc">${highlightText(item.desc, document.getElementById('searchInput').value)}</div>
+                            ${item.meta ? `<div class="search-result-meta">${item.meta}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 移除"显示更多"按钮，追加新结果
+                moreBtn.remove();
+                resultsEl.insertAdjacentHTML('beforeend', html);
+            }
+        }
+        
+        // 搜索输入监听
+        function setupSearchListeners() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+            
+            searchInput.addEventListener('input', (e) => {
+                debounceSearch(e.target.value);
+            });
+            
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeSearchModal();
+                } else if (e.key === 'Enter') {
+                    // 打开第一个结果
+                    const firstResult = document.querySelector('.search-result-item');
+                    if (firstResult) {
+                        firstResult.click();
+                    }
+                }
+            });
+        }
+        
+        // 快捷键监听
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + K 打开搜索
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openSearchModal();
+            }
+        });
+        
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
             await db.init();
@@ -5512,10 +6361,16 @@
                     if (document.getElementById('modal').classList.contains('active')) {
                         closeModal();
                     }
+                    // 关闭搜索弹窗
+                    if (document.getElementById('searchModal').classList.contains('active')) {
+                        closeSearchModal();
+                    }
                 }
             });
+
+            // 设置搜索监听器
+            setupSearchListeners();
         });
     </script>
 </body>
 </html>
-html>
