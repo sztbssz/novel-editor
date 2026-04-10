@@ -1960,10 +1960,10 @@
 
         // 内部：实际加载角色数据
         async function loadCharacterDataInternal(onProgress = null) {
-            // 1. 先检查缓存
-            const cachedData = await cacheManager.get('characters_all');
+            // 1. 先尝试从智能缓存加载（优先使用本地缓存）
+            const cachedData = await smartCache.getData('characters_all.json');
             if (cachedData) {
-                console.log('✅ 从缓存加载角色数据');
+                console.log('✅ 从智能缓存加载角色数据');
                 dataLoadState.characters.data = cachedData;
                 dataLoadState.characters.cached = true;
                 dataLoadState.characters.loaded = true;
@@ -1979,6 +1979,29 @@
                 });
                 
                 characterLoadProgress.showSuccess(totalChars);
+                
+                // 异步检查更新
+                setTimeout(async () => {
+                    const updateCheck = await smartCache.checkUpdate('characters_all.json');
+                    if (updateCheck.needsUpdate) {
+                        console.log('🔄 发现角色数据更新，正在后台更新...');
+                        try {
+                            const response = await fetchWithCDNRetry('characters_all.json?t=' + Date.now());
+                            if (response.ok) {
+                                const newData = await response.json();
+                                await smartCache.setData('characters_all.json', newData, updateCheck.remoteVersion);
+                                // 更新IndexedDB中的数据
+                                await db.clear('characters');
+                                await importCharactersToDB(newData.characters || []);
+                                console.log('✅ 角色数据已后台更新');
+                                showNotification('📦 角色数据已自动更新到最新版本');
+                            }
+                        } catch (e) {
+                            console.warn('后台更新角色数据失败:', e);
+                        }
+                    }
+                }, 1000);
+                
                 return;
             }
             
@@ -1996,9 +2019,14 @@
                 characterLoadProgress.showLoading(0, totalChars);
                 if (onProgress) onProgress(50, `已获取 ${totalChars} 个角色`);
                 
-                // 保存到缓存
-                await cacheManager.set('characters_all', data);
+                // 保存到智能缓存
+                await smartCache.setData('characters_all.json', data, {
+                    version: '1.0.0',
+                    updated: new Date().toISOString(),
+                    hash: 'initial'
+                });
                 dataLoadState.characters.data = data;
+                dataLoadState.characters.cached = true;
                 
                 // 导入到IndexedDB（带进度）
                 await importCharactersToDB(data.characters || [], (loaded, total) => {
@@ -3174,66 +3202,95 @@
         }
         
         function renderTropeItems() {
-            if (!tropesData) return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
+            // 检查 tropesData 是否存在且有效
+            if (!tropesData) {
+                console.error('❌ renderTropeItems: tropesData 为空');
+                return '<div style="text-align:center;color:#e94560;padding:20px;">❌ 桥段数据未加载<br><button class="btn btn-secondary" onclick="refreshTropeData()" style="margin-top:10px;">🔄 刷新</button></div>';
+            }
+            
+            if (!tropesData.categories || !Array.isArray(tropesData.categories)) {
+                console.error('❌ renderTropeItems: categories 格式错误', tropesData);
+                return '<div style="text-align:center;color:#e94560;padding:20px;">❌ 数据格式错误<br><button class="btn btn-secondary" onclick="refreshTropeData()" style="margin-top:10px;">🔄 刷新</button></div>';
+            }
 
             if (currentSubTypeFilter) {
-                const cat = tropesData.categories?.find(c => c.id === currentTropeFilter);
+                const cat = tropesData.categories.find(c => c && c.id === currentTropeFilter);
+                const subTypeName = currentSubTypeFilter || '未知';
+                const catName = cat?.name || '未知类别';
                 return `
                     <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
-                        <span style="color:#888;">${cat?.name || currentTropeFilter}</span>
+                        <span style="color:#888;">${catName}</span>
                         <span style="color:#666;margin:0 8px;">></span>
-                        <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
+                        <span style="color:#00d4ff;">${subTypeName}</span>
                         <button onclick="filterTropes('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
                     </div>
-                    <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="useTrope('${currentSubTypeFilter.replace(/'/g, "\\'")}')">
-                        <div style="font-size:13px;color:#fff;">使用「${currentSubTypeFilter}」桥段</div>
+                    <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="useTrope('${subTypeName.replace(/'/g, "\\'")}')">
+                        <div style="font-size:13px;color:#fff;">使用「${subTypeName}」桥段</div>
                     </div>
                 `;
             }
 
-            let categoriesToShow = tropesData.categories || [];
+            let categoriesToShow = tropesData.categories;
+            
+            // 类别筛选
             if (currentTropeFilter !== 'all') {
-                categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
+                categoriesToShow = categoriesToShow.filter(c => c && c.id === currentTropeFilter);
             }
+            
+            // 搜索筛选
             if (tropeSearchQuery) {
                 const q = tropeSearchQuery.toLowerCase();
-                categoriesToShow = categoriesToShow.filter(c => 
-                    c.name.toLowerCase().includes(q) ||
-                    c.subTypes?.some(s => s.name.toLowerCase().includes(q))
-                );
+                categoriesToShow = categoriesToShow.filter(c => {
+                    if (!c) return false;
+                    const nameMatch = c.name && c.name.toLowerCase().includes(q);
+                    const subTypesMatch = c.subTypes && Array.isArray(c.subTypes) &&
+                        c.subTypes.some(s => s && s.name && s.name.toLowerCase().includes(q));
+                    return nameMatch || subTypesMatch;
+                });
             }
             
             if (categoriesToShow.length === 0) {
-                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
+                return '<div style="text-align:center;color:#888;padding:20px;">🔍 暂无匹配类别</div>';
             }
             
             let html = '';
             categoriesToShow.forEach(cat => {
-                if (cat.subTypes && cat.subTypes.length > 0) {
-                    html += `
-                        <div style="margin-bottom:20px;">
-                            <div style="font-size:14px;font-weight:600;color:#e94560;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333;">
-                                ${cat.name}
-                            </div>
-                            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-                                ${cat.subTypes.map(sub => `
+                if (!cat || !cat.subTypes || !Array.isArray(cat.subTypes)) {
+                    console.warn('⚠️ renderTropeItems: 跳过无效类别', cat);
+                    return;
+                }
+                
+                html += `
+                    <div style="margin-bottom:20px;">
+                        <div style="font-size:14px;font-weight:600;color:#e94560;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333;">
+                            ${cat.name || '未命名'}
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+                            ${cat.subTypes.map(sub => {
+                                if (!sub || !sub.name) return '';
+                                return `
                                     <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
                                         <div style="font-size:13px;font-weight:500;color:#fff;">${sub.name}</div>
                                     </div>
-                                `).join('')}
-                            </div>
+                                `;
+                            }).join('')}
                         </div>
-                    `;
-                }
+                    </div>
+                `;
             });
             
-            return html || '<div style="text-align:center;color:#888;padding:20px;">暂无子类型</div>';
+            return html || '<div style="text-align:center;color:#888;padding:20px;">📭 暂无子类型</div>';
         }
         
         async function selectSubType(categoryId, subTypeName) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
-            await renderPlot(document.getElementById('mainContent'));
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                await renderPlot(mainContent);
+            } else {
+                console.error('❌ selectSubType: 找不到 mainContent 元素');
+            }
         }
         
         function useTrope(tropeName) {
@@ -3590,56 +3647,88 @@
         }
         
         function renderTropeContent() {
-            if (!tropesData || !tropesData.categories) {
-                return '<div style="text-align:center;color:#888;padding:40px;">加载中...</div>';
+            // 检查 tropesData 是否存在且有效
+            if (!tropesData) {
+                console.error('❌ tropesData 为空');
+                return '<div style="text-align:center;color:#e94560;padding:40px;">❌ 数据加载失败<br><button class="btn btn-secondary" onclick="refreshTropeData()" style="margin-top:15px;">🔄 重新加载</button></div>';
+            }
+            
+            // 检查 categories 是否存在且为数组
+            if (!tropesData.categories || !Array.isArray(tropesData.categories)) {
+                console.error('❌ tropesData.categories 格式错误:', tropesData);
+                return '<div style="text-align:center;color:#e94560;padding:40px;">❌ 数据格式错误<br><button class="btn btn-secondary" onclick="refreshTropeData()" style="margin-top:15px;">🔄 重新加载</button></div>';
             }
             
             let categoriesToShow = tropesData.categories;
+            
+            // 应用类别筛选
             if (currentTropeFilter !== 'all') {
-                categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
+                categoriesToShow = categoriesToShow.filter(c => c && c.id === currentTropeFilter);
             }
+            
+            // 应用搜索筛选
             if (tropeSearchQuery) {
                 const q = tropeSearchQuery.toLowerCase();
-                categoriesToShow = categoriesToShow.filter(c => 
-                    c.name.toLowerCase().includes(q) ||
-                    c.subTypes?.some(s => s.name.toLowerCase().includes(q))
-                );
+                categoriesToShow = categoriesToShow.filter(c => {
+                    if (!c) return false;
+                    const nameMatch = c.name && c.name.toLowerCase().includes(q);
+                    const subTypesMatch = c.subTypes && Array.isArray(c.subTypes) && 
+                        c.subTypes.some(s => s && s.name && s.name.toLowerCase().includes(q));
+                    return nameMatch || subTypesMatch;
+                });
             }
             
+            // 如果没有匹配的分类
             if (categoriesToShow.length === 0) {
-                return '<div style="text-align:center;color:#888;padding:40px;">未找到匹配的桥段类别</div>';
+                return '<div style="text-align:center;color:#888;padding:40px;">🔍 未找到匹配的桥段类别</div>';
             }
             
-            return categoriesToShow.map(cat => {
-                let subTypes = cat.subTypes || [];
+            let html = '';
+            categoriesToShow.forEach(cat => {
+                if (!cat || !cat.subTypes || !Array.isArray(cat.subTypes)) {
+                    console.warn('⚠️ 跳过无效类别:', cat);
+                    return;
+                }
+                
+                let subTypes = cat.subTypes;
+                
+                // 搜索时筛选子类型
                 if (tropeSearchQuery) {
                     const q = tropeSearchQuery.toLowerCase();
-                    subTypes = subTypes.filter(s => s.name.toLowerCase().includes(q));
+                    subTypes = subTypes.filter(s => s && s.name && s.name.toLowerCase().includes(q));
                 }
-                if (subTypes.length === 0) return '';
                 
-                return `
+                if (subTypes.length === 0) return;
+                
+                html += `
                     <div style="margin-bottom: 24px; background: #1a1a2e; border-radius: 10px; padding: 16px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333;">
-                            <div style="font-size: 15px; font-weight: 600; color: #e94560;">${cat.name}</div>
+                            <div style="font-size: 15px; font-weight: 600; color: #e94560;">${cat.name || '未命名'}</div>
                             <div style="font-size: 12px; color: #888;">${subTypes.length}个</div>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
                             ${subTypes.map(sub => `
-                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showNotification('桥段：${sub.name.replace(/'/g, "\\'")}')">
-                                    <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name}</div>
+                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showNotification('桥段：${(sub.name || '未命名').replace(/'/g, "\\'")}')">
+                                    <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name || '未命名'}</div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
+            
+            return html || '<div style="text-align:center;color:#888;padding:40px;">📭 暂无内容</div>';
         }
         
         function filterTropeByCategory(categoryId) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = null;
-            renderTrope(document.getElementById('mainContent'));
+            const mainContent = document.getElementById('mainContent');
+            if (mainContent) {
+                renderTrope(mainContent);
+            } else {
+                console.error('❌ 找不到 mainContent 元素');
+            }
         }
         
         function onTropeSearch(query) {
