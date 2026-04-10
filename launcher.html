@@ -1478,9 +1478,10 @@
 
         // 加载世界观数据
         async function loadWorldviewData() {
-            // 从 data.json 加载世界观数据
             try {
-                const response = await fetch('./data.json?t=' + new Date().getTime());
+                const baseUrl = 'https://sztbssz.github.io/novel-editor/';
+                const response = await fetchWithTimeout(`${baseUrl}data.json?t=${new Date().getTime()}`, 20000);
+                
                 if (response.ok) {
                     const data = await response.json();
                     const worldbuildingLibrary = data.worldbuildingLibrary;
