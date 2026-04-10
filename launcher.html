@@ -2224,27 +2224,8 @@
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
             currentTropeDetail = null;
-            // 重新渲染桥段面板
-            const tropePanel = document.getElementById('tropePanel');
-            if (tropePanel) {
-                const panelBody = tropePanel.querySelector('.trope-panel-body');
-                if (panelBody) {
-                    panelBody.innerHTML = `
-                        <div class="search-box" style="margin-bottom:15px;">
-                            <input type="text" id="tropeSearch" placeholder="搜索桥段..." oninput="searchTropes()" style="padding-left:15px;">
-                        </div>
-                        <div class="trope-categories">
-                            <div class="trope-cat-tag ${currentTropeFilter === 'all' ? 'active' : ''}" onclick="filterTropes('all')">全部</div>
-                            ${tropesData?.categories?.map(cat => `
-                                <div class="trope-cat-tag ${currentTropeFilter === cat.id ? 'active' : ''}" onclick="filterTropes('${cat.id}')">${cat.name}</div>
-                            `).join('') || ''}
-                        </div>
-                        <div class="trope-list">
-                            ${renderTropeItems()}
-                        </div>
-                    `;
-                }
-            }
+            // 重新渲染整个页面以确保状态一致
+            renderPlot(document.getElementById('mainContent'));
         }
         
         // 显示桥段详情
