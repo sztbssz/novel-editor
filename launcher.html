@@ -2870,8 +2870,8 @@
             
             return { 
                 name, 
-                meaning: meanings[name] || 'A name of noble character',
-                style: 'Western Style'
+                meaning: meanings[name] || '高贵典雅之名',
+                style: '西方风格'
             };
         }
 
@@ -2931,6 +2931,7 @@
                     ${generatedNames.map((item, index) => `
                         <div class="name-card" onclick="copyName(${index})" id="nameCard${index}" style="padding:20px;cursor:pointer;">
                             <div style="font-size:24px;font-weight:600;color:#fff;margin-bottom:8px;">${item.name}</div>
+                            <div style="font-size:12px;color:#00d4ff;margin-bottom:6px;">${item.style}</div>
                             <div style="font-size:12px;color:#888;">${item.meaning}</div>
                         </div>
                     `).join('')}
