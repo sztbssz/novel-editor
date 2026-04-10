@@ -8628,6 +8628,15 @@
                 if (desc.includes(kw)) femaleScore++;
             }
             for (const kw of maleKeywords) {
+                if (desc.includes(kw)) maleScore++;
+            }
+            
+            // 根据得分判断性别
+            if (femaleScore > maleScore) {
+                gender = 'female';
+            }
+        }
+
         // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
@@ -10225,7 +10234,6 @@
         }
 
         // ==================== 收藏功能 ====================
-        let currentTropeDetail = null;
         let favoritesFilter = 'all'; // 'all' | 'trope' | 'character' | 'worldview' | 'name'
 
         // 显示 Toast 提示
@@ -13479,8 +13487,6 @@
                 }
             }
         });
-    }};
-    
 </script>
 </body>
 </html>
