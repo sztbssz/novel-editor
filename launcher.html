@@ -2072,46 +2072,97 @@
         }
         
         function renderTropeItems() {
-            if (!tropesData || !tropesData.tropes) {
+            if (!tropesData) {
                 return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
             }
 
-            let filtered = tropesData.tropes;
+            // 如果有具体桥段数据，显示桥段列表
+            if (tropesData.tropes && tropesData.tropes.length > 0) {
+                let filtered = tropesData.tropes;
+                
+                if (currentTropeFilter !== 'all') {
+                    filtered = filtered.filter(t => t.category === currentTropeFilter);
+                }
+                
+                if (tropeSearchQuery) {
+                    const q = tropeSearchQuery.toLowerCase();
+                    filtered = filtered.filter(t => 
+                        t.title.toLowerCase().includes(q) ||
+                        t.content.toLowerCase().includes(q) ||
+                        t.subType.toLowerCase().includes(q)
+                    );
+                }
+                
+                if (filtered.length === 0) {
+                    return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
+                }
+                
+                return filtered.map(trope => {
+                    const category = tropesData.categories.find(c => c.id === trope.category);
+                    return `
+                        <div class="trope-item">
+                            <div class="trope-item-header">
+                                <span class="trope-item-type">${category?.name || trope.category}</span>
+                                <span style="font-size:11px;color:#888;">${trope.subType}</span>
+                            </div>
+                            <div class="trope-item-title">${trope.title}</div>
+                            <div class="trope-item-content">${trope.content}</div>
+                            <div class="trope-item-footer">
+                                <span style="font-size:11px;color:#666;">《${trope.book}》${trope.author}</span>
+                                <button class="btn-copy" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // 如果没有桥段数据，显示子类型列表
+            let categoriesToShow = tropesData.categories || [];
             
             if (currentTropeFilter !== 'all') {
-                filtered = filtered.filter(t => t.category === currentTropeFilter);
+                categoriesToShow = categoriesToShow.filter(c => c.id === currentTropeFilter);
             }
             
             if (tropeSearchQuery) {
                 const q = tropeSearchQuery.toLowerCase();
-                filtered = filtered.filter(t => 
-                    t.title.toLowerCase().includes(q) ||
-                    t.content.toLowerCase().includes(q) ||
-                    t.subType.toLowerCase().includes(q)
+                categoriesToShow = categoriesToShow.filter(c => 
+                    c.name.toLowerCase().includes(q) ||
+                    c.subTypes?.some(s => s.name.toLowerCase().includes(q))
                 );
             }
             
-            if (filtered.length === 0) {
-                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
+            if (categoriesToShow.length === 0) {
+                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
             }
             
-            return filtered.map(trope => {
-                const category = tropesData.categories.find(c => c.id === trope.category);
-                return `
-                    <div class="trope-item">
-                        <div class="trope-item-header">
-                            <span class="trope-item-type">${category?.name || trope.category}</span>
-                            <span style="font-size:11px;color:#888;">${trope.subType}</span>
+            // 渲染子类型卡片
+            let html = '';
+            categoriesToShow.forEach(cat => {
+                if (cat.subTypes && cat.subTypes.length > 0) {
+                    html += `
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:13px;font-weight:600;color:#e94560;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #333;">
+                                ${cat.name} (${cat.subTypes.length})
+                            </div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
+                                ${cat.subTypes.map(sub => `
+                                    <div class="trope-item" style="padding:10px;cursor:pointer;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
+                                        <div class="trope-item-title" style="font-size:13px;margin:0;">${sub.name}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
-                        <div class="trope-item-title">${trope.title}</div>
-                        <div class="trope-item-content">${trope.content}</div>
-                        <div class="trope-item-footer">
-                            <span style="font-size:11px;color:#666;">《${trope.book}》${trope.author}</span>
-                            <button class="btn-copy" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }
+            });
+            
+            return html || '<div style="text-align:center;color:#888;padding:20px;">暂无子类型</div>';
+        }
+        
+        // 选择子类型
+        function selectSubType(categoryId, subTypeName) {
+            showNotification(`已选择：${subTypeName}`);
+            // 可以扩展为插入到编辑器等功能
         }
         
         function copyTropeContent(title, content) {
