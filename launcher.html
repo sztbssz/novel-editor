@@ -1401,7 +1401,7 @@
         async function loadCharacterData() {
             const characterFiles = [
                 'characters_2006_2007.json',
-                'characters_2008.json',
+                'characters_2008.json', 
                 'characters_2009_2010.json',
                 'characters_2016_2020_full.json',
                 'characters_2021_2026_full.json'
@@ -1411,17 +1411,24 @@
                 for (const file of characterFiles) {
                     const response = await fetch(`./${file}`);
                     if (response.ok) {
-                        const characters = await response.json();
+                        const data = await response.json();
+                        // 处理不同格式：数组或对象（带 characters 字段）
+                        let characters = Array.isArray(data) ? data : (data.characters || []);
+                        
                         // 检查是否已存在
                         const existingChars = await db.getAll('characters');
                         const existingNames = new Set(existingChars.map(c => c.name));
                         
+                        let addedCount = 0;
                         for (const char of characters) {
                             if (!existingNames.has(char.name)) {
                                 await db.add('characters', char);
+                                addedCount++;
                             }
                         }
-                        console.log(`已加载 ${characters.length} 个角色从 ${file}`);
+                        console.log(`已加载 ${addedCount} 个新角色从 ${file} (共${characters.length}个)`);
+                    } else {
+                        console.warn(`角色文件 ${file} 加载失败: ${response.status}`);
                     }
                 }
             } catch (error) {
