@@ -3181,10 +3181,358 @@
                 chars: ['灵', '羽', '翔', '跃', '翔', '翩', '舞', '歌', '笑', '欢', '悦', '逍', '遥', '逸', '飞', '翔', '翱', '翎', '翩', '跹'],
                 meanings: ['灵动非凡', '羽化成仙', '龙翔九天', '跃然纸上', '翩翩起舞', '载歌载舞', '欢声笑语', '心旷神怡', '逍遥自在', '逸兴遄飞']
             },
-            // 西方男名（中文音译）
-            westernMale: ['约翰', '迈克尔', '詹姆斯', '罗伯特', '威廉', '大卫', '理查德', '查尔斯', '托马斯', '丹尼尔', '特朗普', '罗德', '克里斯托弗', '马修', '安东尼', '马克', '保罗', '史蒂文', '安德鲁', '布莱恩'],
-            // 西方女名（中文音译）
-            westernFemale: ['伊丽莎白', '玛丽', '詹妮弗', '丽莎', '莎拉', '杰西卡', '艾米丽', '艾玛', '奥利维亚', '索菲亚', '维多利亚', '艾娃', '米娅', '夏洛特', '阿米莉亚', '伊芙琳', '阿比盖尔', '哈珀', '莉莉', '安娜']
+            // 西方男名（中文音译+寓意）
+            westernMale: [
+                // 经典名
+                {name: '约翰', meaning: '上帝是仁慈的，慈悲恩典之人'},
+                {name: '迈克尔', meaning: '像上帝一样的人，神圣使者'},
+                {name: '詹姆斯', meaning: '取代者，后来居上者'},
+                {name: '罗伯特', meaning: '辉煌的名声，耀世之光'},
+                {name: '威廉', meaning: '坚定的保护者，勇敢卫士'},
+                {name: '大卫', meaning: '亲爱的朋友，被深爱的人'},
+                {name: '理查德', meaning: '强大的统治者，铁血领袖'},
+                {name: '查尔斯', meaning: '自由的人，豪爽之士'},
+                {name: '托马斯', meaning: '双胞胎，双生之子'},
+                {name: '丹尼尔', meaning: '上帝是我的审判者，正义化身'},
+                {name: '克里斯托弗', meaning: '基督的信使，神圣使者'},
+                {name: '马修', meaning: '上帝的礼物，天赐之子'},
+                {name: '安东尼', meaning: '无价之宝，珍贵之人'},
+                {name: '马克', meaning: '战神之子，勇敢战士'},
+                {name: '保罗', meaning: '小巧的人，谦逊之士'},
+                {name: '史蒂文', meaning: '花环，荣耀加冕者'},
+                {name: '安德鲁', meaning: '有男子气概的，刚强勇敢'},
+                {name: '布莱恩', meaning: '高贵的，品德高尚者'},
+                {name: '约瑟夫', meaning: '上帝将增添，福泽绵长'},
+                {name: '凯文', meaning: '文雅可爱的，温柔善良'},
+                {name: '彼得', meaning: '岩石，坚如磐石'},
+                {name: '西蒙', meaning: '聆听者，善于倾听'},
+                {name: '亚当', meaning: '红土，人类始祖'},
+                {name: '本杰明', meaning: '右手之子，幸运儿'},
+                {name: '乔纳森', meaning: '上帝的恩赐，天赐良缘'},
+                // 现代流行名
+                {name: '艾登', meaning: '火一般的，热情似火'},
+                {name: '利亚姆', meaning: '坚定的保护者，勇士'},
+                {name: '诺亚', meaning: '安宁，平静祥和'},
+                {name: '卢卡斯', meaning: '光明，带来光明的人'},
+                {name: '奥利弗', meaning: '橄榄树，和平使者'},
+                {name: '伊森', meaning: '强壮的，坚韧不拔'},
+                {name: '杰克', meaning: '上帝仁慈，幸运儿'},
+                {name: '康纳', meaning: '猎犬，敏锐忠诚'},
+                {name: '迪伦', meaning: '海洋之子，波涛汹涌'},
+                {name: '卡特', meaning: '运输车夫，勤劳可靠'},
+                {name: '梅森', meaning: '石匠，坚毅工匠'},
+                {name: '洛根', meaning: '小洞，深邃神秘'},
+                {name: '塞缪尔', meaning: '上帝听见，虔诚祈祷'},
+                {name: '亨利', meaning: '家族统治者，王者之风'},
+                {name: '欧文', meaning: '年轻的战士，青春勃发'},
+                {name: '迦勒', meaning: '忠诚的，全心全意的'},
+                {name: '纳撒尼尔', meaning: '上帝的礼物，天赐之人'},
+                {name: '以赛亚', meaning: '上帝拯救，救世主'},
+                {name: '以斯拉', meaning: '帮助，得力助手'},
+                {name: '加布里埃尔', meaning: '上帝的英雄，神圣战士'},
+                // 奇幻/古典名
+                {name: '亚瑟', meaning: '熊一样的，勇猛无畏'},
+                {name: '兰斯洛特', meaning: '骑士精神，侠义之士'},
+                {name: '梅林', meaning: '隼，智慧导师'},
+                {name: '罗兰', meaning: '国土之名，英勇骑士'},
+                {name: '亚瑟', meaning: '石熊，王者之气'},
+                {name: '德雷克', meaning: '龙，强大威严'},
+                {name: '格雷厄姆', meaning: '灰色家园，沉稳内敛'},
+                {name: '沃尔特', meaning: '军队统治者，统帅之才'},
+                {name: '雷金纳德', meaning: '顾问统治者，智慧王者'},
+                {name: '西奥多', meaning: '上帝的礼物，神赐之福'},
+                {name: '塞巴斯蒂安', meaning: '庄严的，受人尊敬'},
+                {name: '费迪南德', meaning: '勇敢的旅行者，冒险家'},
+                {name: '阿尔伯特', meaning: '高贵的，品德高尚'},
+                {name: '阿尔弗雷德', meaning: '智慧的顾问，贤者'},
+                {name: '埃德蒙', meaning: '富有的保护者，守护者'},
+                {name: '埃德加', meaning: '幸运的战士，福将'},
+                {name: '哈罗德', meaning: '军队统治者，统帅'},
+                {name: '伦纳德', meaning: '勇敢的狮子，狮心王'},
+                {name: '菲利普', meaning: '爱马者，骑士精神'},
+                {name: '雷蒙德', meaning: '明智的保护者，守护者'},
+                // 凯尔特/北欧名
+                {name: '康纳', meaning: '猎犬，忠诚勇敢'},
+                {name: '肖恩', meaning: '上帝仁慈，蒙恩之人'},
+                {name: '帕特里克', meaning: '贵族，出身高贵'},
+                {name: '多诺万', meaning: '黑暗战士，神秘战士'},
+                {name: '芬恩', meaning: '白皙的，金发勇士'},
+                {name: '艾丹', meaning: '小火焰，热情活力'},
+                {name: '布雷迪', meaning: '精神饱满的，活力四射'},
+                {name: '凯尔', meaning: '狭道，坚毅不屈'},
+                {name: '德里克', meaning: '人民统治者，民众领袖'},
+                {name: '埃里克', meaning: '永远的统治者，永恒之王'},
+                {name: '冈纳', meaning: '战士，勇猛善战'},
+                {name: '比约恩', meaning: '熊，力量象征'},
+                {name: '斯文', meaning: '年轻的战士，青年才俊'},
+                {name: '拉尔斯', meaning: '桂冠，胜利者'},
+                {name: '尼尔斯', meaning: '胜利的人民，征服者'},
+                {name: '奥拉夫', meaning: '祖先的后裔，传承者'},
+                {name: '托尔', meaning: '雷神，雷霆之力'},
+                {name: '弗雷德里克', meaning: '和平统治者，和平之王'},
+                {name: '亨里克', meaning: '家族统治者，王者'},
+                {name: '奥斯卡', meaning: '神之矛，神圣武器'},
+                // 拉丁/希腊名
+                {name: '朱利安', meaning: '柔软的，年轻的'},
+                {name: '塞巴斯蒂安', meaning: '庄严的，受人敬仰'},
+                {name: '马库斯', meaning: '战神，战斗之神'},
+                {name: '卢修斯', meaning: '光明的，光辉灿烂'},
+                {name: '多米尼克', meaning: '属于上帝的，神圣'},
+                {name: '维克多', meaning: '胜利者，征服者'},
+                {name: '尤利乌斯', meaning: '柔软的头发，年轻'},
+                {name: '康斯坦丁', meaning: '坚定的，恒久不变'},
+                {name: '阿德里安', meaning: '来自亚得里亚海，海边之子'},
+                {name: '尼古拉斯', meaning: '人民的胜利，征服者'},
+                {name: '亚历山大', meaning: '人类的保护者，守护者'},
+                {name: '克里斯托斯', meaning: '受膏者，神圣之人'},
+                {name: '德米特里', meaning: '属于德墨忒尔，丰收之神'},
+                {name: '埃里克', meaning: '永远的统治者'},
+                {name: '乔治', meaning: '农夫，土地工作者'},
+                {name: '赫克托', meaning: '坚守者，忠诚卫士'},
+                {name: '伊卡洛斯', meaning: '飞翔者，追梦之人'},
+                {name: '莱安德尔', meaning: '狮子般的男人，勇猛'},
+                {name: '忒修斯', meaning: '设立者，开创者'},
+                {name: '宙斯', meaning: '雷神，众神之王'},
+                // 现代/流行名
+                {name: '泰勒', meaning: '裁缝，工匠精神'},
+                {name: '乔丹', meaning: '下降，顺流而下'},
+                {name: '卡梅伦', meaning: '弯曲的鼻子，独特个性'},
+                {name: '莱利', meaning: '勇敢的，英勇无畏'},
+                {name: '凯西', meaning: '警觉的，机敏灵活'},
+                {name: '杰西', meaning: '上帝的恩赐'},
+                {name: '奎因', meaning: '智慧，聪明睿智'},
+                {name: '阿什利', meaning: '梣树林，自然之子'},
+                {name: '贝利', meaning: '城堡外墙，守护者'},
+                {name: '达科他', meaning: '朋友，忠诚伙伴'},
+                {name: '艾弗里', meaning: '精灵统治者，精灵王'},
+                {name: '佩顿', meaning: '战士的庄园，勇士家园'},
+                {name: '斯宾塞', meaning: '供应者，供给者'},
+                {name: '麦肯齐', meaning: '火之子的后代，传承'},
+                {name: '达拉斯', meaning: ' wise meadow，智慧草地'},
+                {name: '休斯顿', meaning: '高地，山丘'},
+                {name: '韦斯利', meaning: '西边的草地，田园'},
+                {name: '达伦', meaning: '小橡树，坚韧'},
+                {name: '特里斯坦', meaning: '悲伤的，忧郁诗人'},
+                {name: '加文', meaning: '白鹰，高洁之士'},
+                // 更多经典名
+                {name: '艾伦', meaning: '英俊的，和谐'},
+                {name: '卡尔', meaning: '强壮的，男子汉'},
+                {name: '唐纳德', meaning: '世界统治者，霸主'},
+                {name: '道格拉斯', meaning: '黑色的水，深邃'},
+                {name: '加里', meaning: '矛，战士'},
+                {name: '格伦', meaning: '山谷，宁静'},
+                {name: '基思', meaning: '森林，自然'},
+                {name: '肯尼思', meaning: '英俊的，出生高贵'},
+                {name: '兰斯', meaning: '土地，领地'},
+                {name: '劳伦斯', meaning: '来自劳伦图姆，月桂树'},
+                {name: '莱斯利', meaning: '灰色堡垒，守护'},
+                {name: '刘易斯', meaning: '著名的战士'},
+                {name: '劳埃德', meaning: '灰色的，智慧'},
+                {name: '马尔科姆', meaning: '圣哥伦巴的信徒'},
+                {name: '梅尔文', meaning: '议会保护者'},
+                {name: '莫里斯', meaning: '摩尔人，深色皮肤'},
+                {name: '默里', meaning: '海员，水手'},
+                {name: '尼尔', meaning: '冠军，胜利者'},
+                {name: '诺曼', meaning: '北方人，维京后裔'},
+                {name: '珀西', meaning: '刺梨，坚韧'},
+                {name: '拉尔夫', meaning: '狼之顾问，智者'},
+                {name: '雷金纳德', meaning: '顾问统治者'},
+                {name: '鲁伯特', meaning: '明亮的，光明'},
+                {name: '斯坦利', meaning: '石楠草地，原野'},
+                {name: '斯图尔特', meaning: '管家，管理者'},
+                {name: '弗农', meaning: '桤木林，自然'},
+                {name: '沃伦', meaning: '看守人，守护者'},
+                {name: '韦恩', meaning: '马车，制造者'},
+                {name: '威尔弗雷德', meaning: '渴望和平之人'},
+                {name: '唐纳德', meaning: '世界统治者'},
+                {name: '罗德里克', meaning: '著名的统治者'}
+            ],
+            // 西方女名（中文音译+寓意）
+            westernFemale: [
+                // 经典名
+                {name: '伊丽莎白', meaning: '上帝的誓言，神圣之约'},
+                {name: '玛丽', meaning: '苦涩的，坚强隐忍'},
+                {name: '詹妮弗', meaning: '纯洁的白浪，纯洁美好'},
+                {name: '丽莎', meaning: '上帝的誓约，蒙福之人'},
+                {name: '莎拉', meaning: '公主，高贵典雅'},
+                {name: '杰西卡', meaning: '上帝的恩赐，神赐之礼'},
+                {name: '艾米丽', meaning: '勤奋的，努力上进'},
+                {name: '艾玛', meaning: '普遍的，万能之人'},
+                {name: '奥利维亚', meaning: '橄榄树，和平使者'},
+                {name: '索菲亚', meaning: '智慧的，聪慧明达'},
+                {name: '维多利亚', meaning: '胜利者，凯旋女神'},
+                {name: '艾娃', meaning: '生命的，活力之源'},
+                {name: '米娅', meaning: '我的，属于我的'},
+                {name: '夏洛特', meaning: '自由人，独立坚强'},
+                {name: '阿米莉亚', meaning: '勤奋的，努力奋斗'},
+                {name: '伊芙琳', meaning: '生命，希望之光'},
+                {name: '阿比盖尔', meaning: '父亲的喜悦，掌上明珠'},
+                {name: '哈珀', meaning: '竖琴演奏者，音乐天赋'},
+                {name: '莉莉', meaning: '百合花，纯洁美丽'},
+                {name: '安娜', meaning: '恩典，蒙恩之人'},
+                {name: '凯瑟琳', meaning: '纯洁的，圣洁无瑕'},
+                {name: '玛格丽特', meaning: '珍珠，珍贵稀有'},
+                {name: '苏珊', meaning: '百合花，纯洁'},
+                {name: '多萝西', meaning: '上帝的礼物'},
+                {name: '芭芭拉', meaning: '外来者，异乡人'},
+                // 现代流行名
+                {name: '艾娃', meaning: '鸟，自由飞翔'},
+                {name: '麦迪逊', meaning: '马修之子，强大'},
+                {name: '佐伊', meaning: '生命，活力'},
+                {name: '克洛伊', meaning: '嫩芽，新绿'},
+                {name: '艾比盖尔', meaning: '父亲的喜悦'},
+                {name: '艾莉森', meaning: '高贵的，出身高贵'},
+                {name: '汉娜', meaning: '恩典，蒙恩'},
+                {name: '莱莉', meaning: '勇敢的，英勇'},
+                {name: '萨曼莎', meaning: '听众，倾听者'},
+                {name: '亚历克西斯', meaning: '帮助者，保护者'},
+                {name: '阿什莉', meaning: '梣树林，自然'},
+                {name: '布列塔尼', meaning: '来自不列颠，英伦之风'},
+                {name: '泰勒', meaning: '裁缝，工匠'},
+                {name: '凯莉', meaning: '战士，勇敢'},
+                {name: '摩根', meaning: '海之圈，海洋'},
+                {name: '凯尔西', meaning: '船之岛，航海'},
+                {name: '海莉', meaning: '干草草地，田园'},
+                {name: '麦肯娜', meaning: '芬恩之子，继承者'},
+                {name: '悉尼', meaning: '圣丹尼之城'},
+                {name: '劳伦', meaning: '月桂树，胜利'},
+                // 经典/优雅名
+                {name: '格蕾丝', meaning: '优雅，恩典'},
+                {name: '奥黛丽', meaning: '高贵的力量'},
+                {name: '克劳迪娅', meaning: '跛足，优雅'},
+                {name: '埃莉诺', meaning: '光，闪耀'},
+                {name: '海伦', meaning: '火炬，光明'},
+                {name: '艾琳', meaning: '和平，安宁'},
+                {name: '卡罗琳', meaning: '自由人'},
+                {name: '丽贝卡', meaning: '圈套，迷人'},
+                {name: '斯蒂芬妮', meaning: '花环，荣耀'},
+                {name: '克里斯汀', meaning: '基督徒，信徒'},
+                {name: '瓦妮莎', meaning: '蝴蝶，蜕变'},
+                {name: '莫妮卡', meaning: '顾问，智者'},
+                {name: '杰奎琳', meaning: '取代者，后继者'},
+                {name: '黛安娜', meaning: '神圣，月亮女神'},
+                {name: '安德里亚', meaning: '有男子气概的，刚强'},
+                {name: '金伯利', meaning: '皇家堡垒，高贵'},
+                {name: '塔米卡', meaning: '甜美，温柔'},
+                {name: '丹妮尔', meaning: '上帝是我的审判者'},
+                {name: '梅丽莎', meaning: '蜜蜂，勤劳'},
+                {name: '妮可', meaning: '胜利的人民'},
+                // 奇幻/古典名
+                {name: '阿纳斯塔西娅', meaning: '复活，重生'},
+                {name: '塞拉菲娜', meaning: '燃烧的，炽天使'},
+                {name: '伊莎贝拉', meaning: '上帝的誓言'},
+                {name: '吉纳维芙', meaning: '白浪，纯洁'},
+                {name: '珀耳塞福涅', meaning: '毁灭，冥后'},
+                {name: '卡珊德拉', meaning: '闪耀的人类，预言者'},
+                {name: '阿里阿德涅', meaning: '最圣洁的，神圣'},
+                {name: '卡利俄佩', meaning: '美丽之声，史诗女神'},
+                {name: '雅典娜', meaning: '智慧女神，战争女神'},
+                {name: '阿尔忒弥斯', meaning: '月亮女神，狩猎女神'},
+                {name: '赫拉', meaning: '女神，天后'},
+                {name: '珀涅罗珀', meaning: '织布者，忠贞'},
+                {name: '安德洛玛刻', meaning: '战斗中的男人，勇敢'},
+                {name: '欧律狄刻', meaning: '广阔的正义，公正'},
+                {name: '赫斯提亚', meaning: '炉边女神，家庭之神'},
+                {name: '阿里尔', meaning: '狮子般的上帝'},
+                {name: '贝琳达', meaning: '美丽的蛇，优雅'},
+                {name: '塞西莉亚', meaning: '盲的，音乐家'},
+                {name: '埃斯特拉', meaning: '星星，星光'},
+                {name: '费奥娜', meaning: '白皙的，美丽'},
+                // 凯尔特/北欧名
+                {name: '菲奥娜', meaning: '白皙的，美丽'},
+                {name: '莫伊拉', meaning: '命运，宿命'},
+                {name: '布里奇特', meaning: '崇高的力量，力量'},
+                {name: '凯拉', meaning: '苗条的，优雅'},
+                {name: '诺拉', meaning: '荣誉，光明'},
+                {name: '西耶娜', meaning: '橙红色，温暖'},
+                {name: '奥菲莉娅', meaning: '帮助，援助'},
+                {name: '西格丽德', meaning: '美丽的胜利，胜利'},
+                {name: '英格丽德', meaning: '美丽的，公平'},
+                {name: '弗里达', meaning: '和平的，宁静'},
+                {name: '阿斯特丽德', meaning: '神圣的力量，神力'},
+                {name: '索非亚', meaning: '智慧的，聪慧'},
+                {name: '希尔达', meaning: '战斗的女人，战士'},
+                {name: '格蕾塔', meaning: '珍珠，珍贵'},
+                {name: '安娜莉丝', meaning: '优雅的，高贵'},
+                {name: '埃尔莎', meaning: '上帝是我的誓言'},
+                {name: '海尔加', meaning: '神圣的，有福的'},
+                {name: '伊迪丝', meaning: '战斗中的财富，勇敢'},
+                {name: '玛蒂尔达', meaning: '战斗中的力量，强大'},
+                {name: '罗莎琳德', meaning: '美丽的玫瑰'},
+                // 拉丁/意大利名
+                {name: '克拉拉', meaning: '明亮的，光辉'},
+                {name: '劳拉', meaning: '月桂树，胜利'},
+                {name: '朱莉娅', meaning: '年轻的，柔软的'},
+                {name: '克里斯蒂娜', meaning: '基督徒，信徒'},
+                {name: '安吉拉', meaning: '天使的，神圣'},
+                {name: '保拉', meaning: '小巧的，谦逊'},
+                {name: '露西亚', meaning: '光明的，光辉'},
+                {name: '罗莎', meaning: '玫瑰，美丽'},
+                {name: '特蕾莎', meaning: '收获者，收获'},
+                {name: '维维安', meaning: '活泼的，有活力的'},
+                {name: '西蒙娜', meaning: '倾听者，倾听'},
+                {name: '朱莉亚', meaning: '年轻的，青春'},
+                {name: '卡米拉', meaning: '年轻的助手，辅佐'},
+                {name: '埃莉萨', meaning: '上帝是我的誓言'},
+                {name: '比安卡', meaning: '白色的，纯洁'},
+                {name: '弗兰切斯卡', meaning: '来自法国的人'},
+                {name: '加布里埃拉', meaning: '上帝的英雄'},
+                {name: '伊莎贝拉', meaning: '上帝的誓言'},
+                {name: '莉维亚', meaning: '蓝色的，忧郁'},
+                {name: '玛蒂娜', meaning: '战争的，战士'},
+                // 法语/西班牙名
+                {name: '尚塔尔', meaning: '石头，坚硬'},
+                {name: '科莱特', meaning: '胜利的人民'},
+                {name: '丹妮丝', meaning: '酒神之女，狂欢'},
+                {name: '伊薇特', meaning: '紫杉树，坚韧'},
+                {name: '洛林', meaning: '来自洛林地区'},
+                {name: '米歇尔', meaning: '像上帝一样'},
+                {name: '蕾妮', meaning: '重生的，复兴'},
+                {name: '西蒙娜', meaning: '倾听者'},
+                {name: '塞莱斯特', meaning: '天空的，天堂'},
+                {name: '热纳维耶芙', meaning: '白浪'},
+                {name: '卡门', meaning: '花园，果园'},
+                {name: '伊莎贝尔', meaning: '上帝的誓言'},
+                {name: '帕特里夏', meaning: '贵族的，高贵'},
+                {name: '梅赛德斯', meaning: '怜悯的，仁慈'},
+                {name: '埃斯佩兰萨', meaning: '希望的，期待'},
+                {name: '孔苏埃洛', meaning: '安慰的，慰藉'},
+                {name: '多洛雷斯', meaning: '悲伤的，忧郁'},
+                {name: '格拉谢拉', meaning: '恩典的，优雅'},
+                {name: '阿尔玛', meaning: '灵魂的，滋养'},
+                {name: '罗莎里奥', meaning: '玫瑰经，虔诚'},
+                // 更多现代名
+                {name: '佩顿', meaning: '战士的庄园'},
+                {name: '肯德尔', meaning: '山谷中的河'},
+                {name: '帕克', meaning: '公园管理员'},
+                {name: '里根', meaning: '小国王'},
+                {name: '里利', meaning: '勇敢的'},
+                {name: '哈德利', meaning: '石楠草地'},
+                {name: '斯宾塞', meaning: '供应者'},
+                {name: '特里尼蒂', meaning: '三位一体，神圣'},
+                {name: '伊芙', meaning: '生命'},
+                {name: '斯凯', meaning: '天空，苍穹'},
+                {name: '萨凡纳', meaning: '大草原，开阔'},
+                {name: '布鲁克', meaning: '小溪，流水'},
+                {name: '佩奇', meaning: '年轻的助手'},
+                {name: '斯嘉丽', meaning: '红色的，猩红'},
+                {name: '斯特拉', meaning: '星星，星光'},
+                {name: '露娜', meaning: '月亮，月光'},
+                {name: '奥罗拉', meaning: '黎明，曙光'},
+                {name: '维奥莱特', meaning: '紫罗兰，紫色'},
+                {name: '榛', meaning: '榛树，智慧'},
+                {name: '柳树', meaning: '柳树，柔韧'},
+                {name: '艾维', meaning: '常春藤，忠诚'},
+                {name: '波比', meaning: '罂粟花，美丽'},
+                {name: '黛西', meaning: '雏菊，纯洁'},
+                {name: '莉莉安', meaning: '百合花'},
+                {name: '露比', meaning: '红宝石，珍贵'},
+                {name: '琥珀', meaning: '琥珀，温暖'},
+                {name: '杰德', meaning: '翡翠，玉石'},
+                {name: '珍珠', meaning: '珍珠，珍贵'},
+                {name: '玛格丽特', meaning: '珍珠'},
+                {name: '乔伊斯', meaning: '快乐的，喜悦'}
+            ]
         };
 
         // 关键词匹配规则
@@ -3243,8 +3591,19 @@
             return { style: selectedStyle, gender };
         }
 
-        // 生成中文名字
-        function generateChineseName(style, gender) {
+
+        function generateOneWesternName(gender) {
+            const names = gender === 'female' ? nameDatabase.westernFemale : nameDatabase.westernMale;
+            const item = names[Math.floor(Math.random() * names.length)];
+            return {
+                name: item.name,
+                meaning: item.meaning,
+                style: '西方风格'
+            };
+        }
+
+        // 生成中文名字（单条）
+        function generateOneChineseName(style, gender) {
             const styleData = nameDatabase[style] || nameDatabase.cold;
             const surnames = Math.random() > 0.7 ? nameDatabase.surnames.rare : nameDatabase.surnames.common;
             const surname = surnames[Math.floor(Math.random() * surnames.length)];
@@ -3267,61 +3626,6 @@
             return { name, meaning, style: getStyleName(style) };
         }
 
-        // 生成西方名字
-        function generateWesternName(gender) {
-            const names = gender === 'female' ? nameDatabase.westernFemale : nameDatabase.westernMale;
-            const name = names[Math.floor(Math.random() * names.length)];
-            
-            const meanings = {
-                '约翰': '上帝是仁慈的，慈悲恩典之人',
-                '迈克尔': '像上帝一样的人，神圣使者',
-                '詹姆斯': '取代者，后来居上者',
-                '罗伯特': '辉煌的名声，耀世之光',
-                '威廉': '坚定的保护者，勇敢卫士',
-                '大卫': '亲爱的朋友，被深爱的人',
-                '理查德': '强大的统治者，铁血领袖',
-                '查尔斯': '自由的人，豪爽之士',
-                '托马斯': '双胞胎，双生之子',
-                '丹尼尔': '上帝是我的审判者，正义化身',
-                '特朗普': '胜利者，凯旋之人',
-                '罗德': '著名的统治者，有声望的领袖',
-                '克里斯托弗': '基督的信使，神圣使者',
-                '马修': '上帝的礼物，天赐之子',
-                '安东尼': '无价之宝，珍贵之人',
-                '马克': '战神之子，勇敢战士',
-                '保罗': '小巧的人，谦逊之士',
-                '史蒂文': '花环，荣耀加冕者',
-                '安德鲁': '有男子气概的，刚强勇敢',
-                '布莱恩': '高贵的，品德高尚者',
-                '伊丽莎白': '上帝的誓言，神圣之约',
-                '玛丽': '苦涩的，坚强隐忍',
-                '詹妮弗': '纯洁的白浪，纯洁美好',
-                '丽莎': '上帝的誓约，蒙福之人',
-                '莎拉': '公主，高贵典雅',
-                '杰西卡': '上帝的恩赐，神赐之礼',
-                '艾米丽': '勤奋的，努力上进',
-                '艾玛': '普遍的，万能之人',
-                '奥利维亚': '橄榄树，和平使者',
-                '索菲亚': '智慧的，聪慧明达',
-                '维多利亚': '胜利者，凯旋女神',
-                '艾娃': '生命的，活力之源',
-                '米娅': '我的，属于我的',
-                '夏洛特': '自由人，独立坚强',
-                '阿米莉亚': '勤奋的，努力奋斗',
-                '伊芙琳': '生命，希望之光',
-                '阿比盖尔': '父亲的喜悦，掌上明珠',
-                '哈珀': '竖琴演奏者，音乐天赋',
-                '莉莉': '百合花，纯洁美丽',
-                '安娜': '恩典，蒙恩之人'
-            };
-            
-            return { 
-                name, 
-                meaning: meanings[name] || '高贵典雅之名',
-                style: '西方风格'
-            };
-        }
-
         // 获取风格中文名
         function getStyleName(style) {
             const names = {
@@ -3336,7 +3640,7 @@
             return names[style] || '古风';
         }
 
-        // 生成5个名字
+        // 生成5个名字（去重逻辑）
         function generateNames() {
             const description = document.getElementById('nameDescription')?.value?.trim();
             if (!description) {
@@ -3345,16 +3649,38 @@
             }
             
             const { style, gender } = analyzeDescription(description);
-            generatedNames = [];
             
-            for (let i = 0; i < 5; i++) {
+            // 使用Set去重生成5个名字
+            const generated = new Set();
+            const result = [];
+            
+            // 获取最大可用名字数量
+            const maxNames = currentNameType === 'chinese' ? 1000 : 
+                (gender === 'female' ? nameDatabase.westernFemale.length : nameDatabase.westernMale.length);
+            
+            // 最多尝试生成5个，但如果可用名字不足则返回全部
+            const targetCount = Math.min(5, maxNames);
+            
+            let attempts = 0;
+            const maxAttempts = targetCount * 10; // 防止无限循环
+            
+            while (generated.size < targetCount && attempts < maxAttempts) {
+                let nameObj;
                 if (currentNameType === 'chinese') {
-                    generatedNames.push(generateChineseName(style, gender));
+                    nameObj = generateOneChineseName(style, gender);
                 } else {
-                    generatedNames.push(generateWesternName(gender));
+                    nameObj = generateOneWesternName(gender);
                 }
+                
+                // 使用名字作为唯一标识
+                if (!generated.has(nameObj.name)) {
+                    generated.add(nameObj.name);
+                    result.push(nameObj);
+                }
+                attempts++;
             }
             
+            generatedNames = result;
             renderGeneratedNames();
         }
 
