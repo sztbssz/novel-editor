@@ -776,7 +776,7 @@
                 this.token = localStorage.getItem('github_token');
                 this.gistId = localStorage.getItem('github_gist_id');
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
-                this.tropeDataUrl = 'https://raw.githubusercontent.com/sztbssz/novel-editor/master/data.json';
+                this.tropeDataUrl = 'data.json';
             }
 
             // 检查是否已配置
@@ -927,27 +927,21 @@
                 return false;
             }
 
-            // 从远程加载桥段数据
+            // 从远程加载桥段数据（无缓存，强制实时加载）
             async loadTropeData() {
                 try {
-                    const response = await fetch(this.tropeDataUrl);
+                    // 强制绕过缓存
+                    const noCacheUrl = this.tropeDataUrl + '?t=' + new Date().getTime();
+                    const response = await fetch(noCacheUrl, {
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
                     if (response.ok) {
-                        const data = await response.json();
-                        // 缓存到 localStorage
-                        localStorage.setItem('trope_data_cache', JSON.stringify(data));
-                        localStorage.setItem('trope_data_cache_time', new Date().toISOString());
-                        return data;
+                        return await response.json();
                     }
                 } catch (e) {
                     console.error('Load trope data failed:', e);
                 }
-
-                // 如果加载失败，尝试使用缓存
-                const cached = localStorage.getItem('trope_data_cache');
-                if (cached) {
-                    return JSON.parse(cached);
-                }
-
                 return null;
             }
 
@@ -1225,41 +1219,195 @@
             }
         }
 
-        // 默认桥段数据
+        // 默认桥段数据（新版18类别243子类型）
         function getDefaultTropeData() {
             return {
-                categories: [
-                    { id: 'identity', name: '身份类', subTypes: ['扮猪吃老虎', '身份揭露/认亲', '重生/穿越', '马甲掉落', '假死脱身', '替身梗', '双面间谍'] },
-                    { id: 'conflict', name: '冲突类', subTypes: ['装逼打脸', '退婚流', '复仇流', '越级反杀', '绝境翻盘', '快意恩仇', '杀鸡儆猴'] },
-                    { id: 'ability', name: '能力类', subTypes: ['废材逆袭', '金手指/系统流', '升级流', '顿悟突破', '底牌爆发', '破而后立'] },
-                    { id: 'scene', name: '场景类', subTypes: ['拍卖会', '秘境探险', '宗门大比', '学院流', '副本闯关', '天梯赛'] },
-                    { id: 'emotion', name: '情感类', subTypes: ['英雄救美', '追妻火葬场', '双向奔赴', '久别重逢', '欢喜冤家', '救赎文学'] },
-                    { id: 'intelligence', name: '智斗类', subTypes: ['运筹帷幄', '借刀杀人', '信息差碾压', '精准预判', '计中计', '连环计'] },
-                    { id: 'resource', name: '资源类', subTypes: ['捡漏', '夺宝', '炼丹', '闷声发大财', '天降机缘', '截胡机缘'] },
-                    { id: 'relationship', name: '关系类', subTypes: ['师徒羁绊', '兄弟情深', '护短名场面', '宿敌对决'] },
-                    { id: 'special', name: '特殊类', subTypes: ['重生复仇', '穿书自救', '快穿任务', '无限流副本'] }
-                ],
-                tropes: [
-                    { id: 'trope_001', category: 'conflict', subType: '装逼打脸', title: '三年之约', content: '天才少年一朝陨落，被未婚妻当众羞辱退婚。少年立下三年之约，届时上门讨回尊严。', book: '斗破苍穹', author: '天蚕土豆', tags: ['玄幻', '逆袭', '热血'] },
-                    { id: 'trope_002', category: 'ability', subType: '金手指/系统流', title: '戒指里的老爷爷', content: '主角意外获得一枚神秘戒指，里面藏着一位远古强者的灵魂，从此开启修行之路。', book: '斗破苍穹', author: '天蚕土豆', tags: ['玄幻', '金手指', '传承'] },
-                    { id: 'trope_003', category: 'conflict', subType: '装逼打脸', title: '测试震惊全场', content: '主角参加宗门测试，众人以为他是废物，结果测出天灵根/满级天赋，全场震惊。', book: '凡人修仙传', author: '忘语', tags: ['仙侠', '测试', '天赋'] },
-                    { id: 'trope_004', category: 'identity', subType: '扮猪吃老虎', title: '废品炼丹师', content: '主角炼丹水平极高，却伪装成一品炼丹师，在炼丹大会上让对手轻敌后惨败。', book: '武炼巅峰', author: '莫默', tags: ['玄幻', '炼丹', '伪装'] },
-                    { id: 'trope_005', category: 'intelligence', subType: '借刀杀人', title: '借刀杀人', content: '主角实力不足以对抗强敌，巧妙设局让两个敌对势力互相残杀，自己坐收渔利。', book: '雪中悍刀行', author: '烽火戏诸侯', tags: ['武侠', '谋略', '权谋'] },
-                    { id: 'trope_006', category: 'identity', subType: '身份揭露/认亲', title: '废物竟是绝世高手', content: '门派中的扫地僧/外门弟子一直被当成废物，直到宗门大难才显露真实修为。', book: '一念永恒', author: '耳根', tags: ['仙侠', '隐藏', '强者'] },
-                    { id: 'trope_007', category: 'ability', subType: '越级挑战', title: '越级秒杀', content: '筑基期主角遭遇金丹期对手，底牌尽出，以弱胜强完成越级反杀。', book: '仙逆', author: '耳根', tags: ['仙侠', '战斗', '底牌'] },
-                    { id: 'trope_008', category: 'ability', subType: '顿悟突破', title: '绝境突破', content: '主角被逼入绝境，濒死之际突破瓶颈，不仅伤势痊愈，修为更是暴涨。', book: '完美世界', author: '辰东', tags: ['玄幻', '突破', '反杀'] },
-                    { id: 'trope_009', category: 'resource', subType: '闷声发大财', title: '不经意间露富', content: '主角随手拿出的普通物品其实是绝世珍品，众人震惊而主角一脸茫然。', book: '从前有座灵剑山', author: '国王陛下', tags: ['仙侠', '搞笑', '装逼'] },
-                    { id: 'trope_010', category: 'scene', subType: '拍卖会', title: '拍卖会竞价', content: '反派嘲讽主角没钱，结果主角直接加价十倍，用财力碾压后揭露身份。', book: '斗罗大陆', author: '唐家三少', tags: ['玄幻', '拍卖会', '财富'] },
-                    { id: 'trope_011', category: 'identity', subType: '扮猪吃老虎', title: '傻子人设伪装', content: '主角顶着傻子名号让对手放松警惕，实则暗中布局，关键时刻一击致命。', book: '各类爽文', author: '通用', tags: ['都市', '伪装', '复仇'] },
-                    { id: 'trope_012', category: 'intelligence', subType: '运筹帷幄', title: '草船借箭', content: '主角利用敌人资源为己所用，通过智慧而非武力获取所需。', book: '三国演义', author: '罗贯中', tags: ['谋略', '借势', '经典'] },
-                    { id: 'trope_013', category: 'emotion', subType: '英雄救美', title: '英雄救美', content: '女主角遭遇危险，千钧一发之际主角挺身而出，结下情缘或让对方改观。', book: '各类网文', author: '通用', tags: ['情感', '邂逅', '经典'] },
-                    { id: 'trope_014', category: 'emotion', subType: '追妻火葬场', title: '追妻火葬场', content: '男主前期对女主冷漠/伤害，失去后才追悔莫及，开启疯狂追妻模式。', book: '各类言情', author: '通用', tags: ['言情', '虐恋', '后悔'] },
-                    { id: 'trope_015', category: 'relationship', subType: '师徒羁绊', title: '师徒诀别', content: '师父为救主角燃烧生命施展禁术，临终前将毕生修为传给主角。', book: '诛仙', author: '萧鼎', tags: ['仙侠', '师徒', '传承'] },
-                    { id: 'trope_016', category: 'resource', subType: '捡漏', title: '废物鉴宝', content: '众人眼中的废物却能看出别人看不出的宝物价值，以极低价格捡漏珍品。', book: '遮天', author: '辰东', tags: ['玄幻', '鉴宝', '眼力'] },
-                    { id: 'trope_017', category: 'scene', subType: '学院流', title: '低调炫技', content: '主角故意隐藏修为，在朋友遇险时恰好展现实力救人，装逼于无形。', book: '天道图书馆', author: '横扫天涯', tags: ['玄幻', '装逼', '教学'] },
-                    { id: 'trope_018', category: 'special', subType: '重生复仇', title: '重生复仇', content: '主角带着前世记忆重生，利用先知优势改变命运，手撕前世仇人。', book: '各类重生文', author: '通用', tags: ['重生', '复仇', '爽文'] },
-                    { id: 'trope_019', category: 'ability', subType: '金手指/系统流', title: '系统绑定', content: '主角平凡无奇，意外绑定系统，从此可以通过完成任务获得奖励。', book: '最强反套路系统', author: '太上布衣', tags: ['系统', '搞笑', '无敌'] },
-                    { id: 'trope_020', category: 'conflict', subType: '装逼打脸', title: '多底牌爆发', content: '主角面对强敌，一张底牌接一张底牌掀开，让对手从嚣张到绝望。', book: '各类爽文', author: '通用', tags: ['战斗', '底牌', '惊喜'] }
+                "version": "3.0",
+                "categories": [
+                    {
+                        "id": "universal",
+                        "name": "全网文通用核心桥段",
+                        "description": "全题材覆盖，高频出现的核心爽点桥段",
+                        "subTypes": [
+                            {"name": "装逼打脸"}, {"name": "扮猪吃老虎"}, {"name": "智斗博弈"},
+                            {"name": "越级反杀"}, {"name": "绝境翻盘"}, {"name": "废物逆袭"},
+                            {"name": "身份揭晓/身份反转"}, {"name": "全场震惊"}, {"name": "降维打击"},
+                            {"name": "快意恩仇"}, {"name": "护短名场面"}, {"name": "闷声发大财"},
+                            {"name": "捡漏淘宝"}, {"name": "天降机缘"}, {"name": "截胡机缘"},
+                            {"name": "后手反制"}, {"name": "信息差碾压"}, {"name": "精准预判"},
+                            {"name": "以弱胜强"}, {"name": "借力打力"}, {"name": "釜底抽薪"},
+                            {"name": "杀鸡儆猴"}, {"name": "深藏功与名"}, {"name": "反套路打脸"},
+                            {"name": "破而后立"}, {"name": "死里逃生"}, {"name": "假死脱身"},
+                            {"name": "剧情反转"}, {"name": "伏笔回收"}, {"name": "计中计/连环计"},
+                            {"name": "背刺反水"}, {"name": "临阵倒戈"}, {"name": "真相大白"},
+                            {"name": "惊天秘闻揭露"}, {"name": "正邪反转"}, {"name": "阵营反转"},
+                            {"name": "无间卧底/双面间谍"}, {"name": "真假身份/替身梗"},
+                            {"name": "先知先觉布局"}, {"name": "经验碾压"}, {"name": "多底牌爆发"},
+                            {"name": "误会解除"}, {"name": "困兽之斗"}, {"name": "弃子逆袭"},
+                            {"name": "螳螂捕蝉黄雀在后"}
+                        ]
+                    },
+                    {
+                        "id": "growth",
+                        "name": "人物成长与金手指专属",
+                        "subTypes": [
+                            {"name": "废柴觉醒"}, {"name": "金手指解锁/升级"}, {"name": "境界突破/实力进阶"},
+                            {"name": "顿悟开窍"}, {"name": "闭关出关"}, {"name": "血脉/天赋觉醒"},
+                            {"name": "传承获取"}, {"name": "功法/技能领悟"}, {"name": "洗髓伐脉"},
+                            {"name": "系统任务/奖励解锁"}, {"name": "签到打卡获宝"},
+                            {"name": "本命法宝/武器认主/觉醒"}, {"name": "专属领域解锁"}, {"name": "残血反杀/越挫越勇"}
+                        ]
+                    },
+                    {
+                        "id": "emotion",
+                        "name": "情感与人际关系类桥段",
+                        "subTypes": [
+                            {"name": "英雄救美"}, {"name": "美救英雄"}, {"name": "双向奔赴"},
+                            {"name": "久别重逢"}, {"name": "破镜重圆"}, {"name": "一见钟情"},
+                            {"name": "欢喜冤家"}, {"name": "虐恋情深"}, {"name": "白月光/朱砂痣"},
+                            {"name": "天降vs竹马"}, {"name": "师徒羁绊/师徒反目"}, {"name": "兄弟情深/兄弟反目"},
+                            {"name": "亲情和解/亲情守护"}, {"name": "红颜/蓝颜知己"}, {"name": "忠犬守护"},
+                            {"name": "霸道宠溺"}, {"name": "追妻火葬场"}, {"name": "追夫火葬场"},
+                            {"name": "先婚后爱"}, {"name": "契约恋爱"}, {"name": "双向暗恋"},
+                            {"name": "误会拉扯"}, {"name": "救赎文学"}, {"name": "宿敌对决/宿敌惺惺相惜"},
+                            {"name": "师门情深/师门反目"}, {"name": "舔狗逆袭/舔狗反杀"}, {"name": "护妻/护夫狂魔"}
+                        ]
+                    },
+                    {
+                        "id": "world",
+                        "name": "世界观探索与势力博弈类桥段",
+                        "subTypes": [
+                            {"name": "秘境探险/遗迹寻宝"}, {"name": "副本闯关/试炼挑战"}, {"name": "地图解锁/位面穿梭"},
+                            {"name": "势力大比/擂台对决"}, {"name": "拍卖会竞价博弈"}, {"name": "宗门/势力建立与扩张"},
+                            {"name": "联盟缔结/阵营对抗"}, {"name": "国战/界战/种族争霸"}, {"name": "赌石/赌宝对决"},
+                            {"name": "专业赛道比拼（丹道/器道/阵道/厨艺等）"}, {"name": "科举/职场/行业考核"},
+                            {"name": "天梯赛/排位赛/生死斗"}, {"name": "机关破解/规则博弈"}, {"name": "上古秘辛/文明溯源"},
+                            {"name": "位面入侵/位面守护"}
+                        ]
+                    },
+                    {
+                        "id": "xuanhuan",
+                        "name": "玄幻/仙侠题材专属",
+                        "subTypes": [
+                            {"name": "渡劫飞升"}, {"name": "雷劫反杀"}, {"name": "宗门站队"},
+                            {"name": "正邪大战"}, {"name": "三界争霸"}, {"name": "轮回转世"},
+                            {"name": "神魂夺舍"}, {"name": "天地异象触发"}, {"name": "万族争霸"},
+                            {"name": "天道博弈"}, {"name": "逆天改命"}, {"name": "香火成神"},
+                            {"name": "地府/冥界闯关"}, {"name": "仙凡之恋"}
+                        ]
+                    },
+                    {
+                        "id": "dushi",
+                        "name": "都市题材专属",
+                        "subTypes": [
+                            {"name": "商战博弈"}, {"name": "资本收割/股市操盘"}, {"name": "娱乐圈洗白翻红"},
+                            {"name": "选秀逆袭"}, {"name": "职场背刺反杀"}, {"name": "项目截胡反制"},
+                            {"name": "行业黑马逆袭"}, {"name": "技术碾压"}, {"name": "医疗手术封神"},
+                            {"name": "律政庭审绝杀"}, {"name": "电竞赛场逆风翻盘"}, {"name": "体育赛场绝杀夺冠"},
+                            {"name": "古玩鉴宝捡漏"}, {"name": "玄学/风水断局"}, {"name": "种田开荒致富"}, {"name": "基建落地"}
+                        ]
+                    },
+                    {
+                        "id": "gongdou",
+                        "name": "古言/宫斗/宅斗题材专属",
+                        "subTypes": [
+                            {"name": "宅斗反杀"}, {"name": "宫斗上位"}, {"name": "嫡庶之争"},
+                            {"name": "储位/后位之争"}, {"name": "选秀逆袭"}, {"name": "皇权博弈"},
+                            {"name": "后宫争宠"}, {"name": "栽赃反制"}, {"name": "借刀杀人"},
+                            {"name": "和亲博弈"}, {"name": "家族荣辱兴衰"}, {"name": "替嫁梗"}
+                        ]
+                    },
+                    {
+                        "id": "yineng",
+                        "name": "异能/末世题材专属",
+                        "subTypes": [
+                            {"name": "异能觉醒/变异升级"}, {"name": "超能力对决"}, {"name": "都市隐藏世界揭秘"},
+                            {"name": "古武/异能世家对决"}, {"name": "官方特殊组织招揽/对抗"}, {"name": "末世囤货基建"},
+                            {"name": "丧尸围城突围"}, {"name": "末世求生"}, {"name": "空间异能应用"}, {"name": "末世势力割据"}
+                        ]
+                    },
+                    {
+                        "id": "xuanyi",
+                        "name": "悬疑/灵异/无限流题材专属",
+                        "subTypes": [
+                            {"name": "规则怪谈破解"}, {"name": "无限流副本闯关"}, {"name": "密室逃脱"},
+                            {"name": "灵异事件溯源"}, {"name": "凶手反转"}, {"name": "人格分裂揭秘"},
+                            {"name": "时间循环"}, {"name": "死亡回溯"}, {"name": "连环凶案追凶"},
+                            {"name": "民俗禁忌破解"}, {"name": "凶宅/禁地探险"}, {"name": "博弈类桌游对决"}
+                        ]
+                    },
+                    {
+                        "id": "chuanshu",
+                        "name": "重生/穿越/穿书/快穿题材专属",
+                        "subTypes": [
+                            {"name": "重生复仇"}, {"name": "穿越改命"}, {"name": "穿书自救"},
+                            {"name": "穿书反派洗白"}, {"name": "快穿任务执行"}, {"name": "剧情修正/剧情崩坏"},
+                            {"name": "前世遗憾弥补"}, {"name": "前世仇人手撕"}, {"name": "角色自我意识觉醒"}
+                        ]
+                    },
+                    {
+                        "id": "kesulu",
+                        "name": "克苏鲁/诡异复苏/污染题材专属",
+                        "subTypes": [
+                            {"name": "认知污染蔓延"}, {"name": "SAN值临界挣扎"}, {"name": "不可名状降临"},
+                            {"name": "规则污染对抗"}, {"name": "封印松动预警"}, {"name": "群星归位仪式"},
+                            {"name": "人性污染测试"}, {"name": "诡异驾驭融合"}, {"name": "调查员覆灭轮回"}, {"name": "真相认知崩溃"}
+                        ]
+                    },
+                    {
+                        "id": "dihua",
+                        "name": "迪化流/脑补流专属",
+                        "subTypes": [
+                            {"name": "无心之举被神化"}, {"name": "随口一说成预言"}, {"name": "随手之物变至宝"},
+                            {"name": "谦虚被当深不可测"}, {"name": "误打误撞破大局"}, {"name": "全员脑补滤镜"},
+                            {"name": "真相揭露的尴尬"}, {"name": "被迫维持人设"}
+                        ]
+                    },
+                    {
+                        "id": "narrative",
+                        "name": "叙事节奏与结构设计类",
+                        "subTypes": [
+                            {"name": "黄金三章钩子"}, {"name": "悬念层层叠加"}, {"name": "期待感建立"},
+                            {"name": "延迟满足"}, {"name": "多线并行收束"}, {"name": "草蛇灰线回收"},
+                            {"name": "情绪转折节点"}, {"name": "章节卡点设计"}, {"name": "节奏快慢交替"},
+                            {"name": "风暴前的宁静"}, {"name": "余波震荡"}, {"name": "阶段性总结"}
+                        ]
+                    },
+                    {
+                        "id": "game",
+                        "name": "游戏/网游/电竞题材专属",
+                        "subTypes": [
+                            {"name": "隐藏职业获取"}, {"name": "首杀/首通争夺"}, {"name": "游戏现实融合"},
+                            {"name": "NPC觉醒意识"}, {"name": "版本更新适应"}, {"name": "公会争霸战"},
+                            {"name": "氪金碾压反制"}, {"name": "Bug卡出天际"}
+                        ]
+                    },
+                    {
+                        "id": "tianzhong",
+                        "name": "种田/基建/经营流专属",
+                        "subTypes": [
+                            {"name": "从零开始开荒"}, {"name": "科技树解锁"}, {"name": "产业链完善"},
+                            {"name": "领地扩张"}, {"name": "人才招募培养"}, {"name": "应对天灾危机"},
+                            {"name": "贸易路线开辟"}, {"name": "奇观建成"}, {"name": "文化输出"}, {"name": "军队成型阅兵"}
+                        ]
+                    },
+                    {
+                        "id": "tragedy",
+                        "name": "黑深残/致郁/悲剧向桥段",
+                        "subTypes": [
+                            {"name": "必要之恶牺牲"}, {"name": "善意导致恶果"}, {"name": "希望破灭时刻"},
+                            {"name": "信任崩塌瞬间"}, {"name": "无力回天悲剧"}, {"name": "真相残酷揭露"},
+                            {"name": "孤独前行结局"}, {"name": "轮回无法打破"}
+                        ]
+                    },
+                    {
+                        "id": "comedy",
+                        "name": "沙雕/轻松/吐槽向桥段",
+                        "subTypes": [
+                            {"name": "社死名场面"}, {"name": "疯狂吐槽"}, {"name": "反向操作"},
+                            {"name": "反差萌设定"}, {"name": "官方玩梗"}, {"name": "作死边缘试探"}
+                        ]
+                    }
                 ]
             };
         }

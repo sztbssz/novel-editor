@@ -1,181 +1,388 @@
 {
-  "version": "2.1",
+  "version": "3.0",
+  "updated": "2026-04-10",
   "categories": [
     {
-      "id": "identity",
-      "name": "身份类",
-      "description": "涉及身份隐藏、揭露、转换的桥段",
-      "subTypes": ["扮猪吃老虎", "身份揭露/认亲", "重生/穿越", "马甲掉落", "假死脱身", "替身梗", "双面间谍"]
+      "id": "universal",
+      "name": "全网文通用核心桥段",
+      "description": "全题材覆盖，高频出现的核心爽点桥段",
+      "count": 45,
+      "subTypes": [
+        {"id": "zhuangbi", "name": "装逼打脸", "frequency": "极高", "description": "主角展现实力让反派颜面尽失"},
+        {"id": "banzhu", "name": "扮猪吃老虎", "frequency": "极高", "description": "伪装弱小实则强大"},
+        {"id": "zhidou", "name": "智斗博弈", "frequency": "高", "description": "以智取胜的对抗"},
+        {"id": "yueji", "name": "越级反杀", "frequency": "极高", "description": "低等级战胜高等级对手"},
+        {"id": "juejing", "name": "绝境翻盘", "frequency": "极高", "description": "绝境中找到生机反败为胜"},
+        {"id": "feiwu", "name": "废物逆袭", "frequency": "高", "description": "从被看不起到崛起"},
+        {"id": "shenfen", "name": "身份揭晓/身份反转", "frequency": "高", "description": "隐藏身份被揭露或反转"},
+        {"id": "zhenjing", "name": "全场震惊", "frequency": "极高", "description": "主角行为让所有人震惊"},
+        {"id": "jiangwei", "name": "降维打击", "frequency": "高", "description": "高维度对低维度的碾压"},
+        {"id": "kuaiyi", "name": "快意恩仇", "frequency": "中", "description": "有恩报恩有仇报仇"},
+        {"id": "huduan", "name": "护短名场面", "frequency": "高", "description": "保护身边人的强势表现"},
+        {"id": "mensheng", "name": "闷声发大财", "frequency": "中", "description": "低调获取巨大利益"},
+        {"id": "jianlou", "name": "捡漏淘宝", "frequency": "中", "description": "低价获得高价值物品"},
+        {"id": "tianjiang", "name": "天降机缘", "frequency": "高", "description": "意外获得机缘"},
+        {"id": "jiehu", "name": "截胡机缘", "frequency": "中", "description": "抢先获得他人机缘"},
+        {"id": "houshou", "name": "后手反制", "frequency": "高", "description": "预留后手反制敌人"},
+        {"id": "xinxicha", "name": "信息差碾压", "frequency": "高", "description": "利用信息优势压制对手"},
+        {"id": "jingzhun", "name": "精准预判", "frequency": "中", "description": "提前预判对手行动"},
+        {"id": "yiruosheng", "name": "以弱胜强", "frequency": "高", "description": "弱小战胜强大"},
+        {"id": "jieli", "name": "借力打力", "frequency": "中", "description": "借他人之力攻击"},
+        {"id": "fudi", "name": "釜底抽薪", "frequency": "中", "description": "从根本上解决问题"},
+        {"id": "shaji", "name": "杀鸡儆猴", "frequency": "中", "description": "惩罚小角色警示大角色"},
+        {"id": "shencang", "name": "深藏功与名", "frequency": "低", "description": "做了大事却不为人知"},
+        {"id": "fantaolu", "name": "反套路打脸", "frequency": "中", "description": "不按常理出牌的打脸"},
+        {"id": "pohou", "name": "破而后立", "frequency": "高", "description": "破坏后重建更强"},
+        {"id": "silili", "name": "死里逃生", "frequency": "高", "description": "濒死状态逃脱"},
+        {"id": "jiasi", "name": "假死脱身", "frequency": "中", "description": "伪装死亡逃离"},
+        {"id": "juqingfan", "name": "剧情反转", "frequency": "高", "description": "剧情出乎意料的转折"},
+        {"id": "fubi", "name": "伏笔回收", "frequency": "中", "description": "前期铺垫后期回收"},
+        {"id": "jizhongji", "name": "计中计/连环计", "frequency": "中", "description": "多层次的计谋设计"},
+        {"id": "beici", "name": "背刺反水", "frequency": "中", "description": "信任之人背叛"},
+        {"id": "linzhen", "name": "临阵倒戈", "frequency": "中", "description": "战斗中突然倒向敌方"},
+        {"id": "zhenxiang", "name": "真相大白", "frequency": "高", "description": "谜团揭开"},
+        {"id": "jingtian", "name": "惊天秘闻揭露", "frequency": "高", "description": "重大秘密曝光"},
+        {"id": "zhengxie", "name": "正邪反转", "frequency": "中", "description": "正邪立场互换"},
+        {"id": "zhenying", "name": "阵营反转", "frequency": "中", "description": "所属阵营改变"},
+        {"id": "wodi", "name": "无间卧底/双面间谍", "frequency": "中", "description": "潜伏敌营的间谍"},
+        {"id": "zhenjia", "name": "真假身份/替身梗", "frequency": "中", "description": "身份真假难辨"},
+        {"id": "xianzhi", "name": "先知先觉布局", "frequency": "中", "description": "提前布局等对手入局"},
+        {"id": "jingyanya", "name": "经验碾压", "frequency": "中", "description": "靠经验压制对手"},
+        {"id": "duodipai", "name": "多底牌爆发", "frequency": "高", "description": "连续展示隐藏实力"},
+        {"id": "wuhui", "name": "误会解除", "frequency": "中", "description": "消除误会重归于好"},
+        {"id": "kunshou", "name": "困兽之斗", "frequency": "中", "description": "绝境中的拼死反抗"},
+        {"id": "qizi", "name": "弃子逆袭", "frequency": "中", "description": "被放弃者逆袭成功"},
+        {"id": "huangque", "name": "螳螂捕蝉黄雀在后", "frequency": "中", "description": "第三方得利"}
+      ]
     },
     {
-      "id": "conflict",
-      "name": "冲突类",
-      "description": "制造矛盾与对抗的桥段",
-      "subTypes": ["装逼打脸", "退婚流", "复仇流", "越级反杀", "绝境翻盘", "快意恩仇", "杀鸡儆猴"]
-    },
-    {
-      "id": "ability",
-      "name": "能力类",
-      "description": "主角获得或展示能力的桥段",
-      "subTypes": ["废材逆袭", "金手指/系统流", "升级流", "顿悟突破", "底牌爆发", "破而后立"]
-    },
-    {
-      "id": "scene",
-      "name": "场景类",
-      "description": "特定场合下的经典桥段",
-      "subTypes": ["拍卖会", "秘境探险", "宗门大比", "学院流", "副本闯关", "天梯赛"]
+      "id": "growth",
+      "name": "人物成长与金手指专属",
+      "description": "主角能力提升和金手指相关桥段",
+      "count": 14,
+      "subTypes": [
+        {"id": "feichaijuexing", "name": "废柴觉醒", "frequency": "高", "description": "废物天赋觉醒"},
+        {"id": "jinshouzhi", "name": "金手指解锁/升级", "frequency": "极高", "description": "系统或金手指进化"},
+        {"id": "jingjie", "name": "境界突破/实力进阶", "frequency": "极高", "description": "修为等级提升"},
+        {"id": "dunwu", "name": "顿悟开窍", "frequency": "高", "description": "瞬间领悟道理"},
+        {"id": "biguan", "name": "闭关出关", "frequency": "中", "description": "闭关修炼后出关"},
+        {"id": "xuemai", "name": "血脉/天赋觉醒", "frequency": "高", "description": "隐藏血脉或天赋激活"},
+        {"id": "chuancheng", "name": "传承获取", "frequency": "高", "description": "获得前人传承"},
+        {"id": "gongfa", "name": "功法/技能领悟", "frequency": "高", "description": "学会新功法技能"},
+        {"id": "xishui", "name": "洗髓伐脉", "frequency": "中", "description": "改善体质根骨"},
+        {"id": "xitong", "name": "系统任务/奖励解锁", "frequency": "极高", "description": "完成系统任务"},
+        {"id": "qiandao", "name": "签到打卡获宝", "frequency": "中", "description": "每日签到得奖励"},
+        {"id": "benming", "name": "本命法宝/武器认主/觉醒", "frequency": "高", "description": "武器法宝认主"},
+        {"id": "lingyu", "name": "专属领域解锁", "frequency": "中", "description": "获得个人领域"},
+        {"id": "canxue", "name": "残血反杀/越挫越勇", "frequency": "高", "description": "越受伤越强大"}
+      ]
     },
     {
       "id": "emotion",
-      "name": "情感类",
-      "description": "涉及人物情感关系的桥段",
-      "subTypes": ["英雄救美", "追妻火葬场", "双向奔赴", "久别重逢", "欢喜冤家", "救赎文学"]
+      "name": "情感与人际关系类桥段",
+      "description": "涉及人物情感关系发展的桥段",
+      "count": 27,
+      "subTypes": [
+        {"id": "yingxiong", "name": "英雄救美", "frequency": "高", "description": "主角救下女性角色"},
+        {"id": "meijiu", "name": "美救英雄", "frequency": "中", "description": "女性角色救主角"},
+        {"id": "shuangxiang", "name": "双向奔赴", "frequency": "中", "description": "双方互相奔赴"},
+        {"id": "jiubie", "name": "久别重逢", "frequency": "中", "description": "长时间分离后重逢"},
+        {"id": "pojing", "name": "破镜重圆", "frequency": "中", "description": "分手后复合"},
+        {"id": "yijian", "name": "一见钟情", "frequency": "中", "description": "初次见面就喜欢"},
+        {"id": "huanxi", "name": "欢喜冤家", "frequency": "中", "description": "打打闹闹产生感情"},
+        {"id": "nuelian", "name": "虐恋情深", "frequency": "中", "description": "相爱相虐"},
+        {"id": "baiyueguang", "name": "白月光/朱砂痣", "frequency": "中", "description": "难以忘怀的人"},
+        {"id": "tianjiangzhuma", "name": "天降vs竹马", "frequency": "中", "description": "新欢与旧爱竞争"},
+        {"id": "shitu", "name": "师徒羁绊/师徒反目", "frequency": "中", "description": "师徒关系变化"},
+        {"id": "xiongdi", "name": "兄弟情深/兄弟反目", "frequency": "中", "description": "兄弟情谊或决裂"},
+        {"id": "qinqing", "name": "亲情和解/亲情守护", "frequency": "中", "description": "家庭关系修复"},
+        {"id": "hongyan", "name": "红颜/蓝颜知己", "frequency": "中", "description": "异性知己关系"},
+        {"id": "zhongquan", "name": "忠犬守护", "frequency": "中", "description": "忠诚守护型关系"},
+        {"id": "badao", "name": "霸道宠溺", "frequency": "中", "description": "强势宠溺型关系"},
+        {"id": "zhuiqi", "name": "追妻火葬场", "frequency": "高", "description": "失去后才追悔莫及"},
+        {"id": "zhuifu", "name": "追夫火葬场", "frequency": "中", "description": "女性追悔挽回"},
+        {"id": "xianhun", "name": "先婚后爱", "frequency": "中", "description": "先结婚后恋爱"},
+        {"id": "qiyue", "name": "契约恋爱", "frequency": "中", "description": "基于契约的关系"},
+        {"id": "anshuang", "name": "双向暗恋", "frequency": "中", "description": "互相喜欢却不表白"},
+        {"id": "wuhuilach", "name": "误会拉扯", "frequency": "高", "description": "因误会产生的纠葛"},
+        {"id": "jiushu", "name": "救赎文学", "frequency": "中", "description": "互相救赎的关系"},
+        {"id": "sudi", "name": "宿敌对决/宿敌惺惺相惜", "frequency": "中", "description": "对手间的关系"},
+        {"id": "shimen", "name": "师门情深/师门反目", "frequency": "中", "description": "同门关系变化"},
+        {"id": "tiangou", "name": "舔狗逆袭/舔狗反杀", "frequency": "高", "description": "备胎逆袭成功"},
+        {"id": "hufu", "name": "护妻/护夫狂魔", "frequency": "高", "description": "极度保护伴侣"}
+      ]
     },
     {
-      "id": "intelligence",
-      "name": "智斗类",
-      "description": "用计谋策略取胜的桥段",
-      "subTypes": ["运筹帷幄", "借刀杀人", "信息差碾压", "精准预判", "计中计", "连环计"]
+      "id": "world",
+      "name": "世界观探索与势力博弈类桥段",
+      "description": "涉及世界探索和势力争斗的桥段",
+      "count": 15,
+      "subTypes": [
+        {"id": "mijing", "name": "秘境探险/遗迹寻宝", "frequency": "高", "description": "探索未知区域"},
+        {"id": "fuben", "name": "副本闯关/试炼挑战", "frequency": "高", "description": "挑战特定场景"},
+        {"id": "ditu", "name": "地图解锁/位面穿梭", "frequency": "中", "description": "开启新地图"},
+        {"id": "shili", "name": "势力大比/擂台对决", "frequency": "高", "description": "势力间比拼"},
+        {"id": "paimai", "name": "拍卖会竞价博弈", "frequency": "高", "description": "拍卖场争斗"},
+        {"id": "zongmen", "name": "宗门/势力建立与扩张", "frequency": "中", "description": "创建发展势力"},
+        {"id": "lianmeng", "name": "联盟缔结/阵营对抗", "frequency": "中", "description": "结盟或对抗"},
+        {"id": "guozhan", "name": "国战/界战/种族争霸", "frequency": "中", "description": "大规模战争"},
+        {"id": "dushi", "name": "赌石/赌宝对决", "frequency": "中", "description": "赌运气比拼"},
+        {"id": "zhuanye", "name": "专业赛道比拼（丹道/器道/阵道/厨艺等）", "frequency": "中", "description": "专业技能比赛"},
+        {"id": "keju", "name": "科举/职场/行业考核", "frequency": "中", "description": "制度性考核"},
+        {"id": "tianti", "name": "天梯赛/排位赛/生死斗", "frequency": "高", "description": "排名竞争"},
+        {"id": "jiguan", "name": "机关破解/规则博弈", "frequency": "中", "description": "解密类挑战"},
+        {"id": "shanggu", "name": "上古秘辛/文明溯源", "frequency": "中", "description": "探索历史秘密"},
+        {"id": "weimian", "name": "位面入侵/位面守护", "frequency": "中", "description": "跨位面冲突"}
+      ]
     },
     {
-      "id": "resource",
-      "name": "资源类",
-      "description": "获取或利用资源的桥段",
-      "subTypes": ["捡漏", "夺宝", "炼丹", "闷声发大财", "天降机缘", "截胡机缘"]
+      "id": "xuanhuan",
+      "name": "玄幻/仙侠题材专属",
+      "description": "玄幻仙侠类作品特有桥段",
+      "count": 14,
+      "subTypes": [
+        {"id": "dujie", "name": "渡劫飞升", "frequency": "高", "description": "渡天劫升仙"},
+        {"id": "leijie", "name": "雷劫反杀", "frequency": "中", "description": "利用雷劫杀敌"},
+        {"id": "zhanzhan", "name": "宗门站队", "frequency": "中", "description": "选择宗门阵营"},
+        {"id": "zhengxiezhan", "name": "正邪大战", "frequency": "高", "description": "正邪势力大战"},
+        {"id": "sanjie", "name": "三界争霸", "frequency": "中", "description": "三界势力争斗"},
+        {"id": "lunhui", "name": "轮回转世", "frequency": "中", "description": "转世重生"},
+        {"id": "duoshe", "name": "神魂夺舍", "frequency": "中", "description": "夺取他人身体"},
+        {"id": "tianyi", "name": "天地异象触发", "frequency": "中", "description": "引发天地变化"},
+        {"id": "wanzu", "name": "万族争霸", "frequency": "中", "description": "万族间竞争"},
+        {"id": "tiandao", "name": "天道博弈", "frequency": "中", "description": "与天道对抗"},
+        {"id": "nitiangai", "name": "逆天改命", "frequency": "高", "description": "改变既定命运"},
+        {"id": "xianghuo", "name": "香火成神", "frequency": "低", "description": "靠信仰成神"},
+        {"id": "difu", "name": "地府/冥界闯关", "frequency": "中", "description": "冥界冒险"},
+        {"id": "xianfan", "name": "仙凡之恋", "frequency": "中", "description": "仙人与凡人恋爱"}
+      ]
     },
     {
-      "id": "relationship",
-      "name": "关系类",
-      "description": "建立或维护人际关系的桥段",
-      "subTypes": ["师徒羁绊", "兄弟情深", "护短名场面", "宿敌对决"]
+      "id": "dushi",
+      "name": "都市题材专属",
+      "description": "都市类作品特有桥段",
+      "count": 16,
+      "subTypes": [
+        {"id": "shangzhan", "name": "商战博弈", "frequency": "高", "description": "商业竞争"},
+        {"id": "ziben", "name": "资本收割/股市操盘", "frequency": "中", "description": "金融操作"},
+        {"id": "yulequan", "name": "娱乐圈洗白翻红", "frequency": "中", "description": "娱乐圈逆袭"},
+        {"id": "xuanxiu", "name": "选秀逆袭", "frequency": "中", "description": "选秀节目成功"},
+        {"id": "zhichang", "name": "职场背刺反杀", "frequency": "中", "description": "职场斗争"},
+        {"id": "xiangmu", "name": "项目截胡反制", "frequency": "中", "description": "项目争夺"},
+        {"id": "xingye", "name": "行业黑马逆袭", "frequency": "中", "description": "行业中崛起"},
+        {"id": "jishu", "name": "技术碾压", "frequency": "高", "description": "技术实力压制"},
+        {"id": "yiliao", "name": "医疗手术封神", "frequency": "中", "description": "医术高超"},
+        {"id": "lizheng", "name": "律政庭审绝杀", "frequency": "中", "description": "法庭胜诉"},
+        {"id": "dianjing", "name": "电竞赛场逆风翻盘", "frequency": "高", "description": "电竞比赛逆转"},
+        {"id": "tiyu", "name": "体育赛场绝杀夺冠", "frequency": "中", "description": "体育比赛胜利"},
+        {"id": "guwan", "name": "古玩鉴宝捡漏", "frequency": "中", "description": "古玩鉴定"},
+        {"id": "xuanxue", "name": "玄学/风水断局", "frequency": "中", "description": "风水玄学"},
+        {"id": "zhongtian", "name": "种田开荒致富", "frequency": "中", "description": "农业致富"},
+        {"id": "jijian", "name": "基建落地", "frequency": "中", "description": "基础建设"}
+      ]
     },
     {
-      "id": "special",
-      "name": "特殊类",
-      "description": "特殊设定或流派的桥段",
-      "subTypes": ["重生复仇", "穿书自救", "快穿任务", "无限流副本"]
+      "id": "gongdou",
+      "name": "古言/宫斗/宅斗题材专属",
+      "description": "古代言情、宫斗宅斗类作品特有桥段",
+      "count": 12,
+      "subTypes": [
+        {"id": "zhaidou", "name": "宅斗反杀", "frequency": "高", "description": "家族内部斗争"},
+        {"id": "gongdou", "name": "宫斗上位", "frequency": "高", "description": "后宫争宠上位"},
+        {"id": "dishu", "name": "嫡庶之争", "frequency": "中", "description": "嫡子庶子争斗"},
+        {"id": "chuwei", "name": "储位/后位之争", "frequency": "中", "description": "争夺继承权"},
+        {"id": "xuanxiugong", "name": "选秀逆袭", "frequency": "中", "description": "选秀入宫成功"},
+        {"id": "huangquan", "name": "皇权博弈", "frequency": "中", "description": "皇权斗争"},
+        {"id": "zhenghou", "name": "后宫争宠", "frequency": "高", "description": "后宫嫔妃竞争"},
+        {"id": "zaizang", "name": "栽赃反制", "frequency": "高", "description": "陷害与反击"},
+        {"id": "jiedao", "name": "借刀杀人", "frequency": "高", "description": "借他人之手害人"},
+        {"id": "heqin", "name": "和亲博弈", "frequency": "中", "description": "和亲政治"},
+        {"id": "jiazu", "name": "家族荣辱兴衰", "frequency": "中", "description": "家族命运变迁"},
+        {"id": "tijia", "name": "替嫁梗", "frequency": "中", "description": "代替他人出嫁"}
+      ]
+    },
+    {
+      "id": "yineng",
+      "name": "异能/末世题材专属",
+      "description": "异能和末世类作品特有桥段",
+      "count": 10,
+      "subTypes": [
+        {"id": "yinengjuexing", "name": "异能觉醒/变异升级", "frequency": "极高", "description": "获得超能力"},
+        {"id": "chaoneng", "name": "超能力对决", "frequency": "高", "description": "超能力者战斗"},
+        {"id": "yincang", "name": "都市隐藏世界揭秘", "frequency": "中", "description": "发现隐藏世界"},
+        {"id": "guwu", "name": "古武/异能世家对决", "frequency": "中", "description": "世家争斗"},
+        {"id": "guanfang", "name": "官方特殊组织招揽/对抗", "frequency": "中", "description": "与官方组织互动"},
+        {"id": "tunhuo", "name": "末世囤货基建", "frequency": "高", "description": "末世储备建设"},
+        {"id": "sangshi", "name": "丧尸围城突围", "frequency": "高", "description": "丧尸包围逃脱"},
+        {"id": "moshiqiusheng", "name": "末世求生", "frequency": "高", "description": "末日生存"},
+        {"id": "kongjian", "name": "空间异能应用", "frequency": "中", "description": "空间能力使用"},
+        {"id": "shili割据", "name": "末世势力割据", "frequency": "中", "description": "末日势力分布"}
+      ]
+    },
+    {
+      "id": "xuanyi",
+      "name": "悬疑/灵异/无限流题材专属",
+      "description": "悬疑灵异和无限流类作品特有桥段",
+      "count": 12,
+      "subTypes": [
+        {"id": "guize", "name": "规则怪谈破解", "frequency": "高", "description": "破解诡异规则"},
+        {"id": "wuxianliu", "name": "无限流副本闯关", "frequency": "极高", "description": "副本挑战"},
+        {"id": "mishi", "name": "密室逃脱", "frequency": "中", "description": "密室解谜"},
+        {"id": "lingyisuyuan", "name": "灵异事件溯源", "frequency": "中", "description": "追查灵异源头"},
+        {"id": "xiongshou", "name": "凶手反转", "frequency": "高", "description": "凶手身份反转"},
+        {"id": "renge", "name": "人格分裂揭秘", "frequency": "中", "description": "多重人格真相"},
+        {"id": "shijian", "name": "时间循环", "frequency": "中", "description": "重复同一天"},
+        {"id": "siwang", "name": "死亡回溯", "frequency": "中", "description": "死后重生"},
+        {"id": "lianhuan", "name": "连环凶案追凶", "frequency": "中", "description": "连环案件侦查"},
+        {"id": "minsu", "name": "民俗禁忌破解", "frequency": "中", "description": "破解民俗诅咒"},
+        {"id": "xiongzhai", "name": "凶宅/禁地探险", "frequency": "中", "description": "危险地点探索"},
+        {"id": "boyi", "name": "博弈类桌游对决", "frequency": "低", "description": "桌游博弈"}
+      ]
+    },
+    {
+      "id": "chuanshu",
+      "name": "重生/穿越/穿书/快穿题材专属",
+      "description": "穿越重生类作品特有桥段",
+      "count": 9,
+      "subTypes": [
+        {"id": "chongshengfuchou", "name": "重生复仇", "frequency": "极高", "description": "重生后报复仇人"},
+        {"id": "chuanyuegaiming", "name": "穿越改命", "frequency": "高", "description": "穿越改变命运"},
+        {"id": "chuanshuzijiu", "name": "穿书自救", "frequency": "高", "description": "穿书后保命"},
+        {"id": "fanpaixibai", "name": "穿书反派洗白", "frequency": "中", "description": "反派角色转正"},
+        {"id": "kuaichuan", "name": "快穿任务执行", "frequency": "中", "description": "多个世界任务"},
+        {"id": "juqingxiu", "name": "剧情修正/剧情崩坏", "frequency": "中", "description": "改变或维护剧情"},
+        {"id": "yihan", "name": "前世遗憾弥补", "frequency": "高", "description": "弥补前世遗憾"},
+        {"id": "choushou", "name": "前世仇人手撕", "frequency": "高", "description": "报复前世仇人"},
+        {"id": "zijue", "name": "角色自我意识觉醒", "frequency": "中", "description": "角色觉醒意识"}
+      ]
+    },
+    {
+      "id": "kesulu",
+      "name": "克苏鲁/诡异复苏/污染题材专属",
+      "description": "诡异复苏、克苏鲁风格作品特有桥段",
+      "count": 10,
+      "subTypes": [
+        {"id": "renzhiwuran", "name": "认知污染蔓延", "frequency": "极高", "description": "他人疯狂主角清醒"},
+        {"id": "sanzhilinjie", "name": "SAN值临界挣扎", "frequency": "高", "description": "理智崩坏边缘"},
+        {"id": "bukemingzhuang", "name": "不可名状降临", "frequency": "高", "description": "古神出现的压迫感"},
+        {"id": "guizewuran", "name": "规则污染对抗", "frequency": "高", "description": "利用规则反制"},
+        {"id": "fengyinsongdong", "name": "封印松动预警", "frequency": "中", "description": "恐怖即将降临"},
+        {"id": "qunxing", "name": "群星归位仪式", "frequency": "中", "description": "大事件前兆"},
+        {"id": "renxingceshi", "name": "人性污染测试", "frequency": "中", "description": "极端环境下的人性"},
+        {"id": "guiyujiayu", "name": "诡异驾驭融合", "frequency": "高", "description": "与诡异共存"},
+        {"id": "diaochayuan", "name": "调查员覆灭轮回", "frequency": "中", "description": "前人死亡的传承"},
+        {"id": "zhenxiangbengkui", "name": "真相认知崩溃", "frequency": "高", "description": "得知世界本质"}
+      ]
+    },
+    {
+      "id": "dihua",
+      "name": "迪化流/脑补流专属",
+      "description": "他人脑补主角强大、迪化流作品特有桥段",
+      "count": 8,
+      "subTypes": [
+        {"id": "wuxin", "name": "无心之举被神化", "frequency": "极高", "description": "正常操作被过度解读"},
+        {"id": "suikou", "name": "随口一说成预言", "frequency": "高", "description": "吐槽被当天机"},
+        {"id": "suishou", "name": "随手之物变至宝", "frequency": "高", "description": "普通物品被当神器"},
+        {"id": "qianxu", "name": "谦虚被当深不可测", "frequency": "高", "description": "我很弱被当隐藏实力"},
+        {"id": "wuda", "name": "误打误撞破大局", "frequency": "高", "description": "无意之举破解阴谋"},
+        {"id": "quanxiannao", "name": "全员脑补滤镜", "frequency": "极高", "description": "集体对主角加滤镜"},
+        {"id": "zhenxiangjiejie", "name": "真相揭露的尴尬", "frequency": "中", "description": "众人得知真相后社死"},
+        {"id": "beiporen", "name": "被迫维持人设", "frequency": "中", "description": "为了不穿帮只能继续演"}
+      ]
+    },
+    {
+      "id": "narrative",
+      "name": "叙事节奏与结构设计类",
+      "description": "用于控制阅读体验的技术性桥段",
+      "count": 12,
+      "subTypes": [
+        {"id": "huangjin", "name": "黄金三章钩子", "frequency": "极高", "description": "开篇即爆点抓读者"},
+        {"id": "xuanxianceng", "name": "悬念层层叠加", "frequency": "高", "description": "每个答案引出更大疑问"},
+        {"id": "qidai", "name": "期待感建立", "frequency": "高", "description": "让读者知道爽点要来"},
+        {"id": "yanchiman", "name": "延迟满足", "frequency": "高", "description": "故意拖后高潮爆发"},
+        {"id": "duoxian", "name": "多线并行收束", "frequency": "中", "description": "多伏笔同时爆发"},
+        {"id": "caoshe", "name": "草蛇灰线回收", "frequency": "中", "description": "前文细节呼应"},
+        {"id": "qingzhu", "name": "情绪转折节点", "frequency": "高", "description": "压抑到爆发临界点"},
+        {"id": "kadian", "name": "章节卡点设计", "frequency": "极高", "description": "章末留悬念促追读"},
+        {"id": "jiezou", "name": "节奏快慢交替", "frequency": "高", "description": "高潮后接日常张弛有度"},
+        {"id": "fengbao", "name": "风暴前的宁静", "frequency": "中", "description": "大事件前的日常"},
+        {"id": "yubo", "name": "余波震荡", "frequency": "中", "description": "事件后影响扩散"},
+        {"id": "jieduan", "name": "阶段性总结", "frequency": "中", "description": "回顾成长展示数据"}
+      ]
+    },
+    {
+      "id": "game",
+      "name": "游戏/网游/电竞题材专属",
+      "description": "游戏相关作品特有桥段",
+      "count": 8,
+      "subTypes": [
+        {"id": "yincangzhiye", "name": "隐藏职业获取", "frequency": "高", "description": "全服唯一特殊职业"},
+        {"id": "shousha", "name": "首杀/首通争夺", "frequency": "高", "description": "全区第一个通关"},
+        {"id": "youxixianshi", "name": "游戏现实融合", "frequency": "高", "description": "游戏能力带回现实"},
+        {"id": "npcjuexing", "name": "NPC觉醒意识", "frequency": "中", "description": "游戏角色产生情感"},
+        {"id": "banbengengxin", "name": "版本更新适应", "frequency": "中", "description": "大改版后找到新套路"},
+        {"id": "gonghuizhan", "name": "公会争霸战", "frequency": "中", "description": "大规模阵营对抗"},
+        {"id": "kejin", "name": "氪金碾压反制", "frequency": "中", "description": "技术流击败人民币玩家"},
+        {"id": "bug", "name": "Bug卡出天际", "frequency": "低", "description": "利用游戏漏洞"}
+      ]
+    },
+    {
+      "id": "tianzhong",
+      "name": "种田/基建/经营流专属",
+      "description": "种田基建类作品特有桥段",
+      "count": 10,
+      "subTypes": [
+        {"id": "congling", "name": "从零开始开荒", "frequency": "高", "description": "一无所有起步积累"},
+        {"id": "kejishu", "name": "科技树解锁", "frequency": "高", "description": "逐步攀科技成就感"},
+        {"id": "chanyelian", "name": "产业链完善", "frequency": "中", "description": "原材料到成品闭环"},
+        {"id": "lingdikuozhang", "name": "领地扩张", "frequency": "高", "description": "地盘人口增长"},
+        {"id": "rencai", "name": "人才招募培养", "frequency": "中", "description": "发现使用各类人才"},
+        {"id": "tianzai", "name": "应对天灾危机", "frequency": "中", "description": "洪水干旱等挑战"},
+        {"id": "maoyi", "name": "贸易路线开辟", "frequency": "中", "description": "与其他势力经济往来"},
+        {"id": "qiguan", "name": "奇观建成", "frequency": "中", "description": "标志性建筑完工"},
+        {"id": "wenhuashuchu", "name": "文化输出", "frequency": "低", "description": "美食娱乐向外传播"},
+        {"id": "junduichengxing", "name": "军队成型阅兵", "frequency": "中", "description": "组建强大武装"}
+      ]
+    },
+    {
+      "id": "tragedy",
+      "name": "黑深残/致郁/悲剧向桥段",
+      "description": "用于制造情绪冲击的暗黑桥段",
+      "count": 8,
+      "subTypes": [
+        {"id": "xisheng", "name": "必要之恶牺牲", "frequency": "中", "description": "为大局牺牲某人"},
+        {"id": "shanyi", "name": "善意导致恶果", "frequency": "中", "description": "好心办坏事的嘲弄"},
+        {"id": "xiwang", "name": "希望破灭时刻", "frequency": "高", "description": "即将成功时功亏一篑"},
+        {"id": "xinren", "name": "信任崩塌瞬间", "frequency": "高", "description": "最信任之人背叛"},
+        {"id": "wulitian", "name": "无力回天悲剧", "frequency": "中", "description": "拼尽全力仍失败"},
+        {"id": "canrenzhenxiang", "name": "真相残酷揭露", "frequency": "高", "description": "难以接受的事实"},
+        {"id": "gudu", "name": "孤独前行结局", "frequency": "中", "description": "只剩主角一人"},
+        {"id": "lunhui", "name": "轮回无法打破", "frequency": "中", "description": "无论如何都回到原点"}
+      ]
+    },
+    {
+      "id": "comedy",
+      "name": "沙雕/轻松/吐槽向桥段",
+      "description": "用于调节气氛的搞笑桥段",
+      "count": 6,
+      "subTypes": [
+        {"id": "shesi", "name": "社死名场面", "frequency": "高", "description": "尴尬到想钻地缝"},
+        {"id": "tucao", "name": "疯狂吐槽", "frequency": "高", "description": "打破第四面墙吐槽"},
+        {"id": "fanxiang", "name": "反向操作", "frequency": "中", "description": "故意不走寻常路"},
+        {"id": "fancha", "name": "反差萌设定", "frequency": "中", "description": "强大存在幼稚一面"},
+        {"id": "wangeng", "name": "官方玩梗", "frequency": "中", "description": "自黑致敬经典"},
+        {"id": "zuosi", "name": "作死边缘试探", "frequency": "中", "description": "明知危险还要皮"}
+      ]
     }
   ],
-  "tropes": [
-    {
-      "id": "trope_001",
-      "category": "conflict",
-      "subType": "装逼打脸",
-      "title": "三年之约",
-      "content": "天才少年一朝陨落，被未婚妻当众羞辱退婚。少年立下三年之约，届时上门讨回尊严。",
-      "book": "斗破苍穹",
-      "author": "天蚕土豆",
-      "year": 2009,
-      "tags": ["玄幻", "逆袭", "热血"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_002",
-      "category": "ability",
-      "subType": "金手指/系统流",
-      "title": "戒指里的老爷爷",
-      "content": "主角意外获得一枚神秘戒指，里面藏着一位远古强者的灵魂，从此开启修行之路。",
-      "book": "斗破苍穹",
-      "author": "天蚕土豆",
-      "year": 2009,
-      "tags": ["玄幻", "金手指", "传承"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_003",
-      "category": "conflict",
-      "subType": "装逼打脸",
-      "title": "测试震惊全场",
-      "content": "主角参加宗门测试，众人以为他是废物，结果测出天灵根/满级天赋，全场震惊。",
-      "book": "凡人修仙传",
-      "author": "忘语",
-      "year": 2008,
-      "tags": ["仙侠", "测试", "天赋"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_004",
-      "category": "identity",
-      "subType": "扮猪吃老虎",
-      "title": "废品炼丹师",
-      "content": "主角炼丹水平极高，却伪装成一品炼丹师，在炼丹大会上让对手轻敌后惨败。",
-      "book": "武炼巅峰",
-      "author": "莫默",
-      "year": 2012,
-      "tags": ["玄幻", "炼丹", "伪装"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_005",
-      "category": "intelligence",
-      "subType": "借刀杀人",
-      "title": "借刀杀人",
-      "content": "主角实力不足以对抗强敌，巧妙设局让两个敌对势力互相残杀，自己坐收渔利。",
-      "book": "雪中悍刀行",
-      "author": "烽火戏诸侯",
-      "year": 2012,
-      "tags": ["武侠", "谋略", "权谋"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_006",
-      "category": "identity",
-      "subType": "身份揭露/认亲",
-      "title": "废物竟是绝世高手",
-      "content": "门派中的扫地僧/外门弟子一直被当成废物，直到宗门大难才显露真实修为。",
-      "book": "一念永恒",
-      "author": "耳根",
-      "year": 2016,
-      "tags": ["仙侠", "隐藏", "强者"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_007",
-      "category": "ability",
-      "subType": "越级挑战",
-      "title": "越级秒杀",
-      "content": "筑基期主角遭遇金丹期对手，底牌尽出，以弱胜强完成越级反杀。",
-      "book": "仙逆",
-      "author": "耳根",
-      "year": 2009,
-      "tags": ["仙侠", "战斗", "底牌"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_008",
-      "category": "ability",
-      "subType": "顿悟突破",
-      "title": "绝境突破",
-      "content": "主角被逼入绝境，濒死之际突破瓶颈，不仅伤势痊愈，修为更是暴涨。",
-      "book": "完美世界",
-      "author": "辰东",
-      "year": 2013,
-      "tags": ["玄幻", "突破", "反杀"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_009",
-      "category": "resource",
-      "subType": "闷声发大财",
-      "title": "不经意间露富",
-      "content": "主角随手拿出的普通物品其实是绝世珍品，众人震惊而主角一脸茫然。",
-      "book": "从前有座灵剑山",
-      "author": "国王陛下",
-      "year": 2013,
-      "tags": ["仙侠", "搞笑", "装逼"],
-      "source": "起点中文网"
-    },
-    {
-      "id": "trope_010",
-      "category": "scene",
-      "subType": "拍卖会",
-      "title": "拍卖会竞价",
-      "content": "反派嘲讽主角没钱，结果主角直接加价十倍，用财力碾压后揭露身份。",
-      "book": "斗罗大陆",
-      "author": "唐家三少",
-      "year": 2008,
-      "tags": ["玄幻", "拍卖会", "财富"],
-      "source": "起点中文网"
+  "stats": {
+    "totalCategories": 18,
+    "totalSubTypes": 243,
+    "byFrequency": {
+      "极高": 28,
+      "高": 98,
+      "中": 108,
+      "低": 9
     }
-  ]
+  }
 }
