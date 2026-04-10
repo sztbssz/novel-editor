@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎮 创世者编辑器</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -2722,6 +2723,190 @@
             font-size: 14px;
             color: #888;
         }
+
+        /* ==================== 大纲导图样式 ==================== */
+        .mindmap-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 100px);
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .mindmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1a1a2e;
+            border-bottom: 1px solid #0f3460;
+        }
+        .mindmap-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .mindmap-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .mindmap-toolbar-btn {
+            padding: 8px 16px;
+            background: #0f3460;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .mindmap-toolbar-btn:hover {
+            background: #1a4a7a;
+        }
+        .mindmap-toolbar-btn.active {
+            background: #e94560;
+        }
+        .mindmap-canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #0d1b2a;
+            cursor: grab;
+        }
+        .mindmap-canvas-container:active {
+            cursor: grabbing;
+        }
+        .mindmap-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        .mindmap-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .mindmap-node {
+            cursor: pointer;
+        }
+        .mindmap-node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+            transition: all 0.3s;
+        }
+        .mindmap-node:hover circle {
+            stroke: #00d4ff;
+            stroke-width: 3px;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+        }
+        .mindmap-node text {
+            fill: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            pointer-events: none;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .mindmap-node.collapsed circle {
+            fill: #666;
+        }
+        .mindmap-link {
+            fill: none;
+            stroke: #0f3460;
+            stroke-width: 2px;
+            transition: all 0.3s;
+        }
+        .mindmap-link:hover {
+            stroke: #00d4ff;
+            stroke-width: 3px;
+        }
+        .mindmap-work-node circle {
+            fill: #e94560;
+        }
+        .mindmap-volume-node circle {
+            fill: #00d4ff;
+        }
+        .mindmap-chapter-node circle {
+            fill: #28a745;
+        }
+        .mindmap-context-menu {
+            position: absolute;
+            background: #16213e;
+            border-radius: 8px;
+            padding: 8px 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #0f3460;
+            z-index: 1000;
+            min-width: 150px;
+            display: none;
+        }
+        .mindmap-context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #ccc;
+            transition: all 0.2s;
+        }
+        .mindmap-context-menu-item:hover {
+            background: #0f3460;
+            color: #fff;
+        }
+        .mindmap-work-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .mindmap-work-select {
+            padding: 8px 12px;
+            background: #0f3460;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            min-width: 200px;
+        }
+        .mindmap-zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #16213e;
+            border-radius: 8px;
+            padding: 5px;
+            border: 1px solid #0f3460;
+        }
+        .mindmap-zoom-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #0f3460;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .mindmap-zoom-btn:hover {
+            background: #1a4a7a;
+        }
+        .mindmap-info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(22, 33, 62, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            font-size: 12px;
+            color: #888;
+        }
+        .mindmap-info-panel span {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .mindmap-info-panel strong {
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -2764,6 +2949,7 @@
                 <a class="nav-item" data-page="characters"><i>👤</i>角色管理</a>
                 <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
                 <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
+                <a class="nav-item" data-page="mindmap"><i>🗺️</i>大纲导图</a>
                 <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
                 <a class="nav-item" data-page="scene"><i>📝</i>桥段生成</a>
                 <a class="nav-item" data-page="names"><i>✨</i>姓名生成</a>
@@ -10689,6 +10875,546 @@
             }
         }
 
+        // ==================== 大纲导图功能 ====================
+        let mindmapCurrentWorkId = null;
+        let mindmapSvg = null;
+        let mindmapZoom = null;
+        let mindmapData = null;
+
+        // 渲染导图页面
+        async function renderMindmap(container) {
+            // 获取所有作品
+            const works = await db.getAll('works');
+
+            if (works.length === 0) {
+                container.innerHTML = `
+                    <div class="mindmap-container">
+                        <div class="mindmap-header">
+                            <div class="mindmap-title">🗺️ 大纲导图</div>
+                        </div>
+                        <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#888;">
+                            <div style="font-size:48px;margin-bottom:20px;">📚</div>
+                            <div style="font-size:18px;margin-bottom:10px;">暂无作品</div>
+                            <div style="font-size:14px;color:#666;">请先在"情节大纲"中创建作品</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 如果没有选择作品，默认选择第一个
+            if (!mindmapCurrentWorkId || !works.find(w => w.id === mindmapCurrentWorkId)) {
+                mindmapCurrentWorkId = works[0].id;
+            }
+
+            container.innerHTML = `
+                <div class="mindmap-container">
+                    <div class="mindmap-header">
+                        <div class="mindmap-work-selector">
+                            <span class="mindmap-title">🗺️ 大纲导图</span>
+                            <select class="mindmap-work-select" id="mindmapWorkSelect" onchange="onMindmapWorkChange(this.value)">
+                                ${works.map(w => `
+                                    <option value="${w.id}" ${w.id === mindmapCurrentWorkId ? 'selected' : ''}>${w.title}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="mindmap-toolbar">
+                            <button class="mindmap-toolbar-btn" id="btnTreeView" onclick="switchMindmapView('tree')">🌳 树形图</button>
+                            <button class="mindmap-toolbar-btn" id="btnForceView" onclick="switchMindmapView('force')">🕸️ 力导向图</button>
+                            <div style="width:1px;height:24px;background:#333;margin:0 5px;"></div>
+                            <button class="mindmap-toolbar-btn" onclick="fitMindmapToScreen()">🔍 适应屏幕</button>
+                            <button class="mindmap-toolbar-btn" onclick="exportMindmapPNG()">📷 导出PNG</button>
+                            <button class="mindmap-toolbar-btn" onclick="exportMindmapSVG()">🎨 导出SVG</button>
+                        </div>
+                    </div>
+                    <div class="mindmap-canvas-container" id="mindmapCanvas">
+                        <svg class="mindmap-svg" id="mindmapSvg"></svg>
+                        <div class="mindmap-zoom-controls">
+                            <button class="mindmap-zoom-btn" onclick="zoomMindmap(1.2)" title="放大">+</button>
+                            <button class="mindmap-zoom-btn" onclick="resetMindmapZoom()" title="重置">⌂</button>
+                            <button class="mindmap-zoom-btn" onclick="zoomMindmap(0.8)" title="缩小">−</button>
+                        </div>
+                        <div class="mindmap-info-panel" id="mindmapInfoPanel">
+                            <span><strong>💡 操作提示</strong></span>
+                            <span>• 滚轮缩放画布</span>
+                            <span>• 拖拽移动画布</span>
+                            <span>• 点击节点展开/折叠</span>
+                            <span>• 右键节点打开菜单</span>
+                        </div>
+                    </div>
+                    <div class="mindmap-context-menu" id="mindmapContextMenu">
+                        <div class="mindmap-context-menu-item" onclick="mindmapEditNode()">✏️ 编辑</div>
+                        <div class="mindmap-context-menu-item" onclick="mindmapAddChild()">➕ 添加子项</div>
+                        <div class="mindmap-context-menu-item" onclick="mindmapDeleteNode()">🗑️ 删除</div>
+                    </div>
+                </div>
+            `;
+
+            // 初始化导图
+            await initMindmap();
+        }
+
+        // 初始化导图
+        async function initMindmap() {
+            if (!mindmapCurrentWorkId) return;
+
+            // 获取作品数据
+            const work = await db.get('works', mindmapCurrentWorkId);
+            if (!work) return;
+
+            // 获取卷数据
+            const volumes = await db.getAll('volumes', 'workId', mindmapCurrentWorkId);
+            volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
+
+            // 获取章节数据
+            const allChapters = await db.getAll('chapters');
+
+            // 构建树形数据
+            const root = {
+                id: 'work_' + work.id,
+                name: work.title,
+                type: 'work',
+                children: []
+            };
+
+            for (const volume of volumes) {
+                const volumeNode = {
+                    id: 'volume_' + volume.id,
+                    name: volume.title || `第${volume.volumeNumber}卷`,
+                    type: 'volume',
+                    volumeId: volume.id,
+                    children: []
+                };
+
+                // 获取该卷下的章节
+                const chapters = allChapters.filter(c => c.volumeId === volume.id);
+                chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
+
+                for (const chapter of chapters) {
+                    volumeNode.children.push({
+                        id: 'chapter_' + chapter.id,
+                        name: chapter.title || `第${chapter.chapterNumber}章`,
+                        type: 'chapter',
+                        chapterId: chapter.id,
+                        wordCount: chapter.wordCount || 0
+                    });
+                }
+
+                root.children.push(volumeNode);
+            }
+
+            mindmapData = root;
+
+            // 渲染树形图（默认）
+            renderTreeMindmap(root);
+        }
+
+        // 渲染树形图
+        function renderTreeMindmap(data) {
+            const svg = d3.select('#mindmapSvg');
+            svg.selectAll('*').remove();
+
+            const container = document.getElementById('mindmapCanvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg.attr('width', width).attr('height', height);
+
+            const g = svg.append('g');
+
+            // 创建缩放行为
+            mindmapZoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(mindmapZoom);
+
+            // 创建树形布局
+            const treeLayout = d3.tree()
+                .size([height - 100, width - 300])
+                .separation((a, b) => (a.parent === b.parent ? 1 : 2) / a.depth);
+
+            const root = d3.hierarchy(data);
+            treeLayout(root);
+
+            // 调整位置到左侧
+            root.each(d => {
+                const x = d.x;
+                d.x = d.y + 50;
+                d.y = x + 50;
+            });
+
+            // 绘制连线
+            g.selectAll('.mindmap-link')
+                .data(root.links())
+                .enter()
+                .append('path')
+                .attr('class', 'mindmap-link')
+                .attr('d', d3.linkHorizontal()
+                    .x(d => d.x)
+                    .y(d => d.y))
+                .attr('stroke', '#0f3460')
+                .attr('stroke-width', 2)
+                .attr('fill', 'none');
+
+            // 绘制节点
+            const nodes = g.selectAll('.mindmap-node')
+                .data(root.descendants())
+                .enter()
+                .append('g')
+                .attr('class', d => `mindmap-node mindmap-${d.data.type}-node`)
+                .attr('transform', d => `translate(${d.x},${d.y})`)
+                .on('click', (event, d) => toggleNode(d))
+                .on('contextmenu', (event, d) => showMindmapContextMenu(event, d));
+
+            // 节点圆形
+            nodes.append('circle')
+                .attr('r', d => d.depth === 0 ? 25 : d.depth === 1 ? 18 : 12)
+                .attr('fill', d => {
+                    if (d.data.type === 'work') return '#e94560';
+                    if (d.data.type === 'volume') return '#00d4ff';
+                    return '#28a745';
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+
+            // 节点文字
+            nodes.append('text')
+                .attr('dy', d => d.depth === 0 ? 35 : 25)
+                .attr('text-anchor', 'middle')
+                .text(d => d.data.name.length > 10 ? d.data.name.substring(0, 10) + '...' : d.data.name)
+                .attr('fill', '#fff')
+                .style('font-size', d => d.depth === 0 ? '14px' : '12px')
+                .style('font-weight', d => d.depth === 0 ? '600' : '400');
+
+            // 章节字数
+            nodes.filter(d => d.data.type === 'chapter' && d.data.wordCount > 0)
+                .append('text')
+                .attr('dy', 38)
+                .attr('text-anchor', 'middle')
+                .text(d => `${d.data.wordCount}字`)
+                .attr('fill', '#888')
+                .style('font-size', '10px');
+
+            // 设置初始缩放和位置
+            const initialTransform = d3.zoomIdentity
+                .translate(50, 0)
+                .scale(0.85);
+            svg.call(mindmapZoom.transform, initialTransform);
+
+            // 保存当前视图类型
+            window.currentMindmapView = 'tree';
+            updateMindmapViewButtons();
+        }
+
+        // 渲染力导向图
+        function renderForceMindmap(data) {
+            const svg = d3.select('#mindmapSvg');
+            svg.selectAll('*').remove();
+
+            const container = document.getElementById('mindmapCanvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg.attr('width', width).attr('height', height);
+
+            const g = svg.append('g');
+
+            // 创建缩放行为
+            mindmapZoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(mindmapZoom);
+
+            // 转换数据为节点和链接
+            const nodes = [];
+            const links = [];
+
+            function traverse(node, parent = null) {
+                const nodeData = {
+                    id: node.id,
+                    name: node.name,
+                    type: node.type,
+                    radius: node.type === 'work' ? 30 : node.type === 'volume' ? 20 : 15
+                };
+                nodes.push(nodeData);
+
+                if (parent) {
+                    links.push({ source: parent.id, target: node.id });
+                }
+
+                if (node.children) {
+                    node.children.forEach(child => traverse(child, nodeData));
+                }
+            }
+            traverse(data);
+
+            // 创建力导向模拟
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(d => {
+                    return d.source.type === 'work' ? 150 : 80;
+                }))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => d.radius + 10));
+
+            // 绘制连线
+            const link = g.selectAll('.mindmap-link')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'mindmap-link')
+                .attr('stroke', '#0f3460')
+                .attr('stroke-width', 2);
+
+            // 绘制节点
+            const node = g.selectAll('.mindmap-node')
+                .data(nodes)
+                .enter()
+                .append('g')
+                .attr('class', d => `mindmap-node mindmap-${d.type}-node`)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended))
+                .on('contextmenu', (event, d) => showMindmapContextMenu(event, d));
+
+            // 节点圆形
+            node.append('circle')
+                .attr('r', d => d.radius)
+                .attr('fill', d => {
+                    if (d.type === 'work') return '#e94560';
+                    if (d.type === 'volume') return '#00d4ff';
+                    return '#28a745';
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+
+            // 节点文字
+            node.append('text')
+                .attr('dy', d => d.radius + 15)
+                .attr('text-anchor', 'middle')
+                .text(d => d.name.length > 8 ? d.name.substring(0, 8) + '...' : d.name)
+                .attr('fill', '#fff')
+                .style('font-size', d => d.type === 'work' ? '14px' : '12px')
+                .style('font-weight', d => d.type === 'work' ? '600' : '400');
+
+            // 更新位置
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+
+            // 拖拽函数
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            // 保存当前视图类型
+            window.currentMindmapView = 'force';
+            updateMindmapViewButtons();
+        }
+
+        // 切换节点展开/折叠
+        function toggleNode(d) {
+            if (d.children) {
+                d._children = d.children;
+                d.children = null;
+            } else {
+                d.children = d._children;
+                d._children = null;
+            }
+            renderTreeMindmap(mindmapData);
+        }
+
+        // 切换视图
+        function switchMindmapView(view) {
+            if (view === 'tree') {
+                renderTreeMindmap(mindmapData);
+            } else {
+                renderForceMindmap(mindmapData);
+            }
+        }
+
+        // 更新视图按钮状态
+        function updateMindmapViewButtons() {
+            const treeBtn = document.getElementById('btnTreeView');
+            const forceBtn = document.getElementById('btnForceView');
+            if (treeBtn && forceBtn) {
+                treeBtn.classList.toggle('active', window.currentMindmapView === 'tree');
+                forceBtn.classList.toggle('active', window.currentMindmapView === 'force');
+            }
+        }
+
+        // 缩放导图
+        function zoomMindmap(scale) {
+            const svg = d3.select('#mindmapSvg');
+            svg.transition()
+                .duration(300)
+                .call(mindmapZoom.scaleBy, scale);
+        }
+
+        // 重置缩放
+        function resetMindmapZoom() {
+            const svg = d3.select('#mindmapSvg');
+            const container = document.getElementById('mindmapCanvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg.transition()
+                .duration(500)
+                .call(mindmapZoom.transform, d3.zoomIdentity.translate(width / 6, height / 6).scale(0.8));
+        }
+
+        // 适应屏幕
+        function fitMindmapToScreen() {
+            resetMindmapZoom();
+        }
+
+        // 作品切换
+        async function onMindmapWorkChange(workId) {
+            mindmapCurrentWorkId = parseInt(workId);
+            await initMindmap();
+        }
+
+        // 显示右键菜单
+        let currentMindmapNode = null;
+        function showMindmapContextMenu(event, d) {
+            event.preventDefault();
+            currentMindmapNode = d;
+
+            const menu = document.getElementById('mindmapContextMenu');
+            menu.style.display = 'block';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+
+            // 点击其他地方关闭菜单
+            document.addEventListener('click', hideMindmapContextMenu, { once: true });
+        }
+
+        function hideMindmapContextMenu() {
+            const menu = document.getElementById('mindmapContextMenu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        // 编辑节点
+        async function mindmapEditNode() {
+            if (!currentMindmapNode) return;
+
+            const node = currentMindmapNode.data || currentMindmapNode;
+            const newName = prompt('编辑名称:', node.name);
+
+            if (newName && newName.trim()) {
+                if (node.type === 'volume') {
+                    await editVolume(node.volumeId);
+                } else if (node.type === 'chapter') {
+                    await editChapter(node.chapterId);
+                }
+                await initMindmap();
+            }
+            hideMindmapContextMenu();
+        }
+
+        // 添加子项
+        async function mindmapAddChild() {
+            if (!currentMindmapNode) return;
+
+            const node = currentMindmapNode.data || currentMindmapNode;
+
+            if (node.type === 'work') {
+                await addVolume(mindmapCurrentWorkId);
+            } else if (node.type === 'volume') {
+                await addChapter(node.volumeId);
+            }
+            await initMindmap();
+            hideMindmapContextMenu();
+        }
+
+        // 删除节点
+        async function mindmapDeleteNode() {
+            if (!currentMindmapNode) return;
+
+            const node = currentMindmapNode.data || currentMindmapNode;
+
+            if (node.type === 'volume') {
+                await deleteVolume(node.volumeId);
+            } else if (node.type === 'chapter') {
+                await deleteChapter(node.chapterId);
+            }
+            await initMindmap();
+            hideMindmapContextMenu();
+        }
+
+        // 导出 PNG
+        function exportMindmapPNG() {
+            const svg = document.getElementById('mindmapSvg');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const svgData = new XMLSerializer().serializeToString(svg);
+
+            const img = new Image();
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.fillStyle = '#0d1b2a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+
+                const pngUrl = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngUrl;
+                downloadLink.download = `mindmap_${new Date().toISOString().split('T')[0]}.png`;
+                downloadLink.click();
+
+                URL.revokeObjectURL(url);
+                showNotification('✅ 导图已导出为 PNG');
+            };
+
+            img.src = url;
+        }
+
+        // 导出 SVG
+        function exportMindmapSVG() {
+            const svg = document.getElementById('mindmapSvg');
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `mindmap_${new Date().toISOString().split('T')[0]}.svg`;
+            downloadLink.click();
+
+            URL.revokeObjectURL(url);
+            showNotification('✅ 导图已导出为 SVG');
+        }
+
         // ==================== 页面加载 ====================
         function loadPage(page) {
             currentPage = page;
@@ -10707,6 +11433,7 @@
                     case 'characters': renderCharacters(editorContent); break;
                     case 'world': renderWorld(editorContent); break;
                     case 'plot': renderPlot(editorContent); break;
+                    case 'mindmap': renderMindmap(editorContent); break;
                     case 'trope': renderTrope(editorContent); break;
                     case 'scene': renderSceneEditor(editorContent); break;
                     case 'names': renderNameGenerator(editorContent); break;
@@ -10724,6 +11451,7 @@
                     case 'characters': renderCharacters(target); break;
                     case 'world': renderWorld(target); break;
                     case 'plot': renderPlot(target); break;
+                    case 'mindmap': renderMindmap(target); break;
                     case 'trope': renderTrope(target); break;
                     case 'scene': renderSceneEditor(target); break;
                     case 'names': renderNameGenerator(target); break;
@@ -10749,6 +11477,7 @@
                 'characters': '角色管理',
                 'world': '世界观',
                 'plot': '情节大纲',
+                'mindmap': '大纲导图',
                 'trope': '桥段素材',
                 'scene': '桥段生成',
                 'names': '姓名生成',
