@@ -2155,8 +2155,10 @@
                 return html + filtered.map((trope, index) => {
                     // 生成简要概括（取前50字）
                     const summary = trope.content.substring(0, 50) + (trope.content.length > 50 ? '...' : '');
+                    // 安全编码 trope 数据
+                    const tropeJson = encodeURIComponent(JSON.stringify(trope));
                     return `
-                        <div class="trope-item" style="cursor:pointer;" onclick="showTropeDetail(${JSON.stringify(trope).replace(/"/g, '&quot;')})">
+                        <div class="trope-item" style="cursor:pointer;" onclick="showTropeDetail('${tropeJson}')">
                             <div class="trope-item-header">
                                 <span style="background:#e94560;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${index + 1}</span>
                                 <span class="trope-item-title" style="margin-left:10px;">${trope.title}</span>
@@ -2226,8 +2228,14 @@
         }
         
         // 显示桥段详情
-        function showTropeDetail(trope) {
-            currentTropeDetail = trope;
+        function showTropeDetail(tropeJson) {
+            // 解码 trope 数据
+            try {
+                currentTropeDetail = JSON.parse(decodeURIComponent(tropeJson));
+            } catch (e) {
+                console.error('解析桥段数据失败:', e);
+                return;
+            }
             renderPlot(document.getElementById('mainContent'));
         }
         
