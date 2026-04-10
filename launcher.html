@@ -164,6 +164,104 @@
         .trope-detail-btn-copy:hover { background: #d63a54; }
         .trope-detail-btn-close { background: #0f3460; color: #fff; }
         .trope-detail-btn-close:hover { background: #1a4a7a; }
+
+        /* 通用详情弹窗样式 */
+        .detail-modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+            z-index: 1500; justify-content: center; align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .detail-modal.active { display: flex; }
+        .detail-modal-content {
+            background: #16213e; border-radius: 16px; width: 90%;
+            max-width: 700px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: scaleIn 0.3s ease;
+        }
+        .detail-modal-header {
+            padding: 24px 30px 16px; border-bottom: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .detail-modal-header h3 { font-size: 20px; color: #fff; margin: 0; flex: 1; padding-right: 15px; }
+        .detail-modal-close {
+            background: none; border: none; color: #888; font-size: 28px;
+            cursor: pointer; padding: 0; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; transition: all 0.2s;
+        }
+        .detail-modal-close:hover { color: #fff; background: rgba(233, 69, 96, 0.2); }
+        .detail-modal-body { padding: 24px 30px; }
+        .detail-modal-footer {
+            padding: 16px 30px 24px; display: flex; justify-content: center; gap: 12px;
+            border-top: 1px solid #0f3460;
+        }
+        .detail-modal-btn {
+            padding: 10px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 14px; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .detail-modal-btn-close { background: #0f3460; color: #fff; }
+        .detail-modal-btn-close:hover { background: #1a4a7a; }
+        
+        /* 详情弹窗内容样式 */
+        .detail-info-row {
+            display: flex; margin-bottom: 16px; flex-wrap: wrap; gap: 16px;
+        }
+        .detail-info-item {
+            flex: 1; min-width: 200px;
+            padding: 12px 16px; background: #1a1a2e;
+            border-radius: 8px; border: 1px solid #0f3460;
+        }
+        .detail-info-label {
+            font-size: 12px; color: #888; margin-bottom: 4px;
+        }
+        .detail-info-value {
+            font-size: 14px; color: #fff; font-weight: 500;
+        }
+        .detail-section {
+            margin-bottom: 20px;
+        }
+        .detail-section-title {
+            font-size: 14px; color: #e94560; margin-bottom: 10px;
+            font-weight: 600; display: flex; align-items: center; gap: 6px;
+        }
+        .detail-section-content {
+            background: #1a1a2e; border: 1px solid #0f3460;
+            border-radius: 10px; padding: 16px;
+            line-height: 1.8; color: #ddd; font-size: 14px;
+            white-space: pre-wrap; word-wrap: break-word;
+        }
+        .detail-tags {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .detail-tag {
+            padding: 5px 12px; background: rgba(233, 69, 96, 0.15);
+            border-radius: 15px; font-size: 12px; color: #e94560;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes scaleOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+        .detail-modal.closing {
+            animation: fadeOut 0.2s ease forwards;
+        }
+        .detail-modal.closing .detail-modal-content {
+            animation: scaleOut 0.2s ease forwards;
+        }
         .empty-state { text-align: center; padding: 60px 20px; }
         .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
         .empty-state h3 { font-size: 20px; margin-bottom: 10px; color: #fff; }
@@ -415,6 +513,22 @@
             <div class="trope-detail-footer">
                 <button class="trope-detail-btn trope-detail-btn-copy" onclick="copyTropeDetailContent()">📋 复制内容</button>
                 <button class="trope-detail-btn trope-detail-btn-close" onclick="closeTropeDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用详情弹窗（角色/世界观） -->
+    <div class="detail-modal" id="detailModal" onclick="closeDetailModalOnOverlay(event)">
+        <div class="detail-modal-content" onclick="event.stopPropagation()">
+            <div class="detail-modal-header">
+                <h3 id="detailModalTitle">标题</h3>
+                <button class="detail-modal-close" onclick="closeDetailModal()">&times;</button>
+            </div>
+            <div class="detail-modal-body" id="detailModalBody">
+                <!-- 动态内容 -->
+            </div>
+            <div class="detail-modal-footer">
+                <button class="detail-modal-btn detail-modal-btn-close" onclick="closeDetailModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -1371,7 +1485,7 @@
                 ` : `
                     <div class="card-grid">
                         ${filtered.map(char => `
-                            <div class="card">
+                            <div class="card" onclick="openCharacterDetail(${char.id})" style="cursor: pointer;">
                                 <div class="card-header">
                                     <span class="card-title">${char.name}</span>
                                     <span class="card-type">${char.role || '配角'}</span>
@@ -1382,7 +1496,7 @@
                                 </div>
                                 <div class="card-footer">
                                     <span style="color:#888;font-size:12px">${char.gender || ''} · ${char.book || ''}</span>
-                                    <div class="card-actions">
+                                    <div class="card-actions" onclick="event.stopPropagation()">
                                         <button class="btn btn-secondary" onclick="editCharacter(${char.id})">编辑</button>
                                         <button class="btn btn-danger" onclick="deleteCharacter(${char.id}, '${char.name}')">删除</button>
                                     </div>
@@ -1481,6 +1595,14 @@
             const character = await db.get('characters', id);
             openCharacterModal(character);
         }
+
+        // 打开角色详情弹窗
+        async function openCharacterDetail(id) {
+            const char = await db.get('characters', id);
+            if (!char) return;
+            const content = generateCharacterDetailContent(char);
+            showDetailModal(char.name, content);
+        }
         
         async function deleteCharacter(id, name) {
             if (confirm(`确定要删除角色「${name}」吗？`)) {
@@ -1551,14 +1673,14 @@
                 ` : `
                     <div class="card-grid">
                         ${settings.map(setting => `
-                            <div class="card">
+                            <div class="card" onclick="openWorldviewDetail(${setting.id})" style="cursor: pointer;">
                                 <div class="card-header">
                                     <span class="card-title">${setting.title}</span>
                                 </div>
-                                <div class="card-content">${setting.content}</div>
+                                <div class="card-content">${setting.content?.substring(0, 120) || ''}...</div>
                                 <div class="card-footer">
                                     <span></span>
-                                    <div class="card-actions">
+                                    <div class="card-actions" onclick="event.stopPropagation()">
                                         <button class="btn btn-secondary" onclick="editWorldSetting(${setting.id})">编辑</button>
                                         <button class="btn btn-danger" onclick="deleteWorldSetting(${setting.id}, '${setting.title}')">删除</button>
                                     </div>
@@ -1627,6 +1749,16 @@
         async function editWorldSetting(id) {
             const setting = await db.get('world_settings', id);
             openWorldModal(setting);
+        }
+
+        // 打开世界观详情弹窗
+        async function openWorldviewDetail(id) {
+            const world = await db.get('world_settings', id);
+            if (!world) return;
+            const content = generateWorldviewDetailContent(world);
+            // 从title中提取书名作为弹窗标题
+            const title = world.title?.includes(' - ') ? world.title.split(' - ')[0] : (world.title || '世界观详情');
+            showDetailModal(title, content);
         }
         
         async function deleteWorldSetting(id, title) {
@@ -1824,6 +1956,179 @@
         
         function closeTropeDetailModalOnOverlay(event) {
             if (event.target.id === 'tropeDetailModal') closeTropeDetailModal();
+        }
+        
+        // ==================== 通用详情弹窗函数 ====================
+        function showDetailModal(title, contentHtml) {
+            document.getElementById('detailModalTitle').textContent = title;
+            document.getElementById('detailModalBody').innerHTML = contentHtml;
+            document.getElementById('detailModal').classList.add('active');
+        }
+        
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('closing');
+            setTimeout(() => {
+                modal.classList.remove('active', 'closing');
+            }, 200);
+        }
+        
+        function closeDetailModalOnOverlay(event) {
+            if (event.target.id === 'detailModal') closeDetailModal();
+        }
+        
+        // 生成角色详情弹窗内容
+        function generateCharacterDetailContent(char) {
+            return `
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">🎭 角色类型</div>
+                        <div class="detail-info-value">${char.role || '配角'}</div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">⚧ 性别</div>
+                        <div class="detail-info-value">${char.gender || '未知'}</div>
+                    </div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">📚 出处书籍</div>
+                        <div class="detail-info-value">${char.book || '未知'}</div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">✍️ 作者</div>
+                        <div class="detail-info-value">${char.author || '未知'}</div>
+                    </div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">📅 年份</div>
+                        <div class="detail-info-value">${char.year || '未知'}</div>
+                    </div>
+                </div>
+                ${char.personality ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🎨 性格特点</div>
+                    <div class="detail-section-content">${char.personality}</div>
+                </div>
+                ` : ''}
+                ${char.description ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">📝 人物简介</div>
+                    <div class="detail-section-content">${char.description}</div>
+                </div>
+                ` : ''}
+                ${char.tags && char.tags.length > 0 ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🏷️ 标签</div>
+                    <div class="detail-tags">
+                        ${char.tags.map(tag => `<span class="detail-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        }
+        
+        // 生成世界观详情弹窗内容
+        function generateWorldviewDetailContent(world) {
+            // 解析内容（如果是从JSON导入的格式）
+            let content = world.content || '';
+            let book = world.book || '';
+            let author = world.author || '';
+            let year = world.year || '';
+            let backgroundType = world.backgroundType || '';
+            let powerType = world.powerType || '';
+            let culture = world.culture || '';
+            let features = world.features || '';
+            let tags = world.tags || [];
+            
+            // 尝试从content中解析（如果是Markdown格式存储的）
+            if (content.includes('**作者**:')) {
+                const authorMatch = content.match(/\*\*作者\*\*:\s*(.+)/);
+                if (authorMatch) author = authorMatch[1].trim();
+            }
+            if (content.includes('**年份**:')) {
+                const yearMatch = content.match(/\*\*年份\*\*:\s*(.+)/);
+                if (yearMatch) year = yearMatch[1].trim();
+            }
+            if (content.includes('**背景类型**:')) {
+                const bgMatch = content.match(/\*\*背景类型\*\*:\s*(.+)/);
+                if (bgMatch) backgroundType = bgMatch[1].trim();
+            }
+            if (content.includes('**力量类型**:')) {
+                const powerMatch = content.match(/\*\*力量类型\*\*:\s*(.+)/);
+                if (powerMatch) powerType = powerMatch[1].trim();
+            }
+            if (content.includes('**文化习俗**')) {
+                const cultureMatch = content.match(/\*\*文化习俗\*\*:[\s\S]*?\n\n(.+?)(?=\n\n\*\*|$)/);
+                if (cultureMatch) culture = cultureMatch[1].trim();
+            }
+            if (content.includes('**世界特色**')) {
+                const featuresMatch = content.match(/\*\*世界特色\*\*:[\s\S]*?\n\n(.+?)(?=\n\n\*\*|$)/);
+                if (featuresMatch) features = featuresMatch[1].trim();
+            }
+            
+            // 从title中提取书名
+            if (world.title && world.title.includes(' - ')) {
+                book = world.title.split(' - ')[0];
+            }
+            
+            return `
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">📖 书名</div>
+                        <div class="detail-info-value">${book || '未知'}</div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">✍️ 作者</div>
+                        <div class="detail-info-value">${author || '未知'}</div>
+                    </div>
+                </div>
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">📅 年份</div>
+                        <div class="detail-info-value">${year || '未知'}</div>
+                    </div>
+                </div>
+                ${backgroundType ? `
+                <div class="detail-info-row">
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">🌍 背景类型</div>
+                        <div class="detail-info-value">${backgroundType}</div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-label">⚡ 力量类型</div>
+                        <div class="detail-info-value">${powerType || '未知'}</div>
+                    </div>
+                </div>
+                ` : ''}
+                ${culture ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🎭 文化习俗</div>
+                    <div class="detail-section-content">${culture}</div>
+                </div>
+                ` : ''}
+                ${features ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">✨ 世界特色</div>
+                    <div class="detail-section-content">${features}</div>
+                </div>
+                ` : ''}
+                ${tags.length > 0 ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">🏷️ 标签</div>
+                    <div class="detail-tags">
+                        ${tags.map(tag => `<span class="detail-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                ${!backgroundType && !culture && !features && content ? `
+                <div class="detail-section">
+                    <div class="detail-section-title">📝 详细内容</div>
+                    <div class="detail-section-content">${content.replace(/\*\*/g, '')}</div>
+                </div>
+                ` : ''}
+            `;
         }
         
         function copyTropeDetailContent() {
@@ -2268,7 +2573,13 @@
 
             // ESC键关闭弹窗
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeTropeDetailModal();
+                if (e.key === 'Escape') {
+                    closeTropeDetailModal();
+                    closeDetailModal();
+                    if (document.getElementById('modal').classList.contains('active')) {
+                        closeModal();
+                    }
+                }
             });
         });
     </script>
