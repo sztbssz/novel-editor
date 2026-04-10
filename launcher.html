@@ -1970,6 +1970,7 @@
         
         // ==================== 情节大纲 ====================
         let currentTropeFilter = 'all';
+        let currentSubTypeFilter = null; // 当前选中的小类型
         let tropeSearchQuery = '';
         let showTropePanel = false;
         
@@ -2069,6 +2070,7 @@
         
         function filterTropes(category) {
             currentTropeFilter = category;
+            currentSubTypeFilter = null; // 重置子类型筛选
             renderPlot(document.getElementById('mainContent'));
         }
         
@@ -2082,12 +2084,31 @@
                 return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
             }
 
+            // 构建层级导航
+            let navHtml = '';
+            if (currentSubTypeFilter) {
+                const catName = tropesData.categories?.find(c => c.id === currentTropeFilter)?.name || currentTropeFilter;
+                navHtml = `
+                    <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
+                        <span style="color:#888;cursor:pointer;" onclick="filterTropes('${currentTropeFilter}')">${catName}</span>
+                        <span style="color:#666;margin:0 8px;">></span>
+                        <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
+                        <button onclick="filterTropes('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
+                    </div>
+                `;
+            }
+
             // 如果有具体桥段数据，显示桥段列表
             if (tropesData.tropes && tropesData.tropes.length > 0) {
                 let filtered = tropesData.tropes;
                 
                 if (currentTropeFilter !== 'all') {
                     filtered = filtered.filter(t => t.category === currentTropeFilter);
+                }
+                
+                // 按子类型筛选
+                if (currentSubTypeFilter) {
+                    filtered = filtered.filter(t => t.subType === currentSubTypeFilter);
                 }
                 
                 if (tropeSearchQuery) {
@@ -2100,10 +2121,10 @@
                 }
                 
                 if (filtered.length === 0) {
-                    return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
+                    return navHtml + '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
                 }
                 
-                return filtered.map(trope => {
+                return navHtml + filtered.map(trope => {
                     const category = tropesData.categories.find(c => c.id === trope.category);
                     return `
                         <div class="trope-item">
@@ -2138,11 +2159,11 @@
             }
             
             if (categoriesToShow.length === 0) {
-                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
+                return navHtml + '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
             }
             
             // 渲染子类型卡片
-            let html = '';
+            let html = navHtml;
             categoriesToShow.forEach(cat => {
                 if (cat.subTypes && cat.subTypes.length > 0) {
                     html += `
@@ -2154,6 +2175,7 @@
                                 ${cat.subTypes.map(sub => `
                                     <div class="trope-item" style="padding:10px;cursor:pointer;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
                                         <div class="trope-item-title" style="font-size:13px;margin:0;">${sub.name}</div>
+                                        <div style="font-size:11px;color:#888;margin-top:4px;">${sub.frequency || '中'}频</div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2167,8 +2189,9 @@
         
         // 选择子类型
         function selectSubType(categoryId, subTypeName) {
-            showNotification(`已选择：${subTypeName}`);
-            // 可以扩展为插入到编辑器等功能
+            currentTropeFilter = categoryId;
+            currentSubTypeFilter = subTypeName;
+            renderPlot(document.getElementById('mainContent'));
         }
         
         function copyTropeContent(title, content) {
