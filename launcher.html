@@ -1134,6 +1134,111 @@
             color: #e94560;
         }
 
+        /* ==================== 参考例子区域样式 ==================== */
+        .scene-reference-section {
+            background: #16213e;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        .scene-reference-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: #1a1a2e;
+            cursor: pointer;
+            transition: background 0.3s;
+            user-select: none;
+        }
+        .scene-reference-header:hover {
+            background: #0f3460;
+        }
+        .scene-reference-header span:first-child {
+            font-size: 14px;
+            color: #ccc;
+        }
+        .scene-reference-toggle {
+            font-size: 12px;
+            color: #888;
+            transition: transform 0.3s;
+        }
+        .scene-reference-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        .scene-reference-content {
+            padding: 20px 25px;
+            animation: fadeIn 0.3s ease;
+        }
+        .scene-reference-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .scene-reference-item {
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #0f3460;
+        }
+        .scene-reference-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .scene-reference-title span:first-child {
+            font-size: 13px;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        .scene-reference-source {
+            font-size: 11px;
+            color: #888;
+            background: #0f3460;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .scene-reference-content {
+            font-size: 14px;
+            color: #ddd;
+            line-height: 1.7;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border-left: 3px solid #e94560;
+        }
+        .scene-reference-analysis {
+            font-size: 12px;
+            color: #888;
+            padding: 10px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 6px;
+            border-left: 3px solid #00d4ff;
+        }
+        .scene-reference-analysis strong {
+            color: #00d4ff;
+        }
+        .scene-reference-empty {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+        .scene-original-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.2), rgba(0, 212, 255, 0.2));
+            border-radius: 20px;
+            font-size: 12px;
+            color: #e94560;
+            margin-bottom: 15px;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+
         /* ==================== 多级作品管理样式 ==================== */
         .plot-container {
             display: flex;
@@ -3770,70 +3875,80 @@
                 return;
             }
 
-            // 查找匹配该类型的桥段
+            // 查找匹配该类型的桥段作为参考例子
             const matchingTropes = tropesData.tropes?.filter(t => t.subType === subType) || [];
-
+            
+            // 随机选择1-2个参考例子
+            currentReferenceExamples = [];
             if (matchingTropes.length > 0) {
-                // 从本地库中随机选择一个
-                currentSceneTrope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
-                displaySceneResult(currentSceneTrope);
-            } else {
-                // 本地没有匹配的，AI生成（模拟）
-                currentSceneTrope = generateAIScene(subType);
-                displaySceneResult(currentSceneTrope);
+                const shuffled = [...matchingTropes].sort(() => 0.5 - Math.random());
+                currentReferenceExamples = shuffled.slice(0, Math.min(2, shuffled.length));
             }
-        }
 
-        // AI 生成桥段（备用）
-        function generateAIScene(subType) {
-            const aiTemplates = {
-                '装逼打脸': '主角在众人面前展现出隐藏已久的实力，一招击败曾嘲笑他的对手。围观群众从轻视变为震惊，曾经看不起主角的人纷纷跪地求饶。主角淡然一笑，转身离去，留下一个潇洒的背影和满地的惊叹。',
-                '废物逆袭': '曾被判定为废物的少年，在一次意外中觉醒天赋。他忍受着常人难以想象的痛苦修炼，终于在宗门大比中一鸣惊人。那些曾经欺辱过他的人目瞪口呆，而主角只是平静地说：这只是开始。',
-                '天降机缘': '主角在绝境中意外跌落悬崖，却在一处隐秘山洞中发现上古传承。神秘的老者残魂传授绝世功法，赠送神兵利器。主角获得逆天改命的资本，从此踏上强者之路。',
-                '无敌流': '面对强敌的围攻，主角站在原地纹丝不动。当所有攻击落在他身上时，竟连衣角都无法掀起。他轻轻一挥手，所有敌人如落叶般飞散。这就是绝对实力的差距，令人绝望的强大。',
-                '无限流': '白光闪过，主角被传送到一个陌生的空间。脑海中响起冰冷的提示音：欢迎进入死亡游戏，完成任务即可回归现实世界。四周是同样迷茫的参与者，而危险已经悄然逼近。',
-                '武魂觉醒': '觉醒仪式上，主角双手放在水晶球上，却迟迟没有反应。就在众人准备嘲笑时，一道金光冲天而起，传说中的神级武魂显现。整个广场陷入死寂，随后爆发出震天的惊呼声。',
-                '历史改写': '穿越者站在城墙上，看着即将到来的敌军。他深知按照历史，这座城将在今日沦陷。但这一次不同了，他提前布置的火炮阵列已经就位，历史将从这一刻开始改写。',
-                '民俗禁忌': '深夜，主角独自走在乡间小路上。路旁的纸人突然转过头，露出诡异的笑容。他想起了村里的老人说过的话：走夜路千万别回头，也别答应陌生人的呼唤。但现在，似乎有人在他耳边轻轻吹气...',
-                '闷声发大财': '在别人拼命争抢宝物时，主角悄悄退到角落，取走了一块不起眼的石头。没有人知道，这块石头中蕴含着上古神兽的精血。低调行事，暗中积累，这才是真正的生存之道。',
-                '金手指': '一道金光闪过，主角脑海中响起机械的声音：系统绑定成功。从此他可以通过完成任务获得奖励，兑换各种神奇道具。虽然前路依旧艰险，但他已经有了改变命运的底气。'
-            };
+            // 仿写生成原创桥段
+            const rewrittenContent = rewriteScene(subType, currentReferenceExamples);
 
-            const content = aiTemplates[subType] || `主角在${subType}的过程中，展现出非凡的才能和毅力。面对重重困难和质疑，他始终坚持自己的信念，最终突破极限，创造出令人惊叹的奇迹。这一桥段展现了主角的成长与蜕变，是${subType}类型的经典呈现。`;
-
-            return {
+            // 构建生成结果对象
+            currentSceneTrope = {
                 title: `${subType}桥段`,
-                content: content,
-                book: 'AI生成',
+                content: rewrittenContent,
+                book: 'AI仿写生成',
                 author: '桥段编辑器',
                 year: new Date().getFullYear(),
-                tags: [subType, 'AI生成'],
+                tags: [subType, 'AI仿写', '原创'],
                 subType: subType,
-                isAI: true
+                isAI: true,
+                isRewritten: true
             };
+
+            displaySceneResult(currentSceneTrope);
         }
 
         // 显示桥段结果
         function displaySceneResult(trope) {
             const emptyState = document.getElementById('sceneEmptyState');
             const resultSection = document.getElementById('sceneResultSection');
+            const referenceSection = document.getElementById('sceneReferenceSection');
             const textarea = document.getElementById('sceneResultTextarea');
             const metaDiv = document.getElementById('sceneResultMeta');
             const tagsDiv = document.getElementById('sceneTags');
 
             emptyState.style.display = 'none';
             resultSection.style.display = 'block';
+            referenceSection.style.display = 'block';
 
-            // 填充内容
+            // 填充参考例子
+            const referenceList = document.getElementById('sceneReferenceList');
+            if (currentReferenceExamples.length > 0) {
+                referenceList.innerHTML = currentReferenceExamples.map((ex, idx) => `
+                    <div class="scene-reference-item">
+                        <div class="scene-reference-title">
+                            <span>📖 参考例子 ${idx + 1}</span>
+                            <span class="scene-reference-source">《${ex.book}》${ex.author}</span>
+                        </div>
+                        <div class="scene-reference-content">${ex.content}</div>
+                        <div class="scene-reference-analysis">
+                            <strong>结构分析：</strong>场景设定 → 冲突爆发 → 转折高潮 → 结局落定
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                referenceList.innerHTML = `
+                    <div class="scene-reference-empty">
+                        <p>📚 暂无素材库案例</p>
+                        <p style="font-size:12px;color:#666;">AI将基于桥段类型特征直接生成</p>
+                    </div>
+                `;
+            }
+
+            // 填充生成内容
             textarea.value = trope.content;
 
             // 元信息
             metaDiv.innerHTML = `
-                <span><span class="meta-label">📖</span> ${trope.book}</span>
-                <span><span class="meta-label">✍️</span> ${trope.author}</span>
-                <span><span class="meta-label">📅</span> ${trope.year}</span>
                 <span><span class="meta-label">🎭</span> ${trope.subType}</span>
-                ${trope.isAI ? '<span style="color:#e94560">🤖 AI生成</span>' : ''}
+                <span><span class="meta-label">✨</span> AI仿写</span>
+                <span><span class="meta-label">📅</span> ${trope.year}</span>
             `;
 
             // 标签
@@ -3844,6 +3959,13 @@
             // 统计字数
             const count = trope.content.length;
             document.getElementById('sceneResultCount').textContent = `约 ${count} 字`;
+
+            // 默认折叠参考例子
+            const refContent = document.getElementById('sceneReferenceContent');
+            const refToggle = document.getElementById('referenceToggle');
+            refContent.style.display = 'none';
+            refToggle.textContent = '▶';
+            refToggle.classList.add('collapsed');
         }
 
         // 复制桥段内容
@@ -3859,7 +3981,44 @@
             if (currentSceneSubType) {
                 const select = document.getElementById('sceneTypeSelect');
                 select.value = currentSceneSubType;
-                generateScene();
+                
+                // 重新生成时，更换参考例子（如果有多个）
+                const matchingTropes = tropesData.tropes?.filter(t => t.subType === currentSceneSubType) || [];
+                if (matchingTropes.length > 2) {
+                    const shuffled = [...matchingTropes].sort(() => 0.5 - Math.random());
+                    currentReferenceExamples = shuffled.slice(0, Math.min(2, shuffled.length));
+                }
+                
+                // 重新仿写生成
+                const rewrittenContent = rewriteScene(currentSceneSubType, currentReferenceExamples);
+                
+                currentSceneTrope.content = rewrittenContent;
+                
+                // 更新显示
+                const textarea = document.getElementById('sceneResultTextarea');
+                textarea.value = rewrittenContent;
+                
+                // 更新字数
+                const count = rewrittenContent.length;
+                document.getElementById('sceneResultCount').textContent = `约 ${count} 字`;
+                
+                // 更新参考例子显示
+                const referenceList = document.getElementById('sceneReferenceList');
+                if (currentReferenceExamples.length > 0) {
+                    referenceList.innerHTML = currentReferenceExamples.map((ex, idx) => `
+                        <div class="scene-reference-item">
+                            <div class="scene-reference-title">
+                                <span>📖 参考例子 ${idx + 1}</span>
+                                <span class="scene-reference-source">《${ex.book}》${ex.author}</span>
+                            </div>
+                            <div class="scene-reference-content">${ex.content}</div>
+                            <div class="scene-reference-analysis">
+                                <strong>结构分析：</strong>场景设定 → 冲突爆发 → 转折高潮 → 结局落定
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
                 showNotification('🔄 已重新生成桥段');
             }
         }
@@ -5737,139 +5896,6 @@
             }
             for (const kw of maleKeywords) {
                 if (desc.includes(kw)) maleScore++;
-            }
-            
-            if (femaleScore > maleScore) gender = 'female';
-            else if (maleScore > femaleScore) gender = 'male';
-            else gender = Math.random() > 0.5 ? 'male' : 'female';
-            
-            return { style: selectedStyle, gender };
-        }
-
-
-        function generateOneWesternName(gender) {
-            const names = gender === 'female' ? nameDatabase.westernFemale : nameDatabase.westernMale;
-            const item = names[Math.floor(Math.random() * names.length)];
-            return {
-                name: item.name,
-                meaning: item.meaning,
-                style: '西方风格'
-            };
-        }
-
-        // 生成中文名字（单条）
-        function generateOneChineseName(style, gender) {
-            const styleData = nameDatabase[style] || nameDatabase.cold;
-            const surnames = Math.random() > 0.7 ? nameDatabase.surnames.rare : nameDatabase.surnames.common;
-            const surname = surnames[Math.floor(Math.random() * surnames.length)];
-            
-            // 决定是单字名还是双字名
-            const isDouble = Math.random() > 0.4;
-            
-            let name, meaning;
-            if (isDouble) {
-                const char1 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
-                const char2 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
-                name = surname + char1 + char2;
-                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
-            } else {
-                const char = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
-                name = surname + char;
-                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
-            }
-            
-            return { name, meaning, style: getStyleName(style) };
-        }
-
-        // 获取风格中文名
-        function getStyleName(style) {
-            const names = {
-                cold: '冷峻风格',
-                gentle: '柔美风格',
-                domineering: '霸气风格',
-                scholarly: '儒雅风格',
-                evil: '邪魅风格',
-                resolute: '坚毅风格',
-                lively: '灵动风格'
-            };
-            return names[style] || '古风';
-        }
-
-        // 生成5个名字（去重逻辑）
-        function generateNames() {
-            const description = document.getElementById('nameDescription')?.value?.trim();
-            if (!description) {
-                showNotification('请输入角色描述');
-                return;
-            }
-            
-            const { style, gender } = analyzeDescription(description);
-            
-            // 使用Set去重生成5个名字
-            const generated = new Set();
-            const result = [];
-            
-            // 获取最大可用名字数量
-            const maxNames = currentNameType === 'chinese' ? 1000 : 
-                (gender === 'female' ? nameDatabase.westernFemale.length : nameDatabase.westernMale.length);
-            
-            // 最多尝试生成5个，但如果可用名字不足则返回全部
-            const targetCount = Math.min(5, maxNames);
-            
-            let attempts = 0;
-            const maxAttempts = targetCount * 10; // 防止无限循环
-            
-            while (generated.size < targetCount && attempts < maxAttempts) {
-                let nameObj;
-                if (currentNameType === 'chinese') {
-                    nameObj = generateOneChineseName(style, gender);
-                } else {
-                    nameObj = generateOneWesternName(gender);
-                }
-                
-                // 使用名字作为唯一标识
-                if (!generated.has(nameObj.name)) {
-                    generated.add(nameObj.name);
-                    result.push(nameObj);
-                }
-                attempts++;
-            }
-            
-            generatedNames = result;
-            renderGeneratedNames();
-        }
-
-        // 渲染生成的名字
-        function renderGeneratedNames() {
-            const container = document.getElementById('namesResultContainer');
-            if (!container) return;
-            
-            if (generatedNames.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:60px 20px;color:#666;">
-                        <div style="font-size:32px;margin-bottom:10px;">✨</div>
-                        <p>输入描述，点击生成</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;">
-                    ${generatedNames.map((item, index) => `
-                        <div class="name-card" onclick="copyName(${index})" id="nameCard${index}" style="padding:20px;cursor:pointer;">
-                            <div style="font-size:24px;font-weight:600;color:#fff;margin-bottom:8px;">${item.name}</div>
-                            <div style="font-size:12px;color:#00d4ff;margin-bottom:6px;">${item.style}</div>
-                            <div style="font-size:12px;color:#888;">${item.meaning}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        // 复制名字
-        function copyName(index) {
-            const name = generatedNames[index]?.name;
             if (!name) return;
             
             navigator.clipboard.writeText(name).then(() => {
