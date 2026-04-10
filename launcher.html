@@ -1239,6 +1239,163 @@
             border: 1px solid rgba(233, 69, 96, 0.3);
         }
 
+        /* ==================== 历史记录样式 ==================== */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .history-item:hover {
+            background: #252542;
+            border-color: #0f3460;
+            transform: translateX(5px);
+        }
+        
+        .history-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f3460;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        
+        .history-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .history-title {
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .history-type-badge {
+            font-size: 12px;
+            color: #888;
+            background: #0f3460;
+            padding: 3px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+        
+        .history-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .history-arrow {
+            font-size: 18px;
+            color: #666;
+            transition: color 0.2s;
+        }
+        
+        .history-item:hover .history-arrow {
+            color: #e94560;
+        }
+
+        /* ==================== 最近查看快捷入口样式 ==================== */
+        .recent-section {
+            margin-bottom: 30px;
+        }
+        
+        .recent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .recent-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .recent-list {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #0f3460 transparent;
+        }
+        
+        .recent-list::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .recent-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .recent-list::-webkit-scrollbar-thumb {
+            background: #0f3460;
+            border-radius: 3px;
+        }
+        
+        .recent-item {
+            flex-shrink: 0;
+            width: 200px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .recent-item:hover {
+            background: #252542;
+            border-color: #0f3460;
+            transform: translateY(-3px);
+        }
+        
+        .recent-item-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .recent-item-title {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .recent-item-type {
+            font-size: 12px;
+            color: #888;
+            background: #0f3460;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
         /* ==================== 多级作品管理样式 ==================== */
         .plot-container {
             display: flex;
@@ -1529,6 +1686,138 @@
             margin-bottom: 10px;
             color: #fff;
         }
+
+        /* 收藏功能样式 */
+        .favorite-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #888;
+            transition: all 0.2s;
+            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .favorite-btn:hover {
+            color: #ffd700;
+            transform: scale(1.1);
+        }
+        .favorite-btn.active {
+            color: #ffd700;
+        }
+        .favorite-btn.active:hover {
+            color: #ff6b6b;
+        }
+        .card-favorite-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .card-favorite-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        .trope-detail-favorite {
+            position: absolute;
+            top: 20px;
+            right: 60px;
+            font-size: 24px;
+        }
+        .favorites-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .favorites-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #0f3460;
+            color: #ccc;
+        }
+        .favorites-tab:hover {
+            background: #1a4a7a;
+            color: #fff;
+        }
+        .favorites-tab.active {
+            background: #e94560;
+            color: #fff;
+        }
+        .favorite-card {
+            position: relative;
+        }
+        .favorite-card .card-header {
+            padding-right: 45px;
+        }
+        .favorite-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+        }
+        .favorite-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #0f3460;
+        }
+        .name-result-favorite {
+            margin-top: 10px;
+            text-align: center;
+        }
+        .name-result-favorite .favorite-btn {
+            font-size: 18px;
+            padding: 6px 12px;
+            background: #0f3460;
+            border-radius: 6px;
+        }
+        .name-result-favorite .favorite-btn:hover {
+            background: #1a4a7a;
+        }
+
+        /* Toast 提示样式 */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 5000;
+            animation: toastIn 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toast.toast-out {
+            animation: toastOut 0.3s ease forwards;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(-50%) translateY(0); }
+            to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
     </style>
 </head>
 <body>
@@ -1540,6 +1829,7 @@
             </div>
             <nav class="nav-menu">
                 <a class="nav-item active" data-page="home"><i>🏠</i>首页</a>
+                <a class="nav-item" data-page="history"><i>🕐</i>历史记录</a>
                 <a class="nav-item" data-page="characters"><i>👤</i>角色管理</a>
                 <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
                 <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
@@ -1572,6 +1862,7 @@
         <div class="trope-detail-content" onclick="event.stopPropagation()">
             <div class="trope-detail-header">
                 <h3 id="tropeDetailTitle">桥段标题</h3>
+                <button class="favorite-btn trope-detail-favorite" id="tropeFavoriteBtn" onclick="toggleTropeFavorite()">☆</button>
                 <button class="trope-detail-close" onclick="closeTropeDetailModal()">&times;</button>
             </div>
             <div class="trope-detail-body">
@@ -2468,7 +2759,7 @@
             
             async init() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, 2);
+                    const request = indexedDB.open(this.dbName, 3);
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         this.db = request.result;
@@ -2500,6 +2791,20 @@
                         if (!db.objectStoreNames.contains('chapters')) {
                             const chapStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
                             chapStore.createIndex('volumeId', 'volumeId', { unique: false });
+                        }
+                        // 历史记录表
+                        if (!db.objectStoreNames.contains('history')) {
+                            const historyStore = db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
+                            historyStore.createIndex('type', 'type', { unique: false });
+                            historyStore.createIndex('timestamp', 'timestamp', { unique: false });
+                            historyStore.createIndex('typeItemId', ['type', 'itemId'], { unique: false });
+                        }
+                        // 收藏表
+                        if (!db.objectStoreNames.contains('favorites')) {
+                            const favStore = db.createObjectStore('favorites', { keyPath: 'id', autoIncrement: true });
+                            favStore.createIndex('type', 'type', { unique: false });
+                            favStore.createIndex('itemId', 'itemId', { unique: false });
+                            favStore.createIndex('createdAt', 'createdAt', { unique: false });
                         }
                     };
                 });
@@ -2580,9 +2885,157 @@
             }
         }
 
+        // ==================== 历史记录管理器 ====================
+        class HistoryManager {
+            constructor() {
+                this.db = db;
+                this.debounceTimers = new Map(); // 防抖定时器
+                this.debounceInterval = 5 * 60 * 1000; // 5分钟防抖
+                this.maxRecords = 100; // 最多保留100条
+            }
+
+            // 生成防抖key
+            getDebounceKey(type, itemId) {
+                return `${type}:${itemId}`;
+            }
+
+            // 检查是否需要防抖
+            shouldDebounce(type, itemId) {
+                const key = this.getDebounceKey(type, itemId);
+                const lastTime = this.debounceTimers.get(key);
+                const now = Date.now();
+                
+                if (lastTime && (now - lastTime) < this.debounceInterval) {
+                    return true; // 需要防抖
+                }
+                
+                this.debounceTimers.set(key, now);
+                return false;
+            }
+
+            // 添加历史记录
+            async addHistory(type, itemId, title, action = 'view', meta = {}) {
+                // 防抖检查
+                if (this.shouldDebounce(type, itemId)) {
+                    return;
+                }
+
+                const historyItem = {
+                    type,
+                    itemId,
+                    title,
+                    action,
+                    timestamp: Date.now(),
+                    meta
+                };
+
+                try {
+                    await this.db.add('history', historyItem);
+                    await this.cleanupOldRecords();
+                } catch (e) {
+                    console.warn('添加历史记录失败:', e);
+                }
+            }
+
+            // 获取历史记录列表
+            async getHistoryList(limit = null) {
+                try {
+                    const allHistory = await this.db.getAll('history');
+                    // 按时间倒序排列
+                    const sorted = allHistory.sort((a, b) => b.timestamp - a.timestamp);
+                    return limit ? sorted.slice(0, limit) : sorted;
+                } catch (e) {
+                    console.warn('获取历史记录失败:', e);
+                    return [];
+                }
+            }
+
+            // 清理旧记录
+            async cleanupOldRecords() {
+                try {
+                    const allHistory = await this.db.getAll('history');
+                    if (allHistory.length > this.maxRecords) {
+                        // 按时间升序排列，删除最旧的
+                        const sorted = allHistory.sort((a, b) => a.timestamp - b.timestamp);
+                        const toDelete = sorted.slice(0, allHistory.length - this.maxRecords);
+                        
+                        for (const item of toDelete) {
+                            await this.db.delete('history', item.id);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('清理历史记录失败:', e);
+                }
+            }
+
+            // 清除所有历史记录
+            async clearAllHistory() {
+                try {
+                    await this.db.clear('history');
+                    this.debounceTimers.clear();
+                    return true;
+                } catch (e) {
+                    console.warn('清除历史记录失败:', e);
+                    return false;
+                }
+            }
+
+            // 获取操作类型图标
+            getActionIcon(action) {
+                const icons = {
+                    'view': '👁️',
+                    'generate': '✨',
+                    'edit': '✏️'
+                };
+                return icons[action] || '📌';
+            }
+
+            // 获取类型图标
+            getTypeIcon(type) {
+                const icons = {
+                    'trope': '🎭',
+                    'character': '👤',
+                    'worldview': '🌍',
+                    'name': '✨',
+                    'plot': '📖'
+                };
+                return icons[type] || '📌';
+            }
+
+            // 获取类型名称
+            getTypeName(type) {
+                const names = {
+                    'trope': '桥段',
+                    'character': '角色',
+                    'worldview': '世界观',
+                    'name': '名字',
+                    'plot': '情节'
+                };
+                return names[type] || '其他';
+            }
+
+            // 格式化时间显示
+            formatTime(timestamp) {
+                const now = Date.now();
+                const diff = now - timestamp;
+                const minute = 60 * 1000;
+                const hour = 60 * minute;
+                const day = 24 * hour;
+
+                if (diff < minute) return '刚刚';
+                if (diff < hour) return `${Math.floor(diff / minute)}分钟前`;
+                if (diff < day) return `${Math.floor(diff / hour)}小时前`;
+                if (diff < 7 * day) return `${Math.floor(diff / day)}天前`;
+                
+                const date = new Date(timestamp);
+                return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            }
+        }
+
         // ==================== 全局状态 ====================
         const db = new Database();
         const githubSync = new GitHubSync();
+        const historyManager = new HistoryManager();
         let currentPage = 'home';
         let modalCallback = null;
         let tropesData = null;
@@ -3214,6 +3667,7 @@
             const chars = await db.getAll('characters');
             const world = await db.getAll('world_settings');
             const plots = await db.getAll('plots');
+            const recentHistory = await historyManager.getHistoryList(5);
             
             const syncStatusHtml = githubSync.isConfigured() ? `
                 <div id="syncStatus" class="sync-status ${githubSync.lastSyncTime ? 'synced' : 'unsynced'}">
@@ -3221,6 +3675,27 @@
                     <span style="color: #666; margin-left: auto; font-size: 12px;">
                         ${githubSync.lastSyncTime ? new Date(githubSync.lastSyncTime).toLocaleDateString('zh-CN') : ''}
                     </span>
+                </div>
+            ` : '';
+            
+            // 最近查看区域
+            const recentSectionHtml = recentHistory.length > 0 ? `
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <div class="recent-title">
+                            🕐 最近查看
+                        </div>
+                        <a href="#" onclick="loadPage('history'); return false;" style="font-size: 13px; color: #e94560;">查看全部 →</a>
+                    </div>
+                    <div class="recent-list">
+                        ${recentHistory.map(item => `
+                            <div class="recent-item" onclick="handleHistoryClick('${item.type}', ${item.itemId || 0}, '${(item.title || '').replace(/'/g, "\\'")}')">
+                                <div class="recent-item-icon">${historyManager.getTypeIcon(item.type)}</div>
+                                <div class="recent-item-title">${item.title}</div>
+                                <div class="recent-item-type">${historyManager.getTypeName(item.type)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             ` : '';
             
@@ -3251,6 +3726,8 @@
                 </div>
                 
                 ${syncStatusHtml}
+                
+                ${recentSectionHtml}
                 
                 <div class="card-grid">
                     <div class="card" onclick="loadPage('characters')">
@@ -4096,9 +4573,14 @@
                     </div>
                 ` : `
                     <div class="card-grid">
-                        ${filtered.map(char => `
-                            <div class="card" onclick="openCharacterDetail(${char.id})" style="cursor: pointer;">
-                                <div class="card-header">
+                        ${await Promise.all(filtered.map(async char => {
+                            const isFav = await isFavorite('character', char.id);
+                            return `
+                            <div class="card" onclick="openCharacterDetail(${char.id})" style="cursor: pointer; position: relative;">
+                                <button class="favorite-btn card-favorite-btn ${isFav ? 'active' : ''}" id="charFav-${char.id}" onclick="toggleCharacterFavorite(${char.id}, event)" title="${isFav ? '取消收藏' : '收藏'}">
+                                    ${isFav ? '★' : '☆'}
+                                </button>
+                                <div class="card-header" style="padding-right: 45px;">
                                     <span class="card-title">${char.name}</span>
                                     <span class="card-type">${char.role || '配角'}</span>
                                 </div>
@@ -4114,7 +4596,8 @@
                                     </div>
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        })).then(results => results.join(''))}
                     </div>
                 `}
             `;
@@ -4219,6 +4702,12 @@
             if (!char) return;
             const content = generateCharacterDetailContent(char);
             showDetailModal(char.name, content);
+            
+            // 记录历史
+            await historyManager.addHistory('character', id, char.name, 'view', {
+                role: char.role,
+                book: char.book
+            });
         }
         
         async function deleteCharacter(id, name) {
@@ -4289,9 +4778,14 @@
                     </div>
                 ` : `
                     <div class="card-grid">
-                        ${settings.map(setting => `
-                            <div class="card" onclick="openWorldviewDetail(${setting.id})" style="cursor: pointer;">
-                                <div class="card-header">
+                        ${await Promise.all(settings.map(async setting => {
+                            const isFav = await isFavorite('worldview', setting.id);
+                            return `
+                            <div class="card" onclick="openWorldviewDetail(${setting.id})" style="cursor: pointer; position: relative;">
+                                <button class="favorite-btn card-favorite-btn ${isFav ? 'active' : ''}" id="worldFav-${setting.id}" onclick="toggleWorldviewFavorite(${setting.id}, event)" title="${isFav ? '取消收藏' : '收藏'}">
+                                    ${isFav ? '★' : '☆'}
+                                </button>
+                                <div class="card-header" style="padding-right: 45px;">
                                     <span class="card-title">${setting.title}</span>
                                 </div>
                                 <div class="card-content">${setting.content?.substring(0, 120) || ''}...</div>
@@ -4303,7 +4797,8 @@
                                     </div>
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        })).then(results => results.join(''))}
                     </div>
                 `}
             `;
@@ -4376,6 +4871,11 @@
             // 从title中提取书名作为弹窗标题
             const title = world.title?.includes(' - ') ? world.title.split(' - ')[0] : (world.title || '世界观详情');
             showDetailModal(title, content);
+            
+            // 记录历史
+            await historyManager.addHistory('worldview', id, title, 'view', {
+                category: world.category
+            });
         }
         
         async function deleteWorldSetting(id, title) {
@@ -6063,6 +6563,97 @@
             a.click();
             URL.revokeObjectURL(url);
         }
+
+        // ==================== 历史记录页面 ====================
+        async function renderHistory(container) {
+            const history = await historyManager.getHistoryList();
+            
+            container.innerHTML = `
+                <div class="header">
+                    <h2>🕐 历史记录</h2>
+                    ${history.length > 0 ? `
+                        <button class="btn btn-danger" onclick="confirmClearHistory()">
+                            🗑️ 清除历史
+                        </button>
+                    ` : ''}
+                </div>
+                
+                ${history.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🕐</div>
+                        <h3>暂无历史记录</h3>
+                        <p>浏览角色、世界观、桥段等内容后，会在这里显示历史记录</p>
+                    </div>
+                ` : `
+                    <div class="history-list">
+                        ${history.map(item => `
+                            <div class="history-item" onclick="handleHistoryClick('${item.type}', ${item.itemId || 0}, '${(item.title || '').replace(/'/g, "\\'")}')">
+                                <div class="history-icon">
+                                    ${historyManager.getActionIcon(item.action)}
+                                </div>
+                                <div class="history-content">
+                                    <div class="history-title">
+                                        <span class="history-type-badge">
+                                            ${historyManager.getTypeIcon(item.type)} ${historyManager.getTypeName(item.type)}
+                                        </span>
+                                        ${item.title}
+                                    </div>
+                                    <div class="history-meta">
+                                        ${historyManager.formatTime(item.timestamp)}
+                                    </div>
+                                </div>
+                                <div class="history-arrow">→</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+        }
+
+        // 确认清除历史
+        async function confirmClearHistory() {
+            if (!confirm('确定要清除所有历史记录吗？此操作不可恢复。')) return;
+            
+            const success = await historyManager.clearAllHistory();
+            if (success) {
+                showNotification('✅ 历史记录已清除');
+                renderHistory(document.getElementById('mainContent'));
+            } else {
+                showNotification('❌ 清除失败');
+            }
+        }
+
+        // 处理历史记录点击
+        async function handleHistoryClick(type, itemId, title) {
+            switch (type) {
+                case 'trope':
+                    loadPage('scene');
+                    showNotification(`已跳转: ${title}`);
+                    break;
+                case 'character':
+                    if (!dataLoadState.characters.loaded) {
+                        await loadCharacterDataWithUI();
+                    }
+                    loadPage('characters');
+                    openCharacterDetail(itemId);
+                    break;
+                case 'worldview':
+                    if (!dataLoadState.worldview.loaded) {
+                        await loadWorldviewDataWithUI();
+                    }
+                    loadPage('world');
+                    openWorldviewDetail(itemId);
+                    break;
+                case 'name':
+                    loadPage('names');
+                    showNotification(`已跳转: ${title}`);
+                    break;
+                case 'plot':
+                    loadPage('plot');
+                    showNotification(`已跳转: ${title}`);
+                    break;
+            }
+        }
         
         function importData() {
             document.getElementById('importFile').click();
@@ -6125,7 +6716,371 @@
             dataLoadState.characters.cached = false;
             showNotification('缓存已清除');
         }
-        
+
+        // ==================== 收藏功能 ====================
+        let currentTropeDetail = null;
+        let favoritesFilter = 'all'; // 'all' | 'trope' | 'character' | 'worldview' | 'name'
+
+        // 显示 Toast 提示
+        function showToast(message, duration = 2000) {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('toast-out');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // 检查是否已收藏
+        async function isFavorite(type, itemId) {
+            const favorites = await db.getAll('favorites');
+            return favorites.some(f => f.type === type && String(f.itemId) === String(itemId));
+        }
+
+        // 获取收藏ID
+        async function getFavoriteId(type, itemId) {
+            const favorites = await db.getAll('favorites');
+            const fav = favorites.find(f => f.type === type && String(f.itemId) === String(itemId));
+            return fav ? fav.id : null;
+        }
+
+        // 添加收藏
+        async function addFavorite(type, item) {
+            const existing = await isFavorite(type, item.id || item.name || item.title);
+            if (existing) {
+                showToast('已在收藏列表中');
+                return false;
+            }
+
+            const favorite = {
+                type: type,
+                itemId: String(item.id || item.name || item.title || Date.now()),
+                title: item.title || item.name || '未命名',
+                content: item.content || item.description || item.meaning || '',
+                meta: {
+                    author: item.author || '',
+                    book: item.book || '',
+                    year: item.year || '',
+                    role: item.role || '',
+                    category: item.category || '',
+                    style: item.style || '',
+                    tags: item.tags || []
+                },
+                createdAt: new Date().toISOString()
+            };
+
+            await db.add('favorites', favorite);
+            showToast('已添加到收藏');
+            return true;
+        }
+
+        // 移除收藏
+        async function removeFavorite(id) {
+            await db.delete('favorites', id);
+            showToast('已取消收藏');
+            return true;
+        }
+
+        // 切换收藏状态
+        async function toggleFavorite(type, item, elementId) {
+            const itemId = String(item.id || item.name || item.title);
+            const existingId = await getFavoriteId(type, itemId);
+            
+            if (existingId) {
+                await removeFavorite(existingId);
+                updateFavoriteButton(elementId, false);
+                return false;
+            } else {
+                await addFavorite(type, item);
+                updateFavoriteButton(elementId, true);
+                return true;
+            }
+        }
+
+        // 更新收藏按钮状态
+        function updateFavoriteButton(elementId, isActive) {
+            const btn = document.getElementById(elementId);
+            if (btn) {
+                btn.classList.toggle('active', isActive);
+                btn.textContent = isActive ? '★' : '☆';
+            }
+        }
+
+        // 桥段收藏切换
+        async function toggleTropeFavorite() {
+            if (!currentTropeDetail) return;
+            
+            const itemId = String(currentTropeDetail.id || currentTropeDetail.title);
+            const existingId = await getFavoriteId('trope', itemId);
+            
+            if (existingId) {
+                await removeFavorite(existingId);
+                updateFavoriteButton('tropeFavoriteBtn', false);
+            } else {
+                await addFavorite('trope', currentTropeDetail);
+                updateFavoriteButton('tropeFavoriteBtn', true);
+            }
+        }
+
+        // 角色收藏切换
+        async function toggleCharacterFavorite(charId, event) {
+            if (event) event.stopPropagation();
+            const char = await db.get('characters', charId);
+            if (!char) return;
+            
+            const btnId = `charFav-${charId}`;
+            const result = await toggleFavorite('character', char, btnId);
+            
+            // 如果在收藏页面，刷新列表
+            if (currentPage === 'favorites') {
+                renderFavorites(document.getElementById('mainContent'));
+            }
+        }
+
+        // 世界观收藏切换
+        async function toggleWorldviewFavorite(worldId, event) {
+            if (event) event.stopPropagation();
+            const world = await db.get('world_settings', worldId);
+            if (!world) return;
+            
+            const btnId = `worldFav-${worldId}`;
+            const result = await toggleFavorite('worldview', world, btnId);
+            
+            // 如果在收藏页面，刷新列表
+            if (currentPage === 'favorites') {
+                renderFavorites(document.getElementById('mainContent'));
+            }
+        }
+
+        // 名字收藏切换
+        async function toggleNameFavorite(nameData, index, event) {
+            if (event) event.stopPropagation();
+            
+            const item = typeof nameData === 'string' ? generatedNames[index] : nameData;
+            if (!item) return;
+            
+            const itemId = `${item.name}_${index}`;
+            const existingId = await getFavoriteId('name', itemId);
+            
+            if (existingId) {
+                await removeFavorite(existingId);
+                updateFavoriteButton(`nameFav-${index}`, false);
+            } else {
+                item.id = itemId;
+                await addFavorite('name', item);
+                updateFavoriteButton(`nameFav-${index}`, true);
+            }
+            
+            // 如果在收藏页面，刷新列表
+            if (currentPage === 'favorites') {
+                renderFavorites(document.getElementById('mainContent'));
+            }
+        }
+
+        // 渲染收藏页面
+        async function renderFavorites(container, filter = favoritesFilter) {
+            favoritesFilter = filter;
+            const favorites = await db.getAll('favorites');
+            
+            // 按类型筛选
+            let filtered = favorites;
+            if (filter !== 'all') {
+                filtered = favorites.filter(f => f.type === filter);
+            }
+            
+            // 按时间倒序
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            // 统计各类型数量
+            const counts = {
+                all: favorites.length,
+                trope: favorites.filter(f => f.type === 'trope').length,
+                character: favorites.filter(f => f.type === 'character').length,
+                worldview: favorites.filter(f => f.type === 'worldview').length,
+                name: favorites.filter(f => f.type === 'name').length
+            };
+            
+            const typeLabels = {
+                trope: '桥段',
+                character: '角色',
+                worldview: '世界观',
+                name: '名字'
+            };
+            
+            const typeIcons = {
+                trope: '🎭',
+                character: '👤',
+                worldview: '🌍',
+                name: '✨'
+            };
+
+            container.innerHTML = `
+                <div class="header">
+                    <h2>⭐ 我的收藏 (${filtered.length})</h2>
+                    <button class="btn btn-secondary" onclick="exportFavorites()">📤 导出收藏</button>
+                </div>
+                
+                <div class="favorites-tabs">
+                    <div class="favorites-tab ${filter === 'all' ? 'active' : ''}" onclick="renderFavorites(document.getElementById('mainContent'), 'all')">
+                        全部 (${counts.all})
+                    </div>
+                    <div class="favorites-tab ${filter === 'trope' ? 'active' : ''}" onclick="renderFavorites(document.getElementById('mainContent'), 'trope')">
+                        🎭 桥段 (${counts.trope})
+                    </div>
+                    <div class="favorites-tab ${filter === 'character' ? 'active' : ''}" onclick="renderFavorites(document.getElementById('mainContent'), 'character')">
+                        👤 角色 (${counts.character})
+                    </div>
+                    <div class="favorites-tab ${filter === 'worldview' ? 'active' : ''}" onclick="renderFavorites(document.getElementById('mainContent'), 'worldview')">
+                        🌍 世界观 (${counts.worldview})
+                    </div>
+                    <div class="favorites-tab ${filter === 'name' ? 'active' : ''}" onclick="renderFavorites(document.getElementById('mainContent'), 'name')">
+                        ✨ 名字 (${counts.name})
+                    </div>
+                </div>
+                
+                ${filtered.length === 0 ? `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⭐</div>
+                        <h3>暂无收藏</h3>
+                        <p>在桥段、角色、世界观或名字生成页面点击 ⭐ 收藏按钮添加</p>
+                    </div>
+                ` : `
+                    <div class="card-grid">
+                        ${filtered.map(fav => `
+                            <div class="card favorite-card" style="position:relative;">
+                                <button class="favorite-btn card-favorite-btn active" onclick="removeFavoriteAndRefresh(${fav.id})" title="取消收藏">
+                                    ★
+                                </button>
+                                <div class="card-header">
+                                    <span class="card-title">${fav.title}</span>
+                                    <span class="favorite-type-badge">${typeIcons[fav.type]} ${typeLabels[fav.type]}</span>
+                                </div>
+                                <div class="card-content">
+                                    ${fav.content ? fav.content.substring(0, 150) + (fav.content.length > 150 ? '...' : '') : '暂无内容'}
+                                </div>
+                                <div class="card-footer" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                    ${fav.meta.book || fav.meta.author ? `
+                                        <span style="color:#888;font-size:12px">
+                                            ${fav.meta.book ? `《${fav.meta.book}》` : ''}
+                                            ${fav.meta.author || ''}
+                                            ${fav.meta.role ? ` · ${fav.meta.role}` : ''}
+                                            ${fav.meta.style ? ` · ${fav.meta.style}` : ''}
+                                        </span>
+                                    ` : ''}
+                                    <span style="color:#666;font-size:11px">
+                                        收藏于 ${new Date(fav.createdAt).toLocaleDateString('zh-CN')}
+                                    </span>
+                                </div>
+                                <div class="favorite-actions">
+                                    <button class="btn btn-secondary" onclick="viewFavoriteItem('${fav.type}', '${fav.itemId}')">👁️ 查看</button>
+                                    <button class="btn btn-primary" onclick="copyFavoriteContent('${fav.id}')">📋 复制</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            `;
+        }
+
+        // 移除收藏并刷新
+        async function removeFavoriteAndRefresh(id) {
+            if (!confirm('确定要取消收藏吗？')) return;
+            await removeFavorite(id);
+            renderFavorites(document.getElementById('mainContent'), favoritesFilter);
+        }
+
+        // 查看收藏项
+        async function viewFavoriteItem(type, itemId) {
+            switch(type) {
+                case 'trope':
+                    loadPage('trope');
+                    showNotification('已跳转到桥段素材库');
+                    break;
+                case 'character':
+                    loadPage('characters');
+                    setTimeout(() => {
+                        openCharacterDetail(parseInt(itemId));
+                    }, 100);
+                    break;
+                case 'worldview':
+                    loadPage('world');
+                    setTimeout(() => {
+                        openWorldviewDetail(parseInt(itemId));
+                    }, 100);
+                    break;
+                case 'name':
+                    loadPage('names');
+                    showNotification('已跳转到姓名生成器');
+                    break;
+            }
+        }
+
+        // 复制收藏内容
+        async function copyFavoriteContent(favId) {
+            const fav = await db.get('favorites', favId);
+            if (!fav) return;
+            
+            const text = `${fav.title}\n${fav.content}`;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板');
+            });
+        }
+
+        // 导出收藏
+        async function exportFavorites() {
+            const favorites = await db.getAll('favorites');
+            if (favorites.length === 0) {
+                showToast('暂无收藏可导出');
+                return;
+            }
+            
+            const data = {
+                version: '1.0',
+                export_time: new Date().toISOString(),
+                favorites: favorites
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `favorites_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast(`已导出 ${favorites.length} 条收藏`);
+        }
+
+        // 更新 openTropeDetailModal 以支持收藏按钮
+        const originalOpenTropeDetailModal = openTropeDetailModal;
+        openTropeDetailModal = async function(trope) {
+            currentTropeDetail = trope;
+            document.getElementById('tropeDetailTitle').textContent = trope.title || trope.name || '桥段';
+            document.getElementById('tropeDetailContent').textContent = trope.content || trope.description || '';
+            document.getElementById('tropeDetailSource').textContent = trope.book ? `《${trope.book}》${trope.author || ''}` : '未知出处';
+            
+            const tagsContainer = document.getElementById('tropeDetailTags');
+            if (trope.tags && trope.tags.length > 0) {
+                tagsContainer.innerHTML = trope.tags.map(tag => `<span class="trope-detail-tag">${tag}</span>`).join('');
+            } else {
+                tagsContainer.innerHTML = '';
+            }
+            
+            // 更新收藏按钮状态
+            const isFav = await isFavorite('trope', trope.id || trope.title);
+            updateFavoriteButton('tropeFavoriteBtn', isFav);
+            
+            document.getElementById('tropeDetailModal').classList.add('active');
+        };
+
         // ==================== 模态框控制 ====================
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
@@ -6203,12 +7158,14 @@
             
             switch(page) {
                 case 'home': renderHome(main); break;
+                case 'history': renderHistory(main); break;
                 case 'characters': renderCharacters(main); break;
                 case 'world': renderWorld(main); break;
                 case 'plot': renderPlot(main); break;
                 case 'trope': renderTrope(main); break;
                 case 'scene': renderSceneEditor(main); break;
                 case 'names': renderNameGenerator(main); break;
+                case 'favorites': renderFavorites(main); break;
                 case 'data': renderData(main); break;
             }
         }
