@@ -6613,11 +6613,11 @@
 
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div class="tabs">
-                        <div class="tab ${filterRole === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), 'all')">全部 (${counts.all})</div>
-                        <div class="tab ${filterRole === '主角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '主角')">主角 (${counts['主角']})</div>
-                        <div class="tab ${filterRole === '女主' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '女主')">女主 (${counts['女主']})</div>
-                        <div class="tab ${filterRole === '反派' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '反派')">反派 (${counts['反派']})</div>
-                        <div class="tab ${filterRole === '配角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('mainContent'), '配角')">配角 (${counts['配角']})</div>
+                        <div class="tab ${filterRole === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), 'all')">全部 (${counts.all})</div>
+                        <div class="tab ${filterRole === '主角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '主角')">主角 (${counts['主角']})</div>
+                        <div class="tab ${filterRole === '女主' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '女主')">女主 (${counts['女主']})</div>
+                        <div class="tab ${filterRole === '反派' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '反派')">反派 (${counts['反派']})</div>
+                        <div class="tab ${filterRole === '配角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '配角')">配角 (${counts['配角']})</div>
                     </div>
                     <button class="btn btn-secondary" onclick="forceRefreshData()" title="强制刷新">
                         🔄 刷新
@@ -7520,7 +7520,7 @@
             await db.add('volumes', volume);
             expandedVolumes.add(volume.id);
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 卷添加成功');
         }
 
@@ -7538,7 +7538,7 @@
             volume.title = newTitle.trim();
             volume.summary = newSummary.trim();
             await db.update('volumes', volume);
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 已更新');
         }
 
@@ -7554,7 +7554,7 @@
             await db.delete('volumes', id);
             expandedVolumes.delete(id);
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 卷已删除');
         }
 
@@ -13214,31 +13214,46 @@
                 container.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">🔄 加载中...</div>';
 
                 try {
-                    if (!tropeData || tropeData.length === 0) {
+                    if (!tropesData || !tropesData.categories) {
                         await loadTropeData();
                     }
 
-                    const html = tropeData.slice(0, 20).map(trope => {
+                    // 从所有类别中提取桥段
+                    const allTropes = [];
+                    if (tropesData && tropesData.categories) {
+                        tropesData.categories.forEach(cat => {
+                            if (cat.subTypes) {
+                                cat.subTypes.forEach(sub => {
+                                    allTropes.push({
+                                        ...sub,
+                                        category: cat.name
+                                    });
+                                });
+                            }
+                        });
+                    }
+
+                    const html = allTropes.slice(0, 20).map((trope, idx) => {
                         const card = `
                             <div class="card draggable-card" style="margin-bottom: 15px; cursor: pointer;"
                                 onclick="splitScreenManager.insertToEditor('trope', ${JSON.stringify(trope).replace(/"/g, '&quot;')})"
                             >
                                 <div class="card-header">
-                                    <span class="card-title">${trope.title || '未命名'}</span>
+                                    <span class="card-title">${trope.name || '未命名'}</span>
                                     <span class="card-type">${trope.category || '桥段'}</span>
                                 </div>
-                                <div class="card-content">${trope.summary || trope.content?.substring(0, 100) + '...' || '暂无描述'}</div>
+                                <div class="card-content">${trope.desc || '暂无描述'}</div>
                             </div>
                         `;
                         return card;
                     }).join('');
 
-                    container.innerHTML = `<div class="material-list" style="padding: 10px;">${html}</div>`;
+                    container.innerHTML = `<div class="material-list" style="padding: 10px;">${html || '<p style="text-align: center; color: #666;">暂无桥段</p>'}</div>`;
 
                     // 添加拖拽功能
                     setTimeout(() => {
                         container.querySelectorAll('.draggable-card').forEach((card, idx) => {
-                            this.makeCardDraggable(card, 'trope', tropeData[idx]);
+                            this.makeCardDraggable(card, 'trope', allTropes[idx]);
                         });
                     }, 0);
 
