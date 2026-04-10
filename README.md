@@ -113,3 +113,4 @@ GET http://127.0.0.1:18790/health
 
 - [方案分析报告](./integration-plan.md)
 - [OpenClaw配置说明](./openclaw-config.md)
+# 触发重建 Sat Apr 11 12:42:11 AM CST 2026
