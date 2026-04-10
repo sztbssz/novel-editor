@@ -2446,7 +2446,7 @@
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
                             ${subTypes.map(sub => `
-                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showTropeDetail('${cat.name}', '${sub.name.replace(/'/g, "\\'")}')">
+                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
                                     <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name}</div>
                                 </div>
                             `).join('')}
