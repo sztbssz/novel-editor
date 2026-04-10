@@ -3038,7 +3038,7 @@
 
             async init() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, 3);
+                    const request = indexedDB.open(this.dbName, 4);
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         this.db = request.result;
@@ -3084,6 +3084,15 @@
                             favStore.createIndex('type', 'type', { unique: false });
                             favStore.createIndex('itemId', 'itemId', { unique: false });
                             favStore.createIndex('createdAt', 'createdAt', { unique: false });
+                        }
+                        // 模板表
+                        if (!db.objectStoreNames.contains('templates')) {
+                            const templateStore = db.createObjectStore('templates', { keyPath: 'id', autoIncrement: true });
+                            templateStore.createIndex('type', 'type', { unique: false });
+                            templateStore.createIndex('category', 'category', { unique: false });
+                            templateStore.createIndex('name', 'name', { unique: false });
+                            templateStore.createIndex('createdAt', 'createdAt', { unique: false });
+                            templateStore.createIndex('usageCount', 'usageCount', { unique: false });
                         }
                     };
                 });
@@ -3161,6 +3170,94 @@
                     request.onsuccess = () => resolve();
                     request.onerror = () => reject(request.error);
                 });
+            }
+
+            // ==================== 模板管理方法 ====================
+            async addTemplate(template) {
+                const data = {
+                    ...template,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    usageCount: 0
+                };
+                return await this.add('templates', data);
+            }
+
+            async getTemplate(id) {
+                return await this.get('templates', id);
+            }
+
+            async getAllTemplates(type = null) {
+                const templates = await this.getAll('templates');
+                if (type) {
+                    return templates.filter(t => t.type === type);
+                }
+                return templates;
+            }
+
+            async getTemplatesByCategory(category) {
+                const templates = await this.getAll('templates');
+                return templates.filter(t => t.category === category);
+            }
+
+            async updateTemplate(id, updates) {
+                const template = await this.getTemplate(id);
+                if (!template) return null;
+                const updated = {
+                    ...template,
+                    ...updates,
+                    updatedAt: new Date().toISOString()
+                };
+                return await this.update('templates', updated);
+            }
+
+            async incrementTemplateUsage(id) {
+                const template = await this.getTemplate(id);
+                if (template) {
+                    template.usageCount = (template.usageCount || 0) + 1;
+                    template.updatedAt = new Date().toISOString();
+                    await this.update('templates', template);
+                }
+            }
+
+            async deleteTemplate(id) {
+                return await this.delete('templates', id);
+            }
+
+            async exportTemplates() {
+                const templates = await this.getAllTemplates();
+                return {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    count: templates.length,
+                    templates: templates
+                };
+            }
+
+            async importTemplates(data) {
+                if (!data.templates || !Array.isArray(data.templates)) {
+                    throw new Error('Invalid template data');
+                }
+                const imported = [];
+                for (const template of data.templates) {
+                    delete template.id;
+                    template.createdAt = new Date().toISOString();
+                    template.updatedAt = new Date().toISOString();
+                    template.usageCount = 0;
+                    const id = await this.add('templates', template);
+                    imported.push(id);
+                }
+                return imported;
+            }
+
+            async searchTemplates(query) {
+                const templates = await this.getAllTemplates();
+                const lowerQuery = query.toLowerCase();
+                return templates.filter(t =>
+                    (t.name && t.name.toLowerCase().includes(lowerQuery)) ||
+                    (t.description && t.description.toLowerCase().includes(lowerQuery)) ||
+                    (t.tags && t.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
+                );
             }
         }
 
@@ -9374,7 +9471,606 @@
 
             // 初始化推荐系统
             initRecommendationSystem();
+
+            // ==================== 快捷键系统 ====================
+            initShortcutSystem();
         });
+
+        // ==================== 快捷键管理系统 ====================
+        const shortcutManager = {
+            // 当前页面
+            currentPage: 'home',
+
+            // 选中状态
+            selectedTropeIndex: -1,
+            selectedCharacterIndex: -1,
+            selectedChapterId: null,
+
+            // 是否处于输入状态
+            isInputFocused: false,
+
+            // 弹窗状态
+            isModalOpen: false,
+
+            // 初始化
+            init() {
+                this.bindGlobalShortcuts();
+                this.bindInputListeners();
+                console.log('✅ [快捷键] 系统已初始化');
+            },
+
+            // 检查是否可以触发快捷键
+            canTriggerShortcut() {
+                // 输入框聚焦时不触发
+                if (this.isInputFocused) return false;
+                return true;
+            },
+
+            // 检查弹窗状态
+            updateModalState() {
+                const modal = document.getElementById('modal');
+                const tropeDetailModal = document.getElementById('tropeDetailModal');
+                const detailModal = document.getElementById('detailModal');
+                const searchModal = document.getElementById('searchModal');
+                const githubSetupModal = document.getElementById('githubSetupModal');
+
+                this.isModalOpen = modal?.classList.contains('active') ||
+                              tropeDetailModal?.classList.contains('active') ||
+                              detailModal?.classList.contains('active') ||
+                              searchModal?.classList.contains('active') ||
+                              githubSetupModal?.classList.contains('active') ||
+                              document.getElementById('shortcutHelpModal')?.classList.contains('active');
+            },
+
+            // 显示Toast提示
+            showToast(message) {
+                showToast(message);
+            }
+        };
+
+        // 绑定输入框监听器
+        function bindInputListeners() {
+            document.addEventListener('focusin', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') {
+                    shortcutManager.isInputFocused = true;
+                }
+            });
+
+            document.addEventListener('focusout', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') {
+                    shortcutManager.isInputFocused = false;
+                }
+            });
+        }
+
+        // 绑定全局快捷键
+        function bindGlobalShortcuts() {
+            document.addEventListener('keydown', handleGlobalShortcut);
+        }
+
+        // 处理全局快捷键
+        function handleGlobalShortcut(e) {
+            shortcutManager.updateModalState();
+
+            // Esc 键 - 关闭弹窗/返回上一页（最高优先级）
+            if (e.key === 'Escape') {
+                handleEscKey();
+                return;
+            }
+
+            // ? 键 - 显示快捷键帮助
+            if (e.key === '?' && !shortcutManager.isInputFocused && !shortcutManager.isModalOpen) {
+                e.preventDefault();
+                openShortcutHelpModal();
+                return;
+            }
+
+            // 弹窗打开时只响应 Esc
+            if (shortcutManager.isModalOpen) return;
+
+            // 输入框聚焦时不触发
+            if (shortcutManager.isInputFocused) return;
+
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
+
+            // Ctrl/Cmd + K - 打开全局搜索
+            if (ctrlKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                openSearchModal();
+                showToast('🔍 打开全局搜索');
+                return;
+            }
+
+            // Ctrl/Cmd + S - 保存当前编辑
+            if (ctrlKey && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                handleSaveShortcut();
+                return;
+            }
+
+            // Ctrl/Cmd + F - 当前页面内搜索
+            if (ctrlKey && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                handlePageSearch();
+                return;
+            }
+
+            // Ctrl/Cmd + R - 刷新数据
+            if (ctrlKey && e.key.toLowerCase() === 'r') {
+                e.preventDefault();
+                handleRefreshShortcut();
+                return;
+            }
+
+            // Ctrl/Cmd + B - 收藏/取消收藏
+            if (ctrlKey && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                handleFavoriteShortcut();
+                return;
+            }
+
+            // Ctrl/Cmd + E - 导出当前内容
+            if (ctrlKey && e.key.toLowerCase() === 'e') {
+                e.preventDefault();
+                handleExportShortcut();
+                return;
+            }
+
+            // 页面特定快捷键
+            handlePageSpecificShortcuts(e);
+        }
+
+        // 处理 Esc 键
+        function handleEscKey() {
+            const helpModal = document.getElementById('shortcutHelpModal');
+            const searchModal = document.getElementById('searchModal');
+            const modal = document.getElementById('modal');
+            const tropeDetailModal = document.getElementById('tropeDetailModal');
+            const detailModal = document.getElementById('detailModal');
+            const githubSetupModal = document.getElementById('githubSetupModal');
+
+            // 优先关闭帮助面板
+            if (helpModal?.classList.contains('active')) {
+                closeShortcutHelpModal();
+                return;
+            }
+
+            // 关闭搜索弹窗
+            if (searchModal?.classList.contains('active')) {
+                closeSearchModal();
+                return;
+            }
+
+            // 关闭桥段详情
+            if (tropeDetailModal?.classList.contains('active')) {
+                closeTropeDetailModal();
+                return;
+            }
+
+            // 关闭详情弹窗
+            if (detailModal?.classList.contains('active')) {
+                closeDetailModal();
+                return;
+            }
+
+            // 关闭普通弹窗
+            if (modal?.classList.contains('active')) {
+                closeModal();
+                return;
+            }
+
+            // 关闭GitHub设置
+            if (githubSetupModal?.classList.contains('active')) {
+                hideGitHubSetupModal();
+                return;
+            }
+        }
+
+        // 处理保存快捷键
+        function handleSaveShortcut() {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'plot') {
+                showToast('💾 情节大纲已自动保存');
+            } else if (currentPage === 'characters' && document.getElementById('modal')?.classList.contains('active')) {
+                // 如果在角色编辑弹窗中，触发保存
+                if (typeof confirmModal === 'function') {
+                    confirmModal();
+                    showToast('✅ 角色已保存');
+                }
+            } else if (currentPage === 'world' && document.getElementById('modal')?.classList.contains('active')) {
+                if (typeof confirmModal === 'function') {
+                    confirmModal();
+                    showToast('✅ 世界观已保存');
+                }
+            } else {
+                showToast('💾 已保存');
+            }
+        }
+
+        // 处理页面内搜索
+        function handlePageSearch() {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'trope') {
+                // 聚焦到桥段搜索框
+                const searchInput = document.getElementById('tropeSearch');
+                if (searchInput) {
+                    searchInput.focus();
+                    showToast('🔍 在桥段素材库中搜索');
+                }
+            } else if (currentPage === 'characters') {
+                showToast('👤 请使用浏览器搜索 (Ctrl+F)');
+            } else if (currentPage === 'world') {
+                showToast('🌍 请使用浏览器搜索 (Ctrl+F)');
+            } else {
+                showToast('🔍 请使用浏览器搜索 (Ctrl+F)');
+            }
+        }
+
+        // 处理刷新快捷键
+        function handleRefreshShortcut() {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'characters') {
+                forceRefreshData();
+                showToast('🔄 角色数据已刷新');
+            } else if (currentPage === 'world') {
+                forceRefreshData();
+                showToast('🔄 世界观数据已刷新');
+            } else if (currentPage === 'trope') {
+                refreshTropeData();
+                showToast('🔄 桥段数据已刷新');
+            } else {
+                location.reload();
+            }
+        }
+
+        // 处理收藏快捷键
+        function handleFavoriteShortcut() {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'trope' && currentTropeDetail) {
+                toggleTropeFavorite();
+            } else {
+                showToast('⭐ 请先选择一个项目');
+            }
+        }
+
+        // 处理导出快捷键
+        function handleExportShortcut() {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'characters') {
+                showCharacterExportDialog();
+            } else if (currentPage === 'world') {
+                showWorldviewExportDialog();
+            } else if (currentPage === 'plot') {
+                showPlotsExportDialog();
+            } else if (currentPage === 'trope') {
+                showTropeExportDialog();
+            } else if (currentPage === 'favorites') {
+                showFavoritesExportDialog();
+            } else {
+                showToast('📤 当前页面不支持导出');
+            }
+        }
+
+        // 页面特定快捷键
+        function handlePageSpecificShortcuts(e) {
+            const currentPage = window.currentPage;
+
+            if (currentPage === 'trope') {
+                handleTropePageShortcuts(e);
+            } else if (currentPage === 'characters') {
+                handleCharacterPageShortcuts(e);
+            } else if (currentPage === 'plot') {
+                handlePlotPageShortcuts(e);
+            }
+        }
+
+        // 桥段素材库快捷键
+        function handleTropePageShortcuts(e) {
+            // ← → 切换大类
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const tabs = document.querySelectorAll('.tab');
+                if (tabs.length === 0) return;
+
+                const activeTab = document.querySelector('.tab.active');
+                let currentIndex = Array.from(tabs).indexOf(activeTab);
+
+                if (e.key === 'ArrowLeft') {
+                    currentIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+                } else {
+                    currentIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+                }
+
+                tabs[currentIndex]?.click();
+                e.preventDefault();
+                return;
+            }
+
+            // Enter 查看选中桥段详情
+            if (e.key === 'Enter') {
+                const tropeItems = document.querySelectorAll('.trope-item');
+                if (tropeItems.length > 0 && shortcutManager.selectedTropeIndex >= 0) {
+                    tropeItems[shortcutManager.selectedTropeIndex]?.click();
+                }
+            }
+        }
+
+        // 角色库快捷键
+        function handleCharacterPageShortcuts(e) {
+            const cards = document.querySelectorAll('.card-grid .card');
+            if (cards.length === 0) return;
+
+            // ↑ ↓ 上下选择角色
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+
+                if (e.key === 'ArrowUp') {
+                    shortcutManager.selectedCharacterIndex = Math.max(0, shortcutManager.selectedCharacterIndex - 1);
+                } else {
+                    shortcutManager.selectedCharacterIndex = Math.min(cards.length - 1, shortcutManager.selectedCharacterIndex + 1);
+                }
+
+                // 更新选中状态
+                cards.forEach((card, idx) => {
+                    if (idx === shortcutManager.selectedCharacterIndex) {
+                        card.style.border = '2px solid #00d4ff';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        card.style.border = '';
+                    }
+                });
+
+                return;
+            }
+
+            // Enter 查看角色详情
+            if (e.key === 'Enter' && shortcutManager.selectedCharacterIndex >= 0) {
+                e.preventDefault();
+                const card = cards[shortcutManager.selectedCharacterIndex];
+                const onclickAttr = card?.getAttribute('onclick');
+                if (onclickAttr) {
+                    const match = onclickAttr.match(/openCharacterDetail\((\d+)\)/);
+                    if (match) {
+                        openCharacterDetail(parseInt(match[1]));
+                    }
+                }
+            }
+        }
+
+        // 情节大纲快捷键
+        function handlePlotPageShortcuts(e) {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
+
+            // Ctrl+N - 新建章节
+            if (ctrlKey && e.key.toLowerCase() === 'n') {
+                e.preventDefault();
+                // 找到当前展开的卷，添加章节
+                const expandedVolume = document.querySelector('.volume-chapters:not(.collapsed)');
+                if (expandedVolume) {
+                    const volumeId = expandedVolume.id?.replace('chapters-', '');
+                    if (volumeId) {
+                        addChapter(parseInt(volumeId));
+                    }
+                } else {
+                    showToast('📖 请先展开一个卷');
+                }
+                return;
+            }
+
+            // Ctrl+Delete - 删除选中章节
+            if (ctrlKey && e.key === 'Delete') {
+                e.preventDefault();
+                if (shortcutManager.selectedChapterId) {
+                    deleteChapter(shortcutManager.selectedChapterId);
+                    shortcutManager.selectedChapterId = null;
+                } else {
+                    showToast('🗑️ 请先选择一个章节');
+                }
+                return;
+            }
+        }
+
+        // ==================== 快捷键帮助面板 ====================
+        function openShortcutHelpModal() {
+            const existingModal = document.getElementById('shortcutHelpModal');
+            if (existingModal) {
+                existingModal.classList.add('active');
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'shortcutHelpModal';
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">⌨️ 快捷键帮助</h3>
+                        <button class="modal-close" onclick="closeShortcutHelpModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="shortcut-section">
+                            <div class="shortcut-section-title">🌐 全局快捷键</div>
+                            <div class="shortcut-list">
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('k')}</span>
+                                    <span class="shortcut-desc">打开全局搜索</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('s')}</span>
+                                    <span class="shortcut-desc">保存当前编辑</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('f')}</span>
+                                    <span class="shortcut-desc">当前页面内搜索</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('r')}</span>
+                                    <span class="shortcut-desc">刷新数据</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('b')}</span>
+                                    <span class="shortcut-desc">收藏/取消收藏</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('e')}</span>
+                                    <span class="shortcut-desc">导出当前内容</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">Esc</span>
+                                    <span class="shortcut-desc">关闭弹窗/返回上一页</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">?</span>
+                                    <span class="shortcut-desc">显示快捷键帮助</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shortcut-section">
+                            <div class="shortcut-section-title">🎭 桥段素材库</div>
+                            <div class="shortcut-list">
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">← →</span>
+                                    <span class="shortcut-desc">切换大类</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">Enter</span>
+                                    <span class="shortcut-desc">查看选中桥段详情</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shortcut-section">
+                            <div class="shortcut-section-title">👤 角色库</div>
+                            <div class="shortcut-list">
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">↑ ↓</span>
+                                    <span class="shortcut-desc">上下选择角色</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">Enter</span>
+                                    <span class="shortcut-desc">查看角色详情</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shortcut-section">
+                            <div class="shortcut-section-title">📖 情节大纲</div>
+                            <div class="shortcut-list">
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">${getShortcutLabel('n')}</span>
+                                    <span class="shortcut-desc">新建章节</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-keys">Ctrl+Delete</span>
+                                    <span class="shortcut-desc">删除选中章节</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="shortcut-notice">
+                            <strong>💡 提示：</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>输入框聚焦时全局快捷键被禁用</li>
+                                <li>弹窗打开时只响应 Esc 键</li>
+                                <li>快捷键不区分大小写</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeShortcutHelpModal()">关闭</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // 添加样式
+            if (!document.getElementById('shortcutStyles')) {
+                const style = document.createElement('style');
+                style.id = 'shortcutStyles';
+                style.textContent = `
+                    .shortcut-section {
+                        margin-bottom: 24px;
+                    }
+                    .shortcut-section-title {
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #e94560;
+                        margin-bottom: 12px;
+                        padding-bottom: 8px;
+                        border-bottom: 1px solid #333;
+                    }
+                    .shortcut-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                    .shortcut-item {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 8px 12px;
+                        background: #1a1a2e;
+                        border-radius: 6px;
+                    }
+                    .shortcut-keys {
+                        font-family: 'Monaco', 'Consolas', monospace;
+                        font-size: 12px;
+                        color: #00d4ff;
+                        background: #0f3460;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        white-space: nowrap;
+                    }
+                    .shortcut-desc {
+                        font-size: 13px;
+                        color: #ccc;
+                    }
+                    .shortcut-notice {
+                        margin-top: 20px;
+                        padding: 12px;
+                        background: rgba(0, 212, 255, 0.1);
+                        border-radius: 8px;
+                        font-size: 12px;
+                        color: #888;
+                    }
+                    .shortcut-notice li {
+                        margin: 4px 0;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // 点击外部关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeShortcutHelpModal();
+            });
+        }
+
+        function closeShortcutHelpModal() {
+            const modal = document.getElementById('shortcutHelpModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function getShortcutLabel(key) {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modifier = isMac ? 'Cmd' : 'Ctrl';
+            return `${modifier} + ${key.toUpperCase()}`;
+        }
+
+        // 初始化快捷键系统
+        function initShortcutSystem() {
+            shortcutManager.init();
+        }
     </script>
 </body>
 </html>
