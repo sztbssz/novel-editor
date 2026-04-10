@@ -1313,6 +1313,158 @@
             color: #e94560;
         }
 
+        /* ==================== 姓名生成器样式 ==================== */
+        .name-generator-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .name-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+        
+        .name-type-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: 2px solid #0f3460;
+            background: #1a1a2e;
+            color: #888;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .name-type-btn:hover {
+            border-color: #e94560;
+            color: #fff;
+        }
+        
+        .name-type-btn.active {
+            background: #e94560;
+            border-color: #e94560;
+            color: #fff;
+        }
+        
+        .name-style-selector,
+        .name-gender-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .name-style-selector label,
+        .name-gender-selector label {
+            color: #888;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        
+        .name-style-select {
+            flex: 1;
+            padding: 10px 15px;
+            font-size: 14px;
+            border: 1px solid #0f3460;
+            background: #1a1a2e;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .gender-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .gender-btn {
+            padding: 8px 20px;
+            font-size: 14px;
+            border: 1px solid #0f3460;
+            background: #1a1a2e;
+            color: #888;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .gender-btn:hover {
+            border-color: #e94560;
+            color: #fff;
+        }
+        
+        .gender-btn.active {
+            background: #0f3460;
+            border-color: #0f3460;
+            color: #fff;
+        }
+        
+        .generate-names-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        
+        .name-card {
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .name-card:hover {
+            border-color: #e94560;
+            transform: translateY(-3px);
+        }
+        
+        .name-favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .name-favorite-btn:hover,
+        .name-favorite-btn.active {
+            color: #ffd700;
+        }
+        
+        .name-card-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        .name-card-meaning {
+            font-size: 12px;
+            color: #888;
+            line-height: 1.4;
+        }
+        
+        .name-card-style {
+            font-size: 11px;
+            color: #e94560;
+            margin-top: 10px;
+            padding: 3px 10px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 10px;
+            display: inline-block;
+        }
+
         /* ==================== 最近查看快捷入口样式 ==================== */
         .recent-section {
             margin-bottom: 30px;
@@ -3952,6 +4104,156 @@
             return descriptions[name] || '经典网文桥段类型';
         }
 
+        // ==================== 姓名生成器页面 ====================
+        async function renderNameGenerator(container) {
+            container.innerHTML = `
+                <div class="header">
+                    <h2>✨ 姓名生成</h2>
+                </div>
+                
+                <div class="name-generator-container">
+                    <div class="name-type-selector">
+                        <button class="name-type-btn ${currentNameType === 'chinese' ? 'active' : ''}" onclick="switchNameType('chinese')">
+                            🇨🇳 中文名
+                        </button>
+                        <button class="name-type-btn ${currentNameType === 'western' ? 'active' : ''}" onclick="switchNameType('western')">
+                            🌍 西方名
+                        </button>
+                    </div>
+                    
+                    <div class="name-style-selector">
+                        <label>选择风格：</label>
+                        <select id="nameStyleSelect" class="name-style-select">
+                            <option value="cold">❄️ 冷峻风格</option>
+                            <option value="gentle">🌸 柔美风格</option>
+                            <option value="domineering">👑 霸气风格</option>
+                            <option value="scholarly">📚 儒雅风格</option>
+                            <option value="evil">😈 邪魅风格</option>
+                            <option value="resolute">⚔️ 坚毅风格</option>
+                            <option value="lively">🌟 灵动风格</option>
+                        </select>
+                    </div>
+                    
+                    <div class="name-gender-selector">
+                        <label>性别：</label>
+                        <div class="gender-buttons">
+                            <button class="gender-btn active" data-gender="male" onclick="switchGender('male')">👨 男</button>
+                            <button class="gender-btn" data-gender="female" onclick="switchGender('female')">👩 女</button>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary generate-names-btn" onclick="startGenerateNames()">
+                        🎲 生成名字
+                    </button>
+                    
+                    <div id="namesResult" class="names-result-section">
+                        ${generatedNames.length > 0 ? renderNamesList() : '<div class="empty-names-state"><div class="empty-names-state-icon">✨</div><p>点击上方按钮生成名字</p></div>'}
+                    </div>
+                </div>
+            `;
+        }
+        
+        let currentGender = 'male';
+        
+        function switchNameType(type) {
+            currentNameType = type;
+            renderNameGenerator(document.getElementById('mainContent'));
+        }
+        
+        function switchGender(gender) {
+            currentGender = gender;
+            document.querySelectorAll('.gender-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.gender === gender);
+            });
+        }
+        
+        function startGenerateNames() {
+            const style = document.getElementById('nameStyleSelect')?.value || 'cold';
+            const names = [];
+            
+            if (currentNameType === 'chinese') {
+                const styleData = nameDatabase[style];
+                const surnames = nameDatabase.surnames.common.concat(nameDatabase.surnames.rare);
+                
+                for (let i = 0; i < 12; i++) {
+                    const surname = surnames[Math.floor(Math.random() * surnames.length)];
+                    const char1 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                    const char2 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                    const name = Math.random() > 0.5 ? surname + char1 : surname + char1 + char2;
+                    const meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
+                    
+                    names.push({
+                        name,
+                        meaning,
+                        style: getStyleLabel(style),
+                        type: '中文名'
+                    });
+                }
+            } else {
+                const db = currentGender === 'male' ? nameDatabase.westernMale : nameDatabase.westernFemale;
+                const shuffled = [...db].sort(() => 0.5 - Math.random());
+                names.push(...shuffled.slice(0, 12).map(item => ({
+                    ...item,
+                    style: '西方名',
+                    type: '西方名'
+                })));
+            }
+            
+            generatedNames = names;
+            
+            // 记录历史
+            historyManager.addHistory('name', Date.now(), `${currentNameType === 'chinese' ? '中文' : '西方'}${currentGender === 'male' ? '男' : '女'}名生成`, 'generate', {
+                style,
+                gender: currentGender,
+                count: names.length
+            });
+            
+            document.getElementById('namesResult').innerHTML = renderNamesList();
+        }
+        
+        function getStyleLabel(style) {
+            const labels = {
+                cold: '冷峻风格',
+                gentle: '柔美风格',
+                domineering: '霸气风格',
+                scholarly: '儒雅风格',
+                evil: '邪魅风格',
+                resolute: '坚毅风格',
+                lively: '灵动风格'
+            };
+            return labels[style] || style;
+        }
+        
+        function renderNamesList() {
+            return `
+                <div class="names-result-title">生成结果</div>
+                <div class="names-grid">
+                    ${generatedNames.map((item, index) => `
+                        <div class="name-card" onclick="copyName('${item.name}', ${index})">
+                            <button class="name-favorite-btn" id="nameFav-${index}" onclick="toggleNameFavorite(null, ${index}, event)">☆</button>
+                            <div class="name-card-name">${item.name}</div>
+                            <div class="name-card-meaning">${item.meaning}</div>
+                            <div class="name-card-style">${item.style}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        async function copyName(name, index) {
+            try {
+                await navigator.clipboard.writeText(name);
+                showToast(`已复制：${name}`);
+                
+                // 记录历史
+                await historyManager.addHistory('name', index, name, 'view', {
+                    copied: true
+                });
+            } catch (e) {
+                showToast('复制失败');
+            }
+        }
+
         // ==================== 桥段编辑器页面 ====================
         let currentSceneTrope = null; // 当前生成的桥段
         let currentSceneSubType = ''; // 当前选择的子类型
@@ -4377,6 +4679,12 @@
                 isAI: true,
                 isRewritten: true
             };
+
+            // 记录历史
+            historyManager.addHistory('trope', Date.now(), `${subType}桥段生成`, 'generate', {
+                subType,
+                wordCount: rewrittenContent.length
+            });
 
             displaySceneResult(currentSceneTrope);
         }
@@ -5400,12 +5708,21 @@
             const newTitle = prompt('章节标题：', chapter.title);
             if (newTitle === null) return;
             
+            const oldTitle = chapter.title;
             chapter.title = newTitle.trim();
             
             // 更新字数统计
             chapter.wordCount = (chapter.content || '').length;
             
             await db.update('chapters', chapter);
+            
+            // 记录历史
+            await historyManager.addHistory('plot', id, `第${chapter.chapterNumber}章: ${chapter.title}`, 'edit', {
+                volumeId: chapter.volumeId,
+                oldTitle,
+                newTitle: chapter.title
+            });
+            
             await refreshChaptersData();
             await renderPlot(document.getElementById('mainContent'));
             showNotification('✅ 已更新');
@@ -5609,6 +5926,13 @@
             }
             
             document.getElementById('tropeDetailModal').classList.add('active');
+            
+            // 记录历史
+            historyManager.addHistory('trope', trope.id || Date.now(), trope.title || trope.name || '桥段', 'view', {
+                book: trope.book,
+                author: trope.author,
+                subType: trope.subType
+            });
         }
         
         function closeTropeDetailModal() {
