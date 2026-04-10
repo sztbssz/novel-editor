@@ -3295,6 +3295,10 @@
 
             // 检查是否需要更新
             async checkUpdate(key) {
+                // 确保 cacheStatus 中有该 key 的初始化
+                if (!this.cacheStatus[key]) {
+                    this.cacheStatus[key] = { hasCache: false, version: null, lastUpdated: null, isChecking: false };
+                }
                 this.cacheStatus[key].isChecking = true;
 
                 const [localVersion, remoteVersions] = await Promise.all([
@@ -3417,6 +3421,7 @@
             // 获取缓存状态文本
             getStatusText(key) {
                 const status = this.cacheStatus[key];
+                if (!status) return '⚠️ 未初始化';
                 if (status.isChecking) return '🔍 检查更新中...';
                 if (!status.hasCache) return '⚠️ 无本地缓存';
                 const date = status.cachedAt ? new Date(status.cachedAt).toLocaleDateString('zh-CN') : '未知';
@@ -3541,6 +3546,9 @@
             }
 
             // 2. 异步检查更新
+            if (!smartCache.cacheStatus[key]) {
+                smartCache.cacheStatus[key] = { hasCache: false, version: null, lastUpdated: null, isChecking: false };
+            }
             smartCache.cacheStatus[key].isChecking = true;
             const updateCheck = await smartCache.checkUpdate(key);
             smartCache.cacheStatus[key].isChecking = false;
@@ -3607,6 +3615,9 @@
             }
 
             // 2. 异步检查更新
+            if (!smartCache.cacheStatus[key]) {
+                smartCache.cacheStatus[key] = { hasCache: false, version: null, lastUpdated: null, isChecking: false };
+            }
             smartCache.cacheStatus[key].isChecking = true;
             const updateCheck = await smartCache.checkUpdate(key);
             smartCache.cacheStatus[key].isChecking = false;
