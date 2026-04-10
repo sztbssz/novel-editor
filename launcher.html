@@ -1970,7 +1970,8 @@
         
         // ==================== 情节大纲 ====================
         let currentTropeFilter = 'all';
-        let currentSubTypeFilter = null; // 当前选中的小类型
+        let currentSubTypeFilter = null;
+        let currentTropeDetail = null; // 当前查看的桥段详情
         let tropeSearchQuery = '';
         let showTropePanel = false;
         
@@ -2070,7 +2071,8 @@
         
         function filterTropes(category) {
             currentTropeFilter = category;
-            currentSubTypeFilter = null; // 重置子类型筛选
+            currentSubTypeFilter = null;
+            currentTropeDetail = null;
             renderPlot(document.getElementById('mainContent'));
         }
         
@@ -2084,66 +2086,89 @@
                 return '<div style="text-align:center;color:#888;padding:20px;">加载中...</div>';
             }
 
-            // 构建层级导航
-            let navHtml = '';
-            if (currentSubTypeFilter) {
-                const catName = tropesData.categories?.find(c => c.id === currentTropeFilter)?.name || currentTropeFilter;
-                navHtml = `
+            // 第四级：桥段详情视图
+            if (currentTropeDetail) {
+                const trope = currentTropeDetail;
+                const category = tropesData.categories.find(c => c.id === trope.category);
+                return `
                     <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
-                        <span style="color:#888;cursor:pointer;" onclick="filterTropes('${currentTropeFilter}')">${catName}</span>
+                        <span style="color:#888;cursor:pointer;" onclick="backToTropeList()">${category?.name || trope.category}</span>
                         <span style="color:#666;margin:0 8px;">></span>
-                        <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
-                        <button onclick="filterTropes('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
+                        <span style="color:#888;cursor:pointer;" onclick="backToTropeList()">${trope.subType}</span>
+                        <span style="color:#666;margin:0 8px;">></span>
+                        <span style="color:#00d4ff;">${trope.title}</span>
+                    </div>
+                    <div class="trope-item" style="background:#1a4a7a;padding:20px;">
+                        <div class="trope-item-title" style="font-size:18px;margin-bottom:15px;color:#fff;">${trope.title}</div>
+                        <div style="background:#0f3460;padding:15px;border-radius:8px;margin-bottom:15px;line-height:1.8;color:#ddd;">
+                            ${trope.content}
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                            <div style="font-size:13px;color:#888;">
+                                <span style="color:#e94560;">出处：</span>《${trope.book}》${trope.author} · ${trope.year}年
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                ${trope.tags?.map(tag => `<span style="padding:3px 8px;background:#16213e;border-radius:4px;font-size:11px;color:#00d4ff;">${tag}</span>`).join('') || ''}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-primary" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制内容</button>
+                            <button class="btn btn-secondary" onclick="backToTropeList()">返回列表</button>
+                        </div>
                     </div>
                 `;
             }
 
-            // 如果有具体桥段数据，显示桥段列表
-            if (tropesData.tropes && tropesData.tropes.length > 0) {
-                let filtered = tropesData.tropes;
+            // 第三级：桥段列表（带编号）
+            if (currentSubTypeFilter) {
+                let filtered = tropesData.tropes || [];
                 
                 if (currentTropeFilter !== 'all') {
                     filtered = filtered.filter(t => t.category === currentTropeFilter);
                 }
-                
-                // 按子类型筛选
-                if (currentSubTypeFilter) {
-                    filtered = filtered.filter(t => t.subType === currentSubTypeFilter);
-                }
+                filtered = filtered.filter(t => t.subType === currentSubTypeFilter);
                 
                 if (tropeSearchQuery) {
                     const q = tropeSearchQuery.toLowerCase();
                     filtered = filtered.filter(t => 
                         t.title.toLowerCase().includes(q) ||
-                        t.content.toLowerCase().includes(q) ||
-                        t.subType.toLowerCase().includes(q)
+                        t.content.toLowerCase().includes(q)
                     );
                 }
                 
+                const catName = tropesData.categories?.find(c => c.id === currentTropeFilter)?.name || currentTropeFilter;
+                
+                let html = `
+                    <div style="margin-bottom:15px;padding:10px;background:#0f3460;border-radius:8px;">
+                        <span style="color:#888;cursor:pointer;" onclick="filterTropes('${currentTropeFilter}')">${catName}</span>
+                        <span style="color:#666;margin:0 8px;">></span>
+                        <span style="color:#00d4ff;">${currentSubTypeFilter}</span>
+                        <span style="margin-left:10px;color:#888;font-size:12px;">(${filtered.length}个桥段)</span>
+                        <button onclick="filterTropes('${currentTropeFilter}')" style="margin-left:10px;background:none;border:none;color:#e94560;cursor:pointer;font-size:12px;">返回</button>
+                    </div>
+                `;
+                
                 if (filtered.length === 0) {
-                    return navHtml + '<div style="text-align:center;color:#888;padding:20px;">暂无匹配桥段</div>';
+                    return html + '<div style="text-align:center;color:#888;padding:20px;">该类型暂无桥段素材</div>';
                 }
                 
-                return navHtml + filtered.map(trope => {
-                    const category = tropesData.categories.find(c => c.id === trope.category);
+                return html + filtered.map((trope, index) => {
+                    // 生成简要概括（取前50字）
+                    const summary = trope.content.substring(0, 50) + (trope.content.length > 50 ? '...' : '');
                     return `
-                        <div class="trope-item">
+                        <div class="trope-item" style="cursor:pointer;" onclick="showTropeDetail(${JSON.stringify(trope).replace(/"/g, '&quot;')})">
                             <div class="trope-item-header">
-                                <span class="trope-item-type">${category?.name || trope.category}</span>
-                                <span style="font-size:11px;color:#888;">${trope.subType}</span>
+                                <span style="background:#e94560;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;">${index + 1}</span>
+                                <span class="trope-item-title" style="margin-left:10px;">${trope.title}</span>
                             </div>
-                            <div class="trope-item-title">${trope.title}</div>
-                            <div class="trope-item-content">${trope.content}</div>
-                            <div class="trope-item-footer">
-                                <span style="font-size:11px;color:#666;">《${trope.book}》${trope.author}</span>
-                                <button class="btn-copy" onclick="copyTropeContent('${trope.title}', '${trope.content.replace(/'/g, "\\'")}')">复制</button>
-                            </div>
+                            <div style="color:#888;font-size:13px;margin-top:8px;line-height:1.5;">${summary}</div>
+                            <div style="margin-top:8px;font-size:11px;color:#666;">《${trope.book}》</div>
                         </div>
                     `;
                 }).join('');
             }
-            
-            // 如果没有桥段数据，显示子类型列表
+
+            // 第二级：小类型网格
             let categoriesToShow = tropesData.categories || [];
             
             if (currentTropeFilter !== 'all') {
@@ -2159,25 +2184,30 @@
             }
             
             if (categoriesToShow.length === 0) {
-                return navHtml + '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
+                return '<div style="text-align:center;color:#888;padding:20px;">暂无匹配类别</div>';
             }
             
-            // 渲染子类型卡片
-            let html = navHtml;
+            let html = '';
             categoriesToShow.forEach(cat => {
                 if (cat.subTypes && cat.subTypes.length > 0) {
                     html += `
-                        <div style="margin-bottom:16px;">
-                            <div style="font-size:13px;font-weight:600;color:#e94560;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #333;">
-                                ${cat.name} (${cat.subTypes.length})
+                        <div style="margin-bottom:20px;">
+                            <div style="font-size:14px;font-weight:600;color:#e94560;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #333;">
+                                ${cat.name}
                             </div>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
-                                ${cat.subTypes.map(sub => `
-                                    <div class="trope-item" style="padding:10px;cursor:pointer;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
-                                        <div class="trope-item-title" style="font-size:13px;margin:0;">${sub.name}</div>
-                                        <div style="font-size:11px;color:#888;margin-top:4px;">${sub.frequency || '中'}频</div>
-                                    </div>
-                                `).join('')}
+                            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+                                ${cat.subTypes.map(sub => {
+                                    // 统计该子类型下的桥段数量
+                                    const count = (tropesData.tropes || []).filter(t => 
+                                        t.category === cat.id && t.subType === sub.name
+                                    ).length;
+                                    return `
+                                        <div class="trope-item" style="padding:12px;cursor:pointer;text-align:center;" onclick="selectSubType('${cat.id}', '${sub.name.replace(/'/g, "\\'")}')">
+                                            <div style="font-size:13px;font-weight:500;color:#fff;margin-bottom:4px;">${sub.name}</div>
+                                            <div style="font-size:11px;color:#888;">${sub.frequency || '中'}频 · ${count}个示例</div>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `;
@@ -2191,6 +2221,19 @@
         function selectSubType(categoryId, subTypeName) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = subTypeName;
+            currentTropeDetail = null;
+            renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 显示桥段详情
+        function showTropeDetail(trope) {
+            currentTropeDetail = trope;
+            renderPlot(document.getElementById('mainContent'));
+        }
+        
+        // 返回桥段列表
+        function backToTropeList() {
+            currentTropeDetail = null;
             renderPlot(document.getElementById('mainContent'));
         }
         
