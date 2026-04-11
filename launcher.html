@@ -5346,9 +5346,18 @@
 
         // 导入世界观数据到DB
         async function importWorldviewToDB(data, onProgress = null) {
-            if (!data.worldbuildingLibrary || !data.worldbuildingLibrary.entries) return;
-
-            const worldviews = data.worldbuildingLibrary.entries;
+            // 支持两种数据结构: worldbuildingLibrary 是数组 或 {entries: [...]}
+            let worldviews = null;
+            if (Array.isArray(data.worldbuildingLibrary)) {
+                worldviews = data.worldbuildingLibrary;
+            } else if (data.worldbuildingLibrary && Array.isArray(data.worldbuildingLibrary.entries)) {
+                worldviews = data.worldbuildingLibrary.entries;
+            }
+            
+            if (!worldviews || worldviews.length === 0) {
+                console.warn('⚠️ 世界观数据为空或格式不正确');
+                return;
+            }
             const existingSettings = await db.getAll('world_settings');
             const existingTitles = new Set(existingSettings.map(s => s.title));
 
