@@ -8369,11 +8369,11 @@
         function filterTropeByCategory(categoryId) {
             currentTropeFilter = categoryId;
             currentSubTypeFilter = null;
-            const mainContent = document.getElementById('mainContent');
-            if (mainContent) {
-                renderTrope(mainContent);
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                renderTrope(container);
             } else {
-                console.error('❌ 找不到 mainContent 元素');
+                console.error('❌ 找不到编辑器容器元素');
             }
         }
 
