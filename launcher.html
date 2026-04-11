@@ -7473,6 +7473,7 @@
             } else {
                 const currentWork = worksData.find(w => w.id === currentWorkId);
                 const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+                console.log('🎨 renderPlot: 获取到卷数:', volumes.length);
                 volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
 
                 editorHtml = `
@@ -7491,7 +7492,11 @@
                                 <p>点击上方「添加卷」开始创建</p>
                                </div>`
                             : volumes.map(volume => {
+                                console.log('  渲染卷:', volume.id, volume.title, 'expandedVolumes:', Array.from(expandedVolumes));
                                 const isExpanded = expandedVolumes.has(Number(volume.id));
+                                console.log('    isExpanded:', isExpanded);
+                                const chaptersHtml = renderChapters(volume.id);
+                                console.log('    chaptersHtml 长度:', chaptersHtml.length);
                                 return `
                                     <div class="volume-item" data-volume-id="${volume.id}">
                                         <div class="volume-header" onclick="toggleVolume(${volume.id})">
@@ -7510,7 +7515,7 @@
                                             </div>
                                         </div>
                                         <div class="volume-chapters ${isExpanded ? '' : 'collapsed'}" id="chapters-${volume.id}">
-                                            ${renderChapters(volume.id)}
+                                            ${chaptersHtml}
                                         </div>
                                     </div>
                                 `;
