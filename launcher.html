@@ -8603,36 +8603,50 @@
         function openTropeSubTypeDetail(categoryId, subTypeName) {
             console.log('🎭 打开桥段详情:', categoryId, subTypeName);
             
-            // 查找对应的类别和子类型
+            // 查找对应的类别
             const category = tropesData?.categories?.find(c => c.id === categoryId);
             if (!category) {
                 showNotification('❌ 找不到类别');
                 return;
             }
             
-            const subType = category.subTypes?.find(s => s.name === subTypeName);
-            if (!subType) {
-                showNotification('❌ 找不到子类型');
-                return;
+            // 从 tropesData.tropes 中查找匹配该子类型的所有桥段
+            const matchingTropes = tropesData?.tropes?.filter(t => t.usage === subTypeName) || [];
+            
+            if (matchingTropes.length > 0) {
+                // 有实际素材，随机选择一个展示
+                const trope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
+                openTropeDetailModal({
+                    id: trope.id,
+                    name: subTypeName,
+                    title: trope.title || subTypeName,
+                    category: category.name,
+                    categoryId: categoryId,
+                    description: trope.description || '',
+                    content: trope.description || '',
+                    book: trope.examples?.[0] || '',
+                    author: '',
+                    tags: [category.name, subTypeName],
+                    subType: subTypeName,
+                    allTropes: matchingTropes // 保存所有匹配素材供切换
+                });
+            } else {
+                // 无实际素材，显示占位符
+                const trope = {
+                    id: `${categoryId}_${subTypeName}`,
+                    name: subTypeName,
+                    title: subTypeName,
+                    category: category.name,
+                    categoryId: categoryId,
+                    description: `${subTypeName}是${category.name}中的经典桥段类型。`,
+                    content: `${subTypeName}是网文中常见的桥段套路，适用于${category.name}类型的小说创作。`,
+                    book: '',
+                    author: '',
+                    tags: [category.name, subTypeName],
+                    subType: subTypeName
+                };
+                openTropeDetailModal(trope);
             }
-            
-            // 构建桥段对象
-            const trope = {
-                id: `${categoryId}_${subTypeName}`,
-                name: subTypeName,
-                title: subTypeName,
-                category: category.name,
-                categoryId: categoryId,
-                description: subType.description || `${subTypeName}是${category.name}中的经典桥段类型。`,
-                content: subType.content || subType.description || `${subTypeName}是网文中常见的桥段套路，适用于${category.name}类型的小说创作。`,
-                book: subType.book || '',
-                author: subType.author || '',
-                tags: [category.name, subTypeName],
-                subType: subTypeName
-            };
-            
-            // 打开详情弹窗
-            openTropeDetailModal(trope);
         }
 
         function openTropeDetailModal(trope) {
