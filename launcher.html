@@ -7256,6 +7256,18 @@
             });
         }
 
+        // 切换世界观分类（同步包装器）
+        function switchWorldCategory(category) {
+            console.log('🔄 切换到分类:', category);
+            const container = document.getElementById('mainContent');
+            if (container) {
+                renderWorld(container, category).catch(err => {
+                    console.error('渲染世界观页面失败:', err);
+                    showNotification('❌ 切换分类失败');
+                });
+            }
+        }
+
         // 世界观页面
         async function renderWorld(container, category = 'other') {
             if (!dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
@@ -7306,7 +7318,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div class="tabs">
                         ${Object.entries(categoryNames).map(([key, name]) => `
-                            <div class="tab ${category === key ? 'active' : ''}" onclick="renderWorld(document.getElementById('mainContent'), '${key}')">${name}</div>
+                            <div class="tab ${category === key ? 'active' : ''}" onclick="switchWorldCategory('${key}')">${name}</div>
                         `).join('')}
                     </div>
                     <button class="btn btn-secondary" onclick="forceRefreshData()">🔄 刷新</button>
