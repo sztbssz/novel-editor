@@ -7551,8 +7551,10 @@
                                                 <span class="volume-number">第${volume.volumeNumber}卷</span>
                                                 <span class="volume-title">${volume.title || '未命名卷'}</span>
                                                 ${volume.summary ? `<span class="volume-summary">${volume.summary}</span>` : ''}
+                                                ${volume.outline ? `<span style="background: #4ade80; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">📄 大纲</span>` : ''}
                                             </div>
                                             <div class="volume-actions" onclick="event.stopPropagation()">
+                                                <button class="volume-btn" onclick="editVolumeOutline(${volume.id})" title="编辑大纲" style="${volume.outline ? 'background: #4ade80;' : ''}">📄</button>
                                                 <button class="volume-btn" onclick="editVolume(${volume.id})" title="编辑">✏️</button>
                                                 <button class="volume-btn" onclick="addChapter(${volume.id})" title="添加章节">➕</button>
                                                 <button class="volume-btn" onclick="moveVolumeUp(${volume.id})" title="上移">⬆️</button>
@@ -7627,10 +7629,11 @@
                 <div class="chapter-item" draggable="true" data-chapter-id="${chapter.id}" data-volume-id="${volumeId}" data-index="${index}">
                     <span class="chapter-handle">☰</span>
                     <span class="chapter-number">第${chapter.chapterNumber}章</span>
-                    <span class="chapter-title">${chapter.title || '未命名章节'}</span>
-                    <span class="chapter-wordcount">${chapter.wordCount || 0} 字</span>
+                    <span class="chapter-title" onclick="editChapterContent(${chapter.id})" style="cursor: pointer;" title="点击编辑内容">${chapter.title || '未命名章节'}</span>
+                    <span class="chapter-wordcount" style="${(chapter.wordCount || 0) >= 3000 ? 'color: #4ade80; font-weight: bold;' : ''}">${chapter.wordCount || 0} 字</span>
                     <div class="chapter-actions">
-                        <button class="chapter-btn" onclick="editChapter(${chapter.id})" title="编辑">✏️</button>
+                        <button class="chapter-btn" onclick="editChapterContent(${chapter.id})" title="编辑内容">📝</button>
+                        <button class="chapter-btn" onclick="editChapter(${chapter.id})" title="修改标题">✏️</button>
                         <button class="chapter-btn" onclick="moveChapterUp(${chapter.id})" title="上移">⬆️</button>
                         <button class="chapter-btn" onclick="moveChapterDown(${chapter.id})" title="下移">⬇️</button>
                         <button class="chapter-btn" onclick="deleteChapter(${chapter.id})" title="删除">🗑️</button>
@@ -7953,7 +7956,8 @@
                 workId: currentWorkId,
                 volumeNumber: nextNumber,
                 title: title.trim(),
-                summary: summary.trim()
+                summary: summary.trim(),
+                outline: ''  // 卷大纲，支持几千字
             };
 
             const volumeId = await db.add('volumes', volume);
@@ -7983,6 +7987,10 @@
 
             volume.title = newTitle.trim();
             volume.summary = newSummary.trim();
+            // 确保 outline 字段存在
+            if (volume.outline === undefined) {
+                volume.outline = '';
+            }
             await db.update('volumes', volume);
             await new Promise(resolve => setTimeout(resolve, 100));
             
@@ -7991,6 +7999,79 @@
                 await renderPlot(container);
             }
             showNotification('✅ 已更新');
+        }
+
+        // 编辑卷大纲（大文本编辑）
+        async function editVolumeOutline(id) {
+            const volume = await db.get('volumes', id);
+            if (!volume) return;
+
+            // 确保 outline 字段存在
+            if (volume.outline === undefined) {
+                volume.outline = '';
+            }
+
+            // 创建大纲编辑弹窗
+            const modal = document.createElement('div');
+            modal.id = 'outlineEditorModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border-radius: 12px; width: 90%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+                    <div style="padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; color: #fff;">📚 编辑第${volume.volumeNumber}卷大纲</h3>
+                        <button onclick="document.getElementById('outlineEditorModal').remove()" style="background: none; border: none; color: #999; font-size: 24px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="padding: 20px; flex: 1; overflow: hidden;">
+                        <textarea id="outlineEditorText" style="width: 100%; height: 400px; background: #16213e; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 15px; font-size: 14px; line-height: 1.6; resize: none;" placeholder="请输入本卷大纲...&#10;&#10;建议包含：&#10;- 本卷主要情节走向&#10;- 关键转折点&#10;- 人物发展弧线&#10;- 场景安排&#10;">${volume.outline}</textarea>
+                        <div style="margin-top: 10px; color: #888; font-size: 12px;">
+                            字数: <span id="outlineWordCount">${volume.outline.length}</span> | 支持 Markdown 格式
+                        </div>
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid #333; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button id="outlineCancelBtn" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">取消</button>
+                        <button id="outlineSaveBtn" style="padding: 10px 20px; background: #e94560; color: #fff; border: none; border-radius: 6px; cursor: pointer;">💾 保存大纲</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 字数统计
+            const textarea = document.getElementById('outlineEditorText');
+            const wordCountSpan = document.getElementById('outlineWordCount');
+            textarea.addEventListener('input', () => {
+                wordCountSpan.textContent = textarea.value.length;
+            });
+            
+            // 保存
+            document.getElementById('outlineSaveBtn').addEventListener('click', async () => {
+                const newOutline = textarea.value.trim();
+                volume.outline = newOutline;
+                await db.update('volumes', volume);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                modal.remove();
+                
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) {
+                    await renderPlot(container);
+                }
+                showNotification('✅ 大纲已保存');
+            });
+            
+            // 取消
+            document.getElementById('outlineCancelBtn').addEventListener('click', () => {
+                modal.remove();
+            });
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
         }
 
         // 删除卷
@@ -8155,6 +8236,141 @@
                 await renderPlot(container);
             }
             showNotification('✅ 已更新');
+        }
+
+        // 编辑章节内容（大文本编辑，支持3000字以上）
+        async function editChapterContent(id) {
+            const chapter = await db.get('chapters', id);
+            if (!chapter) return;
+
+            // 确保 content 字段存在
+            if (chapter.content === undefined) {
+                chapter.content = '';
+            }
+
+            // 创建内容编辑弹窗
+            const modal = document.createElement('div');
+            modal.id = 'chapterEditorModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.85); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border-radius: 12px; width: 95%; max-width: 900px; max-height: 95vh; display: flex; flex-direction: column;">
+                    <div style="padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0; color: #fff;">📝 编辑第${chapter.chapterNumber}章</h3>
+                            <p style="margin: 5px 0 0 0; color: #888; font-size: 14px;">${chapter.title || '未命名章节'}</p>
+                        </div>
+                        <button onclick="document.getElementById('chapterEditorModal').remove()" style="background: none; border: none; color: #999; font-size: 28px; cursor: pointer;">×</button>
+                    </div>
+                    <div style="padding: 20px; flex: 1; overflow: hidden;">
+                        <textarea id="chapterEditorText" style="width: 100%; height: 500px; background: #16213e; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 15px; font-size: 15px; line-height: 1.8; resize: none; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;" placeholder="开始写作...&#10;&#10;本章目标字数：3000字&#10;&#10;建议结构：&#10;- 开头钩子（200-300字）&#10;- 情节推进（1500-2000字）&#10;- 高潮/转折（500-800字）&#10;- 结尾悬念（200-300字）&#10;">${chapter.content}</textarea>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; color: #888; font-size: 12px;">
+                            <span>字数: <span id="chapterWordCount" style="color: #00d4ff; font-weight: bold;">${chapter.content.length}</span> | 目标: 3000字</span>
+                            <span id="chapterProgress">进度: ${Math.min(100, Math.round(chapter.content.length / 3000 * 100))}%</span>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 10px;">
+                            <button id="chapterClearBtn" style="padding: 10px 20px; background: #333; color: #ff6b6b; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">🗑️ 清空</button>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button id="chapterCancelBtn" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">取消</button>
+                            <button id="chapterSaveBtn" style="padding: 10px 25px; background: #e94560; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">💾 保存内容</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const textarea = document.getElementById('chapterEditorText');
+            const wordCountSpan = document.getElementById('chapterWordCount');
+            const progressSpan = document.getElementById('chapterProgress');
+            
+            // 字数统计和进度更新
+            textarea.addEventListener('input', () => {
+                const count = textarea.value.length;
+                wordCountSpan.textContent = count;
+                const progress = Math.min(100, Math.round(count / 3000 * 100));
+                progressSpan.textContent = `进度: ${progress}%`;
+                
+                // 达到目标字数时变绿
+                if (count >= 3000) {
+                    wordCountSpan.style.color = '#4ade80';
+                    progressSpan.style.color = '#4ade80';
+                } else {
+                    wordCountSpan.style.color = '#00d4ff';
+                    progressSpan.style.color = '#888';
+                }
+            });
+            
+            // 保存
+            document.getElementById('chapterSaveBtn').addEventListener('click', async () => {
+                const newContent = textarea.value;
+                const oldContent = chapter.content || '';
+                chapter.content = newContent;
+                chapter.wordCount = newContent.length;
+                
+                await db.update('chapters', chapter);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // 记录写作统计
+                try {
+                    await recordWritingStats('chapter_save', {
+                        chaptersAdded: 0,
+                        wordCount: newContent.length - oldContent.length,
+                        minutesActive: 1
+                    });
+                } catch (e) {
+                    console.warn('记录统计失败:', e);
+                }
+                
+                modal.remove();
+                await refreshChaptersData();
+                
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) {
+                    await renderPlot(container);
+                }
+                showNotification(`✅ 已保存，本章 ${newContent.length} 字`);
+            });
+            
+            // 取消
+            document.getElementById('chapterCancelBtn').addEventListener('click', () => {
+                modal.remove();
+            });
+            
+            // 清空
+            document.getElementById('chapterClearBtn').addEventListener('click', () => {
+                if (confirm('确定要清空本章内容吗？此操作不可恢复。')) {
+                    textarea.value = '';
+                    wordCountSpan.textContent = '0';
+                    progressSpan.textContent = '进度: 0%';
+                }
+            });
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    // 有内容变更时提示
+                    if (textarea.value !== chapter.content) {
+                        if (confirm('内容已修改，是否保存？')) {
+                            document.getElementById('chapterSaveBtn').click();
+                        } else {
+                            modal.remove();
+                        }
+                    } else {
+                        modal.remove();
+                    }
+                }
+            });
+            
+            // 自动聚焦
+            textarea.focus();
         }
 
         // 删除章节
