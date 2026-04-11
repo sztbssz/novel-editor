@@ -2945,18 +2945,18 @@
                 <p>镜像囚笼 · 小说编辑器</p>
             </div>
             <nav class="nav-menu">
-                <a class="nav-item active" data-page="home"><i>🏠</i>首页</a>
-                <a class="nav-item" data-page="history"><i>🕐</i>历史记录</a>
-                <a class="nav-item" data-page="characters"><i>👤</i>角色管理</a>
-                <a class="nav-item" data-page="world"><i>🌍</i>世界观</a>
-                <a class="nav-item" data-page="plot"><i>📖</i>情节大纲</a>
-                <a class="nav-item" data-page="mindmap"><i>🗺️</i>大纲导图</a>
-                <a class="nav-item" data-page="trope"><i>🎭</i>桥段素材</a>
-                <a class="nav-item" data-page="scene"><i>📝</i>桥段生成</a>
-                <a class="nav-item" data-page="names"><i>✨</i>姓名生成</a>
-                <a class="nav-item" data-page="stats"><i>📊</i>写作统计</a>
-                <a class="nav-item" data-page="templates"><i>🎨</i>模板管理</a>
-                <a class="nav-item" data-page="data"><i>💾</i>数据管理</a>
+                <a class="nav-item active" data-page="home" onclick="handleNavClick(this, 'home')"><i>🏠</i>首页</a>
+                <a class="nav-item" data-page="history" onclick="handleNavClick(this, 'history')"><i>🕐</i>历史记录</a>
+                <a class="nav-item" data-page="characters" onclick="handleNavClick(this, 'characters')"><i>👤</i>角色管理</a>
+                <a class="nav-item" data-page="world" onclick="handleNavClick(this, 'world')"><i>🌍</i>世界观</a>
+                <a class="nav-item" data-page="plot" onclick="handleNavClick(this, 'plot')"><i>📖</i>情节大纲</a>
+                <a class="nav-item" data-page="mindmap" onclick="handleNavClick(this, 'mindmap')"><i>🗺️</i>大纲导图</a>
+                <a class="nav-item" data-page="trope" onclick="handleNavClick(this, 'trope')"><i>🎭</i>桥段素材</a>
+                <a class="nav-item" data-page="scene" onclick="handleNavClick(this, 'scene')"><i>📝</i>桥段生成</a>
+                <a class="nav-item" data-page="names" onclick="handleNavClick(this, 'names')"><i>✨</i>姓名生成</a>
+                <a class="nav-item" data-page="stats" onclick="handleNavClick(this, 'stats')"><i>📊</i>写作统计</a>
+                <a class="nav-item" data-page="templates" onclick="handleNavClick(this, 'templates')"><i>🎨</i>模板管理</a>
+                <a class="nav-item" data-page="data" onclick="handleNavClick(this, 'data')"><i>💾</i>数据管理</a>
             </nav>
         </aside>
         <!-- 分屏容器 -->
@@ -5074,6 +5074,27 @@
         }
 
         // ==================== 页面加载 ====================
+
+        // 处理导航点击（直接绑定在HTML元素上）
+        function handleNavClick(element, page) {
+            console.log('🧭 导航点击:', page);
+            
+            // 更新活跃状态
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            element.classList.add('active');
+            
+            // 懒加载：进入角色页时加载角色数据
+            if (page === 'characters' && !dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
+                loadCharacterDataWithUI();
+            }
+            // 懒加载：进入世界观页时加载世界观数据
+            else if (page === 'world' && !dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
+                loadWorldviewDataWithUI();
+            }
+            
+            loadPage(page);
+        }
+
         function loadPage(page) {
             currentPage = page;
             // 根据分屏模式选择渲染目标
