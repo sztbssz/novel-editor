@@ -8602,6 +8602,7 @@
         // 打开子类型详情弹窗
         function openTropeSubTypeDetail(categoryId, subTypeName) {
             console.log('🎭 打开桥段详情:', categoryId, subTypeName);
+            console.log('📦 tropesData:', tropesData ? '已加载' : '未加载', 'tropes数量:', tropesData?.tropes?.length || 0);
             
             // 查找对应的类别
             const category = tropesData?.categories?.find(c => c.id === categoryId);
@@ -8612,10 +8613,12 @@
             
             // 从 tropesData.tropes 中查找匹配该子类型的所有桥段
             const matchingTropes = tropesData?.tropes?.filter(t => t.usage === subTypeName) || [];
+            console.log('🔍 匹配素材数:', matchingTropes.length, '子类型:', subTypeName);
             
             if (matchingTropes.length > 0) {
                 // 有实际素材，随机选择一个展示
                 const trope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
+                console.log('✅ 找到素材:', trope.title, '描述长度:', (trope.description || '').length);
                 openTropeDetailModal({
                     id: trope.id,
                     name: subTypeName,
@@ -8632,6 +8635,7 @@
                 });
             } else {
                 // 无实际素材，显示占位符
+                console.log('⚠️ 无匹配素材，显示占位符');
                 const trope = {
                     id: `${categoryId}_${subTypeName}`,
                     name: subTypeName,
