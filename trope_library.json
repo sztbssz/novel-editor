@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "description": "网文经典桥段素材库",
+  "updated": "2026-04-11",
+  "total_tropes": 459,
+  "categories": {
+    "universal": {
+      "name": "全网文通用核心桥段",
+      "count": 2,
+      "tropes": [
+        "炸天帮徐缺装逼如风"
+      ]
+    },
+    "xuanhuan": {
+      "name": "玄幻/仙侠题材专属",
+      "count": 5,
+      "tropes": [
+        "天道图书馆洞察弱点",
+        "李七夜寻找丢失山羊",
+        "模拟长生路百世轮回",
+        "绝世武神越级战斗",
+        "剑道真解杀伐果断"
+      ]
+    },
+    "xuanyi": {
+      "name": "悬疑/灵异/无限流题材专属",
+      "count": 0,
+      "tropes": []
+    },
+    "dushi": {
+      "name": "都市题材专属",
+      "count": 0,
+      "tropes": []
+    },
+    "game": {
+      "name": "游戏/网游/电竞题材专属",
+      "count": 3,
+      "tropes": [
+        "林凡不死之身浪全场",
+        "绝对交易财富权杖",
+        "亏成首富从游戏开始"
+      ]
+    },
+    "chuanshu": {
+      "name": "重生/穿越/穿书/快穿题材专属",
+      "count": 3,
+      "tropes": [
+        "北玄帝尊重生复仇",
+        "全民大穿越脑洞崩坏",
+        "墨雨云间借尸还魂"
+      ]
+    },
+    "growth": {
+      "name": "人物成长与金手指专属",
+      "count": 0,
+      "tropes": []
+    },
+    "kesulu": {
+      "name": "克苏鲁/诡异复苏/污染题材专属",
+      "count": 0,
+      "tropes": []
+    },
+    "emotion": {
+      "name": "情感与人际关系类桥段",
+      "count": 0,
+      "tropes": []
+    },
+    "narrative": {
+      "name": "叙事节奏与结构设计类",
+      "count": 0,
+      "tropes": []
+    },
+    "yineng": {
+      "name": "异能/末世题材专属",
+      "count": 0,
+      "tropes": []
+    }
+  }
+}
