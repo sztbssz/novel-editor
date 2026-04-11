@@ -4033,10 +4033,8 @@
                             const chapStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
                             chapStore.createIndex('volumeId', 'volumeId', { unique: false });
                         }
-                        // 情节大纲专用存储
-                        if (!db.objectStoreNames.contains('outline_works')) {
-                            db.createObjectStore('outline_works', { keyPath: 'id', autoIncrement: true });
-                        }
+                        // 情节大纲专用存储 - 使用works表，不再独立创建
+                        // outline_works 已弃用，使用 works 表统一管理作品
                         if (!db.objectStoreNames.contains('outline_settings')) {
                             const settingStore = db.createObjectStore('outline_settings', { keyPath: 'id', autoIncrement: true });
                             settingStore.createIndex('workId', 'workId', { unique: false });
@@ -8706,8 +8704,8 @@
         async function renderOutline(container) {
             if (!container) return;
             
-            // 加载作品列表
-            const works = await db.getAll('outline_works');
+            // 加载作品列表 - 从works表获取（正文创作的作品）
+            const works = await db.getAll('works');
             
             // 如果没有选中作品，默认选择第一个
             if (!currentOutlineWorkId && works.length > 0) {
@@ -8738,10 +8736,17 @@
                         <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 15px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <h3 style="margin: 0; font-size: 14px; color: #fff;">📚 作品列表</h3>
-                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="addOutlineWork()">+ 新建</button>
+                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="goToCreateWork()">+ 新建</button>
                             </div>
-                            <div class="outline-works-list" style="max-height: 150px; overflow-y: auto;">
-                                ${works.length === 0 ? '<div style="color: #666; font-size: 12px; text-align: center; padding: 10px;">暂无作品</div>' : 
+                            <div class="outline-works-list" style="max-height: 200px; overflow-y: auto;">
+                                ${works.length === 0 ? `
+                                    <div style="color: #666; font-size: 12px; text-align: center; padding: 20px 10px;">
+                                        <div style="font-size: 24px; margin-bottom: 8px;">📭</div>
+                                        <div style="margin-bottom: 8px;">暂无作品</div>
+                                        <div style="font-size: 11px; color: #888; margin-bottom: 12px;">请先在正文创作中创建作品</div>
+                                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="goToCreateWork()">去创建作品</button>
+                                    </div>
+                                ` : 
                                     works.map(work => `
                                         <div class="outline-work-item ${work.id === currentOutlineWorkId ? 'active' : ''}" 
                                              onclick="switchOutlineWork(${work.id})"
@@ -8750,13 +8755,13 @@
                                                     border-left: 3px solid ${work.id === currentOutlineWorkId ? '#e94560' : 'transparent'};
                                                     display: flex; justify-content: space-between; align-items: center;">
                                             <span style="font-size: 13px; color: ${work.id === currentOutlineWorkId ? '#fff' : '#ccc'}; overflow: hidden; text-overflow: ellipsis;">${work.title || '未命名作品'}</span>
-                                            <button onclick="event.stopPropagation(); deleteOutlineWork(${work.id})" 
-                                                    style="background: none; border: none; color: #e94560; cursor: pointer; font-size: 12px; padding: 2px 5px;">×</button>
+                                            ${work.id === currentOutlineWorkId ? '<span style="font-size: 11px; color: #e94560;">●</span>' : ''}
                                         </div>
                                     `).join('')}
                             </div>
                         </div>
                         
+                        ${works.length > 0 ? `
                         <!-- 分类标签 -->
                         <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 15px; flex: 1;">
                             <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #fff;">📂 分类设定</h3>
@@ -8774,6 +8779,7 @@
                                 `).join('')}
                             </div>
                         </div>
+                        ` : ''}
                     </div>
                     
                     <!-- 中间：设定条目列表 -->
@@ -8789,7 +8795,15 @@
                             </div>
                         </div>
                         
-                        ${!currentOutlineWorkId ? '<div style="color: #666; text-align: center; padding: 40px 20px;">请先选择或创建一个作品</div>' :
+                        <!-- 导入/导出按钮 -->
+                        ${currentOutlineWorkId ? `
+                        <div style="display: flex; gap: 5px; margin-bottom: 15px; padding: 10px; background: #16213e; border-radius: 8px;">
+                            <button class="btn btn-secondary" style="flex: 1; padding: 6px 10px; font-size: 12px;" onclick="exportSettings()">📤 导出设定</button>
+                            <button class="btn btn-secondary" style="flex: 1; padding: 6px 10px; font-size: 12px;" onclick="showImportSettingsDialog()">📥 导入设定</button>
+                        </div>
+                        ` : ''}
+                        
+                        ${!currentOutlineWorkId ? '<div style="color: #666; text-align: center; padding: 40px 20px;">请先选择作品<br><span style="font-size: 12px;">从左侧作品列表选择</span></div>' :
                             settings.length === 0 ? '<div style="color: #666; text-align: center; padding: 40px 20px;">暂无设定条目<br><span style="font-size: 12px;">点击上方按钮生成</span></div>' :
                             `<div class="outline-settings-list" style="flex: 1; overflow-y: auto;">
                                 ${settings.map(setting => `
@@ -8888,52 +8902,21 @@
 
         // ==================== 作品管理函数 ====================
         
-        // 添加作品
-        async function addOutlineWork() {
-            const title = prompt('请输入作品名称：');
-            if (!title) return;
-            
-            const work = {
-                title: title.trim(),
-                description: '',
-                createdAt: new Date().toISOString()
-            };
-            
-            const workId = await db.add('outline_works', work);
-            currentOutlineWorkId = workId;
-            showNotification('✅ 作品创建成功');
-            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        // 跳转到正文创作创建作品
+        async function goToCreateWork() {
+            switchPage('plot');
+            showNotification('💡 请在正文创作页面点击「+ 新建作品」创建作品');
         }
         
-        // 删除作品
+        // 添加作品（已弃用，改为引用works表）
+        async function addOutlineWork() {
+            showNotification('⚠️ 请先在正文创作中创建作品，然后在剧情大纲中选择');
+            goToCreateWork();
+        }
+        
+        // 删除作品（已弃用，在正文创作中管理）
         async function deleteOutlineWork(id) {
-            if (!confirm('确定要删除这个作品吗？所有相关设定、卷和剧情都将被删除！')) return;
-            
-            // 删除相关设定
-            const settings = await db.getAll('outline_settings');
-            for (const setting of settings.filter(s => s.workId === id)) {
-                await db.delete('outline_settings', setting.id);
-            }
-            
-            // 删除相关卷和剧情
-            const volumes = await db.getAll('outline_volumes');
-            for (const vol of volumes.filter(v => v.workId === id)) {
-                const plots = await db.getAll('outline_plots');
-                for (const plot of plots.filter(p => p.volumeId === vol.id)) {
-                    await db.delete('outline_plots', plot.id);
-                }
-                await db.delete('outline_volumes', vol.id);
-            }
-            
-            await db.delete('outline_works', id);
-            
-            if (currentOutlineWorkId === id) {
-                currentOutlineWorkId = null;
-                currentSettingId = null;
-            }
-            
-            showNotification('✅ 作品已删除');
-            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            showNotification('⚠️ 作品删除请在正文创作中操作');
         }
         
         // 切换当前作品
@@ -12582,6 +12565,314 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             modalCallback = () => {
                 document.getElementById('modalConfirm').style.display = '';
             };
+        }
+
+        // ==================== 设定导入/导出功能 ====================
+        
+        // 导出当前作品的所有设定
+        async function exportSettings() {
+            if (!currentOutlineWorkId) {
+                showNotification('❌ 请先选择一个作品');
+                return;
+            }
+            
+            const work = await db.get('works', currentOutlineWorkId);
+            if (!work) {
+                showNotification('❌ 作品不存在');
+                return;
+            }
+            
+            // 获取所有设定
+            const allSettings = await db.getAll('outline_settings');
+            const workSettings = allSettings.filter(s => s.workId === currentOutlineWorkId);
+            
+            // 获取所有卷
+            const allVolumes = await db.getAll('outline_volumes');
+            const workVolumes = allVolumes.filter(v => v.workId === currentOutlineWorkId);
+            
+            // 获取所有剧情
+            const allPlots = await db.getAll('outline_plots');
+            const workPlots = allPlots.filter(p => p.workId === currentOutlineWorkId);
+            
+            const exportData = {
+                version: '1.0',
+                exportType: 'settings',
+                exportDate: new Date().toISOString(),
+                work: {
+                    title: work.title,
+                    description: work.description || ''
+                },
+                settings: workSettings,
+                volumes: workVolumes,
+                plots: workPlots
+            };
+            
+            const filename = `${work.title}_设定_${ExportUtils.getDateString()}.json`;
+            ExportUtils.exportJSON(exportData, filename);
+            showNotification(`✅ 已导出 ${workSettings.length} 条设定，${workVolumes.length} 个卷，${workPlots.length} 条剧情`);
+        }
+        
+        // 显示导入设定对话框
+        async function showImportSettingsDialog() {
+            if (!currentOutlineWorkId) {
+                showNotification('❌ 请先选择一个作品');
+                return;
+            }
+            
+            showModal('📥 导入设定', `
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="import-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                        <button id="tab-file" class="import-tab active" onclick="switchImportTab('file')" 
+                                style="padding: 8px 16px; background: #e94560; border: none; border-radius: 6px; color: #fff; cursor: pointer;">📁 文件导入</button>
+                        <button id="tab-text" class="import-tab" onclick="switchImportTab('text')" 
+                                style="padding: 8px 16px; background: #0f3460; border: none; border-radius: 6px; color: #ccc; cursor: pointer;">📝 粘贴导入</button>
+                    </div>
+                    
+                    <!-- 文件导入 -->
+                    <div id="import-file-panel">
+                        <div style="border: 2px dashed #555; border-radius: 8px; padding: 30px; text-align: center;">
+                            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="handleImportFileSelect(event)">
+                            <button onclick="document.getElementById('importFileInput').click()" 
+                                    style="padding: 10px 20px; background: #0f3460; border: none; border-radius: 6px; color: #fff; cursor: pointer;">选择 JSON 文件</button>
+                            <p style="color: #888; font-size: 12px; margin-top: 15px;">支持从「导出设定」生成的 JSON 文件</p>
+                            <div id="importFilePreview" style="margin-top: 15px; text-align: left;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 粘贴导入 -->
+                    <div id="import-text-panel" style="display: none;">
+                        <textarea id="importTextInput" placeholder="在此粘贴设定内容...\n\n支持格式：\n1. JSON格式（从导出文件复制）\n2. 简单文本格式（AI生成的设定）\n   例如：\n   【功法名称】\n   名称：xxx\n   描述：xxx\n   ..." 
+                                  style="width: 100%; height: 200px; padding: 12px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 13px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <!-- 导入选项 -->
+                    <div id="import-options" style="background: #16213e; padding: 15px; border-radius: 8px; display: none;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #fff;">导入选项</h4>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 8px;">导入模式</label>
+                            <div style="display: flex; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="importMode" value="append" checked style="accent-color: #e94560;">
+                                    <span style="font-size: 13px; color: #ccc;">追加（保留现有设定）</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="importMode" value="overwrite" style="accent-color: #e94560;">
+                                    <span style="font-size: 13px; color: #ccc;">覆盖（删除现有设定）</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="importPreview" style="font-size: 12px; color: #888;"></div>
+                    </div>
+                </div>
+            `, async () => {
+                const mode = document.querySelector('input[name="importMode"]:checked')?.value || 'append';
+                const fileData = window.importFileData;
+                const textData = document.getElementById('importTextInput')?.value?.trim();
+                
+                if (!fileData && !textData) {
+                    showNotification('❌ 请先选择文件或粘贴内容');
+                    return false;
+                }
+                
+                let importData = fileData;
+                if (!importData && textData) {
+                    try {
+                        importData = JSON.parse(textData);
+                    } catch (e) {
+                        // 尝试解析简单文本格式
+                        importData = parseSimpleTextToSettings(textData);
+                    }
+                }
+                
+                if (!importData) {
+                    showNotification('❌ 无法解析导入内容');
+                    return false;
+                }
+                
+                await executeImport(importData, mode);
+                return true;
+            });
+        }
+        
+        // 切换导入标签
+        function switchImportTab(tab) {
+            document.querySelectorAll('.import-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.background = '#0f3460';
+                t.style.color = '#ccc';
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.getElementById(`tab-${tab}`).style.background = '#e94560';
+            document.getElementById(`tab-${tab}`).style.color = '#fff';
+            
+            document.getElementById('import-file-panel').style.display = tab === 'file' ? 'block' : 'none';
+            document.getElementById('import-text-panel').style.display = tab === 'text' ? 'block' : 'none';
+        }
+        
+        // 处理文件选择
+        async function handleImportFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                
+                window.importFileData = data;
+                
+                const preview = document.getElementById('importFilePreview');
+                const options = document.getElementById('import-options');
+                
+                const settingCount = data.settings?.length || 0;
+                const volumeCount = data.volumes?.length || 0;
+                const plotCount = data.plots?.length || 0;
+                
+                preview.innerHTML = `
+                    <div style="background: #1a1a2e; padding: 12px; border-radius: 6px;">
+                        <div style="color: #00d4ff; font-weight: 600; margin-bottom: 8px;">📄 ${file.name}</div>
+                        <div style="color: #888; font-size: 12px;">
+                            来源作品：${data.work?.title || '未知'}<br>
+                            导出时间：${data.exportDate ? new Date(data.exportDate).toLocaleString('zh-CN') : '未知'}<br>
+                            包含：${settingCount} 条设定，${volumeCount} 个卷，${plotCount} 条剧情
+                        </div>
+                    </div>
+                `;
+                
+                options.style.display = 'block';
+                document.getElementById('importPreview').innerHTML = `
+                    检测到：<br>
+                    • 设定条目：${settingCount} 条<br>
+                    • 卷：${volumeCount} 个<br>
+                    • 剧情梗概：${plotCount} 条
+                `;
+            } catch (e) {
+                showNotification('❌ 文件解析失败：' + e.message);
+                window.importFileData = null;
+            }
+        }
+        
+        // 解析简单文本为设定
+        function parseSimpleTextToSettings(text) {
+            const settings = [];
+            const lines = text.split('\n');
+            let currentSetting = null;
+            let currentContent = [];
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                
+                // 检测标题（【xxx】或 xxx：）
+                const titleMatch = trimmed.match(/^[【\[](.+?)[】\]]\s*(.+)?$/) || trimmed.match(/^(.+?)[：:]/);
+                
+                if (titleMatch && !trimmed.includes('描述') && !trimmed.includes('介绍')) {
+                    // 保存上一个设定
+                    if (currentSetting && currentContent.length > 0) {
+                        currentSetting.description = currentContent.join('\n');
+                        settings.push(currentSetting);
+                    }
+                    
+                    // 创建新设定
+                    currentSetting = {
+                        name: titleMatch[1] || titleMatch[2] || trimmed,
+                        description: '',
+                        type: currentSettingType,
+                        workId: currentOutlineWorkId,
+                        generatedFrom: 'import'
+                    };
+                    currentContent = [];
+                } else if (currentSetting) {
+                    currentContent.push(trimmed);
+                }
+            }
+            
+            // 保存最后一个设定
+            if (currentSetting && currentContent.length > 0) {
+                currentSetting.description = currentContent.join('\n');
+                settings.push(currentSetting);
+            }
+            
+            return {
+                version: '1.0',
+                exportType: 'settings',
+                exportDate: new Date().toISOString(),
+                settings: settings,
+                volumes: [],
+                plots: []
+            };
+        }
+        
+        // 执行导入
+        async function executeImport(data, mode) {
+            if (mode === 'overwrite') {
+                // 删除现有设定
+                const allSettings = await db.getAll('outline_settings');
+                for (const s of allSettings.filter(s => s.workId === currentOutlineWorkId)) {
+                    await db.delete('outline_settings', s.id);
+                }
+                
+                // 删除现有卷和剧情
+                const allVolumes = await db.getAll('outline_volumes');
+                for (const v of allVolumes.filter(v => v.workId === currentOutlineWorkId)) {
+                    const allPlots = await db.getAll('outline_plots');
+                    for (const p of allPlots.filter(p => p.volumeId === v.id)) {
+                        await db.delete('outline_plots', p.id);
+                    }
+                    await db.delete('outline_volumes', v.id);
+                }
+            }
+            
+            let settingCount = 0;
+            let volumeCount = 0;
+            let plotCount = 0;
+            const volumeIdMap = {}; // 旧卷ID映射到新卷ID
+            
+            // 导入设定
+            if (data.settings && Array.isArray(data.settings)) {
+                for (const setting of data.settings) {
+                    const newSetting = {
+                        ...setting,
+                        workId: currentOutlineWorkId,
+                        id: undefined // 让数据库生成新ID
+                    };
+                    await db.add('outline_settings', newSetting);
+                    settingCount++;
+                }
+            }
+            
+            // 导入卷
+            if (data.volumes && Array.isArray(data.volumes)) {
+                for (const vol of data.volumes) {
+                    const oldId = vol.id;
+                    const newVol = {
+                        ...vol,
+                        workId: currentOutlineWorkId,
+                        id: undefined
+                    };
+                    const newId = await db.add('outline_volumes', newVol);
+                    volumeIdMap[oldId] = newId;
+                    volumeCount++;
+                }
+            }
+            
+            // 导入剧情（使用映射后的卷ID）
+            if (data.plots && Array.isArray(data.plots)) {
+                for (const plot of data.plots) {
+                    const newPlot = {
+                        ...plot,
+                        workId: currentOutlineWorkId,
+                        volumeId: volumeIdMap[plot.volumeId] || plot.volumeId,
+                        id: undefined
+                    };
+                    await db.add('outline_plots', newPlot);
+                    plotCount++;
+                }
+            }
+            
+            showNotification(`✅ 导入成功！新增 ${settingCount} 条设定，${volumeCount} 个卷，${plotCount} 条剧情`);
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // ==================== 收藏功能 ====================

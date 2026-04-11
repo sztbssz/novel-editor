@@ -1,0 +1,425 @@
+{
+  "version": "1.0",
+  "description": "网文写作风格数据集，用于一键写作功能",
+  "styles": [
+    {
+      "id": "dawang_raoming",
+      "name": "大王饶命",
+      "author": "会说话的肘子",
+      "category": "搞笑/灵气复苏",
+      "features": {
+        "sentencePattern": {
+          "description": "短句为主，节奏明快",
+          "characteristics": [
+            "多用短句，避免长句堆砌",
+            "口语化表达，贴近生活",
+            "频繁使用反问句增强互动感",
+            "段落简短，一行一段居多"
+          ],
+          "example": "吕树愣了一下。\n这什么情况？\n画风不对啊！"
+        },
+        "vocabulary": {
+          "description": "网络热梗+生活化用词",
+          "characteristics": [
+            "大量使用网络流行语",
+            "亲切接地气的口语词汇",
+            "吐槽式幽默用词",
+            "'毒舌'式犀利表达"
+          ],
+          "keywords": ["负面情绪值", "我信了你的邪", "跟谁俩呢", "画风不对", "毒舌"],
+          "example": "我信了你的邪！"
+        },
+        "pacing": {
+          "description": "快节奏，爽点密集",
+          "characteristics": [
+            "情节推进快速，不拖沓",
+            "笑点与爽点交替出现",
+            "冲突快速爆发快速解决",
+            "每章都有明确的小高潮"
+          ]
+        },
+        "description": {
+          "description": "简洁明了，少环境描写",
+          "characteristics": [
+            "环境描写极简，一笔带过",
+            "重在人物对话和心理",
+            "动作描写利落干脆",
+            "不堆砌辞藻"
+          ]
+        },
+        "dialogue": {
+          "description": "吐槽风，金句频出",
+          "characteristics": [
+            "对话占比极高",
+            "吐槽式对白",
+            "主角经常'毒舌'损人",
+            "金句频出，适合传播"
+          ],
+          "example": "天不生我吕小树，贱道万古如长夜。"
+        }
+      },
+      "sampleOpening": "时值2月，冬日里的晚霞由西边向整个世界蔓延，寂静的红色像是一层油画的涂料，把所有行人身上都换了一种颜色。\n\n来往过客都是笑容满面的。\n\n今天大年初三，正是逛庙会的好时候...",
+      "tags": ["搞笑", "系统流", "灵气复苏", "毒舌", "吐槽"]
+    },
+    {
+      "id": "dafeng_dagengren",
+      "name": "大奉打更人",
+      "author": "卖报小郎君",
+      "category": "玄幻/探案",
+      "features": {
+        "sentencePattern": {
+          "description": "长短结合，张弛有度",
+          "characteristics": [
+            "叙述用长句，对话用短句",
+            "文言与白话交替使用",
+            "推理段落逻辑严密",
+            "适当使用对仗句式"
+          ]
+        },
+        "vocabulary": {
+          "description": "古风+现代梗融合",
+          "characteristics": [
+            "大量使用古代官职、礼仪词汇",
+            "诗词歌赋信手拈来",
+            "现代梗巧妙植入",
+            "成语和典故频繁使用"
+          ],
+          "keywords": ["打更人", "儒家", "术士", "妖物", "京察", "半阙七律"],
+          "example": "滚滚长江东逝水，浪花淘尽英雄。"
+        },
+        "pacing": {
+          "description": "悬疑推进，层层递进",
+          "characteristics": [
+            "开篇即入悬疑主线",
+            "案件推理环环相扣",
+            "线索埋伏笔深远",
+            "高潮迭起，不拖沓"
+          ]
+        },
+        "description": {
+          "description": "古风浓郁，画面感强",
+          "characteristics": [
+            "古代市井生活描写细腻",
+            "服饰、建筑、礼仪考究",
+            "场景切换自然流畅",
+            "氛围营造到位"
+          ]
+        },
+        "dialogue": {
+          "description": "文白夹杂，各有特色",
+          "characteristics": [
+            "不同角色有不同说话风格",
+            "文人雅士用文言",
+            "市井百姓用口语",
+            "主角机智对答"
+          ],
+          "example": "这个世界，有儒；有道；有佛；有妖；有术士。"
+        }
+      },
+      "sampleOpening": "这个世界，有儒；有道；有佛；有妖；有术士。\n\n警校毕业的许七安幽幽醒来，发现自己身处牢狱之中，三日后流放边陲.....\n\n他起初的目的只是自保，顺便在这个没有人权的社会里当个富家翁悠闲度日。",
+      "tags": ["玄幻", "探案", "悬疑", "古风", "权谋"]
+    },
+    {
+      "id": "wobushixishen",
+      "name": "我不是戏神",
+      "author": "三九音域",
+      "category": "玄幻/中式怪诞",
+      "features": {
+        "sentencePattern": {
+          "description": "诗意与诡异交织",
+          "characteristics": [
+            "长短句交错，富有韵律",
+            "戏剧化旁白式叙述",
+            "倒叙与插叙结合",
+            "情绪层层递进"
+          ]
+        },
+        "vocabulary": {
+          "description": "戏腔+末日氛围",
+          "characteristics": [
+            "大量戏曲术语",
+            "末日废土词汇",
+            "诗意化表达",
+            "隐喻和象征丰富"
+          ],
+          "keywords": ["戏神道", "嘲灾", "黄昏社", "灰界", "赤星", "好戏开场"],
+          "example": "大厦将倾，有人见一戏子屹立文明废墟之上，红帔似血，时笑时哭。"
+        },
+        "pacing": {
+          "description": "层层揭开，悬念迭起",
+          "characteristics": [
+            "开篇即营造神秘氛围",
+            "记忆碎片式叙事",
+            "真相层层揭开",
+            "高潮与反转不断"
+          ]
+        },
+        "description": {
+          "description": "画面感极强，电影感",
+          "characteristics": [
+            "强烈的视觉意象",
+            "色彩对比鲜明",
+            "末世废土美学",
+            "戏剧舞台式场景"
+          ]
+        },
+        "dialogue": {
+          "description": "台词有韵味，符合身份",
+          "characteristics": [
+            "戏子身份决定台词风格",
+            "台词富有哲理",
+            "舞台念白式对白",
+            "暗示与隐喻并存"
+          ],
+          "example": "好戏……开场。"
+        }
+      },
+      "sampleOpening": "赤色流星划过天际后，人类文明陷入停滞。\n\n从那天起，人们再也无法制造一枚火箭，一颗核弹，一架飞机，一台汽车……近代科学堆砌而成的文明金字塔轰然坍塌，而灾难，远不止此。\n\n灰色的世界随着赤色流星降临，像是镜面后的鬼魅倒影，将文明世界一点点拖入无序的深渊。",
+      "tags": ["玄幻", "末日", "中式怪诞", "悬疑", "戏道"]
+    },
+    {
+      "id": "shenmifusu",
+      "name": "神秘复苏",
+      "author": "佛前献花",
+      "category": "恐怖/灵异",
+      "features": {
+        "sentencePattern": {
+          "description": "紧张压抑，氛围感强",
+          "characteristics": [
+            "短句制造紧迫感",
+            "倒叙开头制造悬念",
+            "心理描写细腻",
+            "节奏张弛有度"
+          ]
+        },
+        "vocabulary": {
+          "description": "灵异术语+日常对照",
+          "characteristics": [
+            "大量鬼怪灵异词汇",
+            "专业术语增加真实感",
+            "日常与诡异的反差",
+            "规则类描述清晰"
+          ],
+          "keywords": ["驭鬼者", "羊皮卷", "诡眼", "厉鬼", "鬼域", "复苏"],
+          "example": "我叫杨间，当你看到这句话的时候我已经死了......"
+        },
+        "pacing": {
+          "description": "步步惊心，生死一线",
+          "characteristics": [
+            "开篇即危机四伏",
+            "求生紧张感十足",
+            "每个副本都有生死危机",
+            "节奏快不拖沓"
+          ]
+        },
+        "description": {
+          "description": "恐怖氛围渲染极致",
+          "characteristics": [
+            "环境描写阴森诡异",
+            "细节描写增强恐怖感",
+            "心理活动描写深入",
+            "灵异现象描写有规则"
+          ]
+        },
+        "dialogue": {
+          "description": "求生状态下的真实反应",
+          "characteristics": [
+            "对话简洁实用",
+            "危机中的人性体现",
+            "不同人物性格分明",
+            "信息量大"
+          ],
+          "example": "一张诡异的羊皮卷，一只窥视黑暗的眼睛，这是一个活下来的人经历的故事。"
+        }
+      },
+      "sampleOpening": "我叫杨间，当你看到这句话的时候我已经死了......\n\n一张诡异的羊皮卷，一只窥视黑暗的眼睛，这是一个活下来的人经历的故事。",
+      "tags": ["恐怖", "灵异", "鬼怪", "求生", "悬疑"]
+    },
+    {
+      "id": "diyugongyu",
+      "name": "地狱公寓",
+      "author": "黑色火种",
+      "category": "恐怖/无限流",
+      "features": {
+        "sentencePattern": {
+          "description": "冷静叙述，恐怖内敛",
+          "characteristics": [
+            "客观冷静的叙述视角",
+            "恐怖藏在细节中",
+            "不刻意渲染却能让人细思极恐",
+            "规则性描述清晰"
+          ]
+        },
+        "vocabulary": {
+          "description": "都市日常+恐怖规则",
+          "characteristics": [
+            "现代都市词汇",
+            "恐怖公寓的特定术语",
+            "血字任务相关词汇",
+            "生与死的残酷对比"
+          ],
+          "keywords": ["血字", "公寓", "地狱", "生路", "鬼", "执行者"],
+          "example": "进入这座公寓，就等于踏上了一条不归路。"
+        },
+        "pacing": {
+          "description": "悬念驱动，步步紧逼",
+          "characteristics": [
+            "每个任务都是生死局",
+            "解谜与逃生并重",
+            "伏笔与回收精密",
+            "情绪递进到位"
+          ]
+        },
+        "description": {
+          "description": "恐怖来自规则与未知",
+          "characteristics": [
+            "规则类恐怖",
+            "心理恐怖大于视觉恐怖",
+            "环境细节暗示危险",
+            "不确定性制造焦虑"
+          ]
+        },
+        "dialogue": {
+          "description": "求生者的对话",
+          "characteristics": [
+            "信息交换为主",
+            "情感克制",
+            "策略讨论",
+            "绝望与希望交织"
+          ]
+        }
+      },
+      "sampleOpening": "这是一座普通的公寓，但又是一座不普通的公寓。\n\n一旦被这座公寓选中，就必须按照血字的指示去执行，否则……只有死。",
+      "tags": ["恐怖", "无限流", "生存", "解谜", "规则怪谈"]
+    },
+    {
+      "id": "jianke",
+      "name": "间客",
+      "author": "猫腻",
+      "category": "现代/科幻",
+      "features": {
+        "sentencePattern": {
+          "description": "文艺范，长句优美",
+          "characteristics": [
+            "句子较长但流畅",
+            "散文式叙述",
+            "哲理与故事结合",
+            "节奏舒缓有韵味"
+          ]
+        },
+        "vocabulary": {
+          "description": "文艺+科幻融合",
+          "characteristics": [
+            "文艺气息浓厚",
+            "科幻设定词汇",
+            "古典文学引用",
+            "比喻修辞丰富"
+          ],
+          "keywords": ["许乐", "间客", "费城", "机甲", "宪章", "古老"],
+          "example": "人生在世，不过是一次又一次的选择。"
+        },
+        "pacing": {
+          "description": "娓娓道来，渐入佳境",
+          "characteristics": [
+            "开篇铺垫充足",
+            "人物塑造优先于剧情",
+            "冲突逐渐升级",
+            "高潮蓄势待发"
+          ]
+        },
+        "description": {
+          "description": "画面唯美，意境深远",
+          "characteristics": [
+            "场景描写有电影感",
+            "情感细腻",
+            "科幻与武侠美学结合",
+            "氛围营造一流"
+          ]
+        },
+        "dialogue": {
+          "description": "有深度，富哲理",
+          "characteristics": [
+            "对话有营养",
+            "不直白而含蓄",
+            "人物性格鲜明",
+            "金句频出"
+          ],
+          "example": "我只是一个……间客而已。"
+        }
+      },
+      "sampleOpening": "东林大区，河西州，落日下。\n\n一个少年坐在废弃的矿坑边缘，看着远处的城市轮廓。\n\n那里不是他的家，但他必须去那里。",
+      "tags": ["科幻", "机甲", "文艺", "权谋", "成长"]
+    },
+    {
+      "id": "conghongyuekaishi",
+      "name": "从红月开始",
+      "author": "黑山老鬼",
+      "category": "现代/诡异",
+      "features": {
+        "sentencePattern": {
+          "description": "平淡叙述下的诡异",
+          "characteristics": [
+            "表面平淡，实则诡异",
+            "短句制造疏离感",
+            "第一人称视角深入",
+            "反常的行为描写"
+          ]
+        },
+        "vocabulary": {
+          "description": "日常词汇下的不正常",
+          "characteristics": [
+            "普通日常词汇",
+            "精神状态的微妙描述",
+            "家庭关系的扭曲表达",
+            "能力相关术语"
+          ],
+          "keywords": ["红月", "污染", "能力者", "清理", "家人", "妹妹"],
+          "example": "陆辛看着镜子里的自己，露出了一个微笑。\n镜子里的他也笑了。\n只不过，笑得有点不太对。"
+        },
+        "pacing": {
+          "description": "诡异感逐渐加深",
+          "characteristics": [
+            "开篇即暗示异常",
+            "诡异感层层递进",
+            "正常与异常的反差",
+            "高潮爆发突然"
+          ]
+        },
+        "description": {
+          "description": "日常场景下的诡异",
+          "characteristics": [
+            "场景描写正常却令人不安",
+            "细节暗示异常",
+            "氛围诡异压抑",
+            "反差感强烈"
+          ]
+        },
+        "dialogue": {
+          "description": "表面正常，实则异常",
+          "characteristics": [
+            "对话内容日常",
+            "语气和细节暗示异常",
+            "只有主角能看到的'家人'",
+            "反差对话制造诡异感"
+          ],
+          "example": "哥哥，这个人看起来好好吃哦。"
+        }
+      },
+      "sampleOpening": "陆辛坐在餐桌前，看着对面的妹妹。\n\n妹妹正在开心地吃着一块肉，鲜血顺着她的嘴角流下来。\n\n妈妈微笑着递给陆辛一碗汤。\n\n爸爸坐在旁边看报纸，报纸上是红色的月亮。\n\n陆辛知道，这一切都不太对劲。\n\n但他已经习惯了。",
+      "tags": ["诡异", "现代", "能力", "心理", "反差"]
+    }
+  ],
+  "usage": {
+    "description": "使用说明：根据用户需求选择对应文风，AI将参考该风格的特征进行创作",
+    "selectionGuide": {
+      "搞笑轻松": "dawang_raoming",
+      "古风悬疑": "dafeng_dagengren",
+      "诗意怪诞": "wobushixishen",
+      "恐怖灵异": "shenmifusu",
+      "规则恐怖": "diyugongyu",
+      "文艺科幻": "jianke",
+      "现代诡异": "conghongyuekaishi"
+    },
+    "promptTemplate": "请使用【{style_name}】的文风进行创作。\n\n该文风特点：\n- 句式特点：{sentence_features}\n- 用词风格：{vocabulary_features}\n- 节奏感：{pacing_features}\n- 描写手法：{description_features}\n- 对话风格：{dialogue_features}\n\n创作要求：{user_requirement}"
+  }
+}
