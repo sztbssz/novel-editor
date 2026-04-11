@@ -7186,7 +7186,7 @@
                                 <p>点击上方「添加卷」开始创建</p>
                                </div>`
                             : volumes.map(volume => {
-                                const isExpanded = expandedVolumes.has(volume.id);
+                                const isExpanded = expandedVolumes.has(Number(volume.id));
                                 return `
                                     <div class="volume-item" data-volume-id="${volume.id}">
                                         <div class="volume-header" onclick="toggleVolume(${volume.id})">
@@ -7247,7 +7247,9 @@
 
         // 渲染章节列表（用于内部调用）
         function renderChapters(volumeId) {
-            const chapters = chaptersData.filter(c => c.volumeId === volumeId);
+            // 确保 volumeId 是数字类型进行比较
+            const targetId = Number(volumeId);
+            const chapters = chaptersData.filter(c => Number(c.volumeId) === targetId);
             if (chapters.length === 0) {
                 return `<div class="chapters-empty">暂无章节，点击上方 ➕ 添加</div>`;
             }
@@ -7479,10 +7481,12 @@
 
         // 展开/折叠卷
         function toggleVolume(volumeId) {
-            if (expandedVolumes.has(volumeId)) {
-                expandedVolumes.delete(volumeId);
+            // 确保 volumeId 是数字类型
+            const id = Number(volumeId);
+            if (expandedVolumes.has(id)) {
+                expandedVolumes.delete(id);
             } else {
-                expandedVolumes.add(volumeId);
+                expandedVolumes.add(id);
             }
             const chaptersDiv = document.getElementById(`chapters-${volumeId}`);
             const toggleSpan = document.querySelector(`.volume-item[data-volume-id="${volumeId}"] .volume-toggle`);
@@ -7580,7 +7584,7 @@
             console.log('✅ 卷已添加，ID:', volumeId);
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            expandedVolumes.add(volumeId);
+            expandedVolumes.add(Number(volumeId));
             await refreshChaptersData();
             
             const container = document.getElementById('editorContent') || document.getElementById('mainContent');
@@ -7625,7 +7629,7 @@
             await db.delete('volumes', id);
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            expandedVolumes.delete(id);
+            expandedVolumes.delete(Number(id));
             await refreshChaptersData();
             
             const container = document.getElementById('editorContent') || document.getElementById('mainContent');
@@ -7696,7 +7700,7 @@
             // 确保数据已写入
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            expandedVolumes.add(volumeId);
+            expandedVolumes.add(Number(volumeId));
             
             // 记录写作统计
             try {
@@ -7712,6 +7716,7 @@
             // 重新加载章节数据
             await refreshChaptersData();
             console.log('📊 章节数据已刷新，当前章节数:', chaptersData.length);
+            console.log('📋 章节列表:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId})));
             
             // 重新渲染
             const container = document.getElementById('editorContent') || document.getElementById('mainContent');
