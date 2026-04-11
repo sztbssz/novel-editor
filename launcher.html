@@ -6761,7 +6761,7 @@
             }
 
             // 查找匹配该类型的桥段作为参考例子
-            const matchingTropes = tropesData.tropes?.filter(t => t.subType === subType) || [];
+            const matchingTropes = tropesData.tropes?.filter(t => t.usage === subType) || [];
 
             // 随机选择1-2个参考例子
             currentReferenceExamples = [];
@@ -6900,7 +6900,7 @@
                 select.value = currentSceneSubType;
 
                 // 重新生成时，更换参考例子（如果有多个）
-                const matchingTropes = tropesData.tropes?.filter(t => t.subType === currentSceneSubType) || [];
+                const matchingTropes = tropesData.tropes?.filter(t => t.usage === currentSceneSubType) || [];
                 if (matchingTropes.length > 2) {
                     const shuffled = [...matchingTropes].sort(() => 0.5 - Math.random());
                     currentReferenceExamples = shuffled.slice(0, Math.min(2, shuffled.length));
