@@ -460,6 +460,88 @@
         .trope-detail-btn-close { background: #0f3460; color: #fff; }
         .trope-detail-btn-close:hover { background: #1a4a7a; }
 
+        /* ==================== 故事列表弹窗样式 ==================== */
+        .story-list-modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.85);
+            z-index: 1600; justify-content: center; align-items: center;
+        }
+        .story-list-modal.active { display: flex; }
+        .story-list-content {
+            background: #16213e; border-radius: 16px; width: 90%;
+            max-width: 500px; max-height: 85vh; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+        }
+        .story-list-header {
+            padding: 20px 24px; border-bottom: 1px solid #0f3460;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .story-list-header h3 { font-size: 18px; color: #fff; margin: 0; flex: 1; }
+        .story-list-count {
+            font-size: 12px; color: #888; margin-right: 15px;
+            background: rgba(0, 212, 255, 0.1); padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .story-list-close {
+            background: none; border: none; color: #888; font-size: 24px;
+            cursor: pointer; padding: 0; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; transition: all 0.2s;
+        }
+        .story-list-close:hover { color: #fff; background: rgba(233, 69, 96, 0.2); }
+        .story-list-body { 
+            padding: 16px 20px; 
+            overflow-y: auto; 
+            flex: 1;
+        }
+        .story-list-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; margin-bottom: 10px;
+            background: #1a1a2e; border: 1px solid #0f3460;
+            border-radius: 10px; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .story-list-item:hover {
+            background: #0f3460; border-color: #00d4ff;
+            transform: translateX(4px);
+        }
+        .story-list-item-icon {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .story-list-item-info { flex: 1; }
+        .story-list-item-title {
+            font-size: 14px; color: #fff; font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .story-list-item-source {
+            font-size: 12px; color: #888;
+        }
+        .story-list-item-arrow {
+            font-size: 16px; color: #666;
+        }
+        .story-list-item:hover .story-list-item-arrow {
+            color: #00d4ff;
+        }
+        .story-list-empty {
+            text-align: center; padding: 40px 20px;
+            color: #888; font-size: 14px;
+        }
+        .story-list-footer {
+            padding: 16px 24px; 
+            display: flex; justify-content: center;
+            border-top: 1px solid #0f3460;
+        }
+        .story-list-btn {
+            padding: 10px 24px; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 14px; transition: all 0.2s;
+        }
+        .story-list-btn-close { background: #0f3460; color: #fff; }
+        .story-list-btn-close:hover { background: #1a4a7a; }
+
         /* 通用详情弹窗样式 */
         .detail-modal {
             display: none; position: fixed; top: 0; left: 0;
@@ -3036,6 +3118,23 @@
             <div class="trope-detail-footer">
                 <button class="trope-detail-btn trope-detail-btn-copy" onclick="copyTropeDetailContent()">📋 复制内容</button>
                 <button class="trope-detail-btn trope-detail-btn-close" onclick="closeTropeDetailModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 故事列表弹窗 -->
+    <div class="story-list-modal" id="storyListModal" onclick="closeStoryListModalOnOverlay(event)">
+        <div class="story-list-content" onclick="event.stopPropagation()">
+            <div class="story-list-header">
+                <h3 id="storyListTitle">故事列表</h3>
+                <span id="storyListCount" class="story-list-count">共0个故事</span>
+                <button class="story-list-close" onclick="closeStoryListModal()">&times;</button>
+            </div>
+            <div class="story-list-body" id="storyListBody">
+                <!-- 故事列表将动态插入这里 -->
+            </div>
+            <div class="story-list-footer">
+                <button class="story-list-btn story-list-btn-close" onclick="closeStoryListModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -8599,9 +8698,12 @@
             });
         }
 
-        // 打开子类型详情弹窗
+        // 当前故事列表数据
+        let currentStoryListData = null;
+
+        // 打开子类型详情弹窗 - 改为显示故事列表
         function openTropeSubTypeDetail(categoryId, subTypeName) {
-            console.log('🎭 打开桥段详情:', categoryId, subTypeName);
+            console.log('🎭 打开桥段故事列表:', categoryId, subTypeName);
             console.log('📦 tropesData:', tropesData ? '已加载' : '未加载', 'tropes数量:', tropesData?.tropes?.length || 0);
             
             // 查找对应的类别
@@ -8615,43 +8717,113 @@
             const matchingTropes = tropesData?.tropes?.filter(t => t.usage === subTypeName) || [];
             console.log('🔍 匹配素材数:', matchingTropes.length, '子类型:', subTypeName);
             
-            if (matchingTropes.length > 0) {
-                // 有实际素材，随机选择一个展示
-                const trope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
-                console.log('✅ 找到素材:', trope.title, '描述长度:', (trope.description || '').length);
-                openTropeDetailModal({
-                    id: trope.id,
-                    name: subTypeName,
-                    title: trope.title || subTypeName,
-                    category: category.name,
-                    categoryId: categoryId,
-                    description: trope.description || '',
-                    content: trope.description || '',
-                    book: trope.examples?.[0] || '',
-                    author: '',
-                    tags: [category.name, subTypeName],
-                    subType: subTypeName,
-                    allTropes: matchingTropes // 保存所有匹配素材供切换
-                });
+            // 保存当前故事列表数据供后续使用
+            currentStoryListData = {
+                category: category,
+                subTypeName: subTypeName,
+                tropes: matchingTropes
+            };
+            
+            // 打开故事列表弹窗
+            openStoryListModal(category, subTypeName, matchingTropes);
+        }
+
+        // 打开故事列表弹窗
+        function openStoryListModal(category, subTypeName, tropes) {
+            const modal = document.getElementById('storyListModal');
+            const titleEl = document.getElementById('storyListTitle');
+            const countEl = document.getElementById('storyListCount');
+            const bodyEl = document.getElementById('storyListBody');
+            
+            if (!modal || !titleEl || !countEl || !bodyEl) {
+                console.error('❌ 故事列表弹窗元素未找到');
+                return;
+            }
+            
+            // 设置标题和数量
+            titleEl.textContent = subTypeName;
+            countEl.textContent = `共${tropes.length}个故事`;
+            
+            // 生成故事列表HTML
+            if (tropes.length > 0) {
+                bodyEl.innerHTML = tropes.map((trope, index) => `
+                    <div class="story-list-item" onclick="openStoryFromList(${index})">
+                        <div class="story-list-item-icon">📖</div>
+                        <div class="story-list-item-info">
+                            <div class="story-list-item-title">${trope.title || '未命名故事'}</div>
+                            <div class="story-list-item-source">${trope.examples?.[0] ? `《${trope.examples[0]}》` : '未知出处'}</div>
+                        </div>
+                        <div class="story-list-item-arrow">›</div>
+                    </div>
+                `).join('');
             } else {
-                // 无实际素材，显示占位符
-                console.log('⚠️ 无匹配素材，显示占位符');
-                const trope = {
-                    id: `${categoryId}_${subTypeName}`,
-                    name: subTypeName,
-                    title: subTypeName,
-                    category: category.name,
-                    categoryId: categoryId,
-                    description: `${subTypeName}是${category.name}中的经典桥段类型。`,
-                    content: `${subTypeName}是网文中常见的桥段套路，适用于${category.name}类型的小说创作。`,
-                    book: '',
-                    author: '',
-                    tags: [category.name, subTypeName],
-                    subType: subTypeName
-                };
-                openTropeDetailModal(trope);
+                // 无实际素材，显示占位信息
+                bodyEl.innerHTML = `
+                    <div class="story-list-empty">
+                        <p>📝 暂无具体故事素材</p>
+                        <p style="font-size: 12px; margin-top: 8px;">${subTypeName}是${category.name}中的经典桥段类型，敬请期待更多内容。</p>
+                    </div>
+                `;
+            }
+            
+            // 显示弹窗
+            modal.classList.add('active');
+            console.log('✅ 故事列表弹窗已显示');
+        }
+
+        // 关闭故事列表弹窗
+        function closeStoryListModal() {
+            const modal = document.getElementById('storyListModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            currentStoryListData = null;
+        }
+
+        // 点击遮罩关闭故事列表弹窗
+        function closeStoryListModalOnOverlay(event) {
+            if (event.target.id === 'storyListModal') {
+                closeStoryListModal();
             }
         }
+
+        // 从故事列表中打开具体故事
+        function openStoryFromList(index) {
+            if (!currentStoryListData || !currentStoryListData.tropes[index]) {
+                showNotification('❌ 无法加载故事');
+                return;
+            }
+            
+            const trope = currentStoryListData.tropes[index];
+            const category = currentStoryListData.category;
+            const subTypeName = currentStoryListData.subTypeName;
+            
+            console.log('📖 打开故事详情:', trope.title);
+            
+            // 关闭故事列表弹窗
+            closeStoryListModal();
+            
+            // 打开故事详情弹窗
+            openTropeDetailModal({
+                id: trope.id,
+                name: subTypeName,
+                title: trope.title || subTypeName,
+                category: category.name,
+                categoryId: category.id,
+                description: trope.description || '',
+                content: trope.description || '',
+                book: trope.examples?.[0] || '',
+                author: '',
+                tags: [category.name, subTypeName],
+                subType: subTypeName
+            });
+        }
+
+        // 确保故事列表相关函数在全局作用域可用
+        window.openStoryListModal = openStoryListModal;
+        window.closeStoryListModal = closeStoryListModal;
+        window.closeStoryListModalOnOverlay = closeStoryListModalOnOverlay;
+        window.openStoryFromList = openStoryFromList;
 
         function openTropeDetailModal(trope) {
             console.log('🔓 打开弹窗:', trope.title);
