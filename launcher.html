@@ -8619,7 +8619,7 @@
                 // 有实际素材，随机选择一个展示
                 const trope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
                 console.log('✅ 找到素材:', trope.title, '描述长度:', (trope.description || '').length);
-                const tropeObj = {
+                openTropeDetailModal({
                     id: trope.id,
                     name: subTypeName,
                     title: trope.title || subTypeName,
