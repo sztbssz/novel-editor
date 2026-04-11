@@ -8619,7 +8619,7 @@
                 // 有实际素材，随机选择一个展示
                 const trope = matchingTropes[Math.floor(Math.random() * matchingTropes.length)];
                 console.log('✅ 找到素材:', trope.title, '描述长度:', (trope.description || '').length);
-                openTropeDetailModal({
+                const tropeObj = {
                     id: trope.id,
                     name: subTypeName,
                     title: trope.title || subTypeName,
@@ -8654,6 +8654,7 @@
         }
 
         function openTropeDetailModal(trope) {
+            console.log('🔓 打开弹窗:', trope.title);
             try {
                 currentTropeDetail = trope;
                 
@@ -8680,6 +8681,7 @@
                 }
 
                 modal.classList.add('active');
+                console.log('✅ 弹窗已显示');
                 
                 // 添加推荐内容
                 setTimeout(async () => {
