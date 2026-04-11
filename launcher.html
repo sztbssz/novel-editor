@@ -8508,6 +8508,7 @@
                     <div style="padding: 20px; border-top: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; gap: 10px;">
                             <button id="chapterClearBtn" style="padding: 10px 20px; background: #333; color: #ff6b6b; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">🗑️ 清空</button>
+                            <button id="chapterAIBtn" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">📝 一键写作</button>
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <button id="chapterCancelBtn" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">取消</button>
@@ -8538,6 +8539,11 @@
                     wordCountSpan.style.color = '#00d4ff';
                     progressSpan.style.color = '#888';
                 }
+            });
+            
+            // 一键写作
+            document.getElementById('chapterAIBtn').addEventListener('click', () => {
+                openAIWritingDialog(textarea, wordCountSpan, progressSpan);
             });
             
             // 保存
@@ -16063,6 +16069,325 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
 
         function closeCharacterFloatModal() {
             document.getElementById('characterFloatModal').classList.remove('active');
+        }
+
+        // ==================== 一键写作功能 ====================
+        let writingStylesData = null;
+
+        // 加载文风配置
+        async function loadWritingStyles() {
+            if (writingStylesData) return writingStylesData;
+            try {
+                const response = await fetch('writing_styles.json');
+                if (response.ok) {
+                    writingStylesData = await response.json();
+                    return writingStylesData;
+                }
+            } catch (e) {
+                console.warn('加载文风配置失败:', e);
+            }
+            // 返回默认配置
+            return {
+                styles: [
+                    { id: 'default', name: '默认风格', author: '', category: '通用' },
+                    { id: 'dawang_raoming', name: '大王饶命', author: '会说话的肘子', category: '搞笑/灵气复苏' },
+                    { id: 'dafeng_dagengren', name: '大奉打更人', author: '卖报小郎君', category: '玄幻/探案' },
+                    { id: 'wobushixishen', name: '我不是戏神', author: '三九音域', category: '玄幻/中式怪诞' },
+                    { id: 'shenmifusu', name: '神秘复苏', author: '佛前献花', category: '恐怖/灵异' },
+                    { id: 'diyugongyu', name: '地狱公寓', author: '黑色火种', category: '恐怖/无限流' },
+                    { id: 'jianke', name: '间客', author: '猫腻', category: '现代/科幻' },
+                    { id: 'conghongyuekaishi', name: '从红月开始', author: '黑山老鬼', category: '现代/诡异' }
+                ]
+            };
+        }
+
+        // 打开一键写作对话框
+        async function openAIWritingDialog(textarea, wordCountSpan, progressSpan) {
+            const styles = await loadWritingStyles();
+            
+            const dialog = document.createElement('div');
+            dialog.id = 'aiWritingDialog';
+            dialog.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.9); z-index: 20000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            const styleOptions = styles.styles.map((style, index) => `
+                <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #1a1a2e; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;" 
+                       onmouseover="this.style.borderColor='#667eea'" onmouseout="this.style.borderColor='transparent'">
+                    <input type="radio" name="writingStyle" value="${style.id}" ${index === 0 ? 'checked' : ''} style="accent-color: #667eea;">
+                    <div style="flex: 1;">
+                        <div style="color: #fff; font-weight: 500;">${style.name}</div>
+                        ${style.author ? `<div style="color: #888; font-size: 12px;">${style.author} · ${style.category}</div>` : ''}
+                    </div>
+                </label>
+            `).join('');
+            
+            dialog.innerHTML = `
+                <div style="background: #16213e; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <div style="padding: 24px 30px; border-bottom: 1px solid #0f3460;">
+                        <h3 style="margin: 0; color: #fff; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+                            📝 一键写作
+                        </h3>
+                    </div>
+                    <div style="padding: 30px;">
+                        <!-- 剧情描述 -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 10px; color: #ccc; font-size: 14px;">
+                                剧情描述：
+                            </label>
+                            <textarea id="aiPlotDescription" style="width: 100%; height: 120px; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 10px; padding: 15px; color: #fff; font-size: 14px; line-height: 1.6; resize: vertical;" 
+                                placeholder="描述本章要写的剧情内容...&#10;&#10;例如：主角在废弃医院探险，遭遇诡异事件，觉醒特殊能力..."></textarea>
+                        </div>
+                        
+                        <!-- 目标字数 -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 10px; color: #ccc; font-size: 14px;">
+                                目标字数：
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="number" id="aiTargetWords" value="5000" min="500" max="20000" step="500" 
+                                    style="flex: 1; padding: 12px 15px; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px; color: #fff; font-size: 14px;">
+                                <span style="color: #888; font-size: 14px;">字</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 文风选择 -->
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 12px; color: #ccc; font-size: 14px;">
+                                文风选择：
+                            </label>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 280px; overflow-y: auto;">
+                                ${styleOptions}
+                            </div>
+                        </div>
+                        
+                        <!-- 进度条（默认隐藏） -->
+                        <div id="aiWritingProgress" style="display: none; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: #667eea; font-size: 14px;">📝 AI正在创作中...</span>
+                                <span id="aiProgressText" style="color: #667eea; font-size: 14px;">0%</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: #1a1a2e; border-radius: 4px; overflow: hidden;">
+                                <div id="aiProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 生成结果预览 -->
+                        <div id="aiResultPreview" style="display: none; margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; color: #ccc; font-size: 14px;">
+                                生成结果预览：
+                            </label>
+                            <div id="aiGeneratedContent" style="max-height: 200px; overflow-y: auto; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 10px; padding: 15px; color: #ddd; font-size: 14px; line-height: 1.8;"></div>
+                            <div style="margin-top: 10px; text-align: right; color: #888; font-size: 12px;">
+                                生成字数: <span id="aiGeneratedWordCount" style="color: #667eea; font-weight: bold;">0</span> 字
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 20px 30px; border-top: 1px solid #0f3460; display: flex; justify-content: flex-end; gap: 12px;">
+                        <button id="aiCancelBtn" style="padding: 12px 24px; background: #333; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">取消</button>
+                        <button id="aiRegenerateBtn" style="display: none; padding: 12px 24px; background: #0f3460; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">🔄 重新生成</button>
+                        <button id="aiInsertBtn" style="display: none; padding: 12px 24px; background: #28a745; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">✅ 插入编辑器</button>
+                        <button id="aiGenerateBtn" style="padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;">开始写作</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            
+            let generatedContent = '';
+            
+            // 取消按钮
+            document.getElementById('aiCancelBtn').addEventListener('click', () => {
+                dialog.remove();
+            });
+            
+            // 开始写作按钮
+            document.getElementById('aiGenerateBtn').addEventListener('click', async () => {
+                const plotDescription = document.getElementById('aiPlotDescription').value.trim();
+                const targetWords = parseInt(document.getElementById('aiTargetWords').value) || 5000;
+                const selectedStyle = document.querySelector('input[name="writingStyle"]:checked')?.value || 'default';
+                
+                if (!plotDescription) {
+                    showNotification('⚠️ 请先输入剧情描述');
+                    document.getElementById('aiPlotDescription').focus();
+                    return;
+                }
+                
+                // 显示进度条
+                document.getElementById('aiWritingProgress').style.display = 'block';
+                document.getElementById('aiGenerateBtn').disabled = true;
+                document.getElementById('aiGenerateBtn').textContent = '创作中...';
+                
+                // 模拟进度
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    document.getElementById('aiProgressBar').style.width = progress + '%';
+                    document.getElementById('aiProgressText').textContent = Math.round(progress) + '%';
+                }, 500);
+                
+                // 调用AI生成
+                try {
+                    generatedContent = await generateAIContent(plotDescription, targetWords, selectedStyle, styles);
+                    clearInterval(progressInterval);
+                    document.getElementById('aiProgressBar').style.width = '100%';
+                    document.getElementById('aiProgressText').textContent = '100%';
+                    
+                    // 显示结果
+                    document.getElementById('aiGeneratedContent').textContent = generatedContent.substring(0, 500) + (generatedContent.length > 500 ? '...' : '');
+                    document.getElementById('aiGeneratedWordCount').textContent = generatedContent.length;
+                    document.getElementById('aiResultPreview').style.display = 'block';
+                    
+                    // 切换按钮
+                    document.getElementById('aiGenerateBtn').style.display = 'none';
+                    document.getElementById('aiRegenerateBtn').style.display = 'inline-block';
+                    document.getElementById('aiInsertBtn').style.display = 'inline-block';
+                    
+                    showNotification(`✅ AI创作完成！生成 ${generatedContent.length} 字`);
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    console.error('AI生成失败:', error);
+                    showNotification('❌ AI生成失败，请重试');
+                    document.getElementById('aiGenerateBtn').disabled = false;
+                    document.getElementById('aiGenerateBtn').textContent = '开始写作';
+                }
+            });
+            
+            // 重新生成按钮
+            document.getElementById('aiRegenerateBtn').addEventListener('click', () => {
+                document.getElementById('aiResultPreview').style.display = 'none';
+                document.getElementById('aiRegenerateBtn').style.display = 'none';
+                document.getElementById('aiInsertBtn').style.display = 'none';
+                document.getElementById('aiGenerateBtn').style.display = 'inline-block';
+                document.getElementById('aiGenerateBtn').disabled = false;
+                document.getElementById('aiGenerateBtn').textContent = '开始写作';
+                document.getElementById('aiProgressBar').style.width = '0%';
+                document.getElementById('aiProgressText').textContent = '0%';
+                generatedContent = '';
+            });
+            
+            // 插入编辑器按钮
+            document.getElementById('aiInsertBtn').addEventListener('click', () => {
+                if (generatedContent) {
+                    textarea.value = generatedContent;
+                    // 触发input事件更新字数统计
+                    textarea.dispatchEvent(new Event('input'));
+                    dialog.remove();
+                    showNotification(`✅ 已插入编辑器，共 ${generatedContent.length} 字`);
+                }
+            });
+            
+            // 点击背景关闭
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    dialog.remove();
+                }
+            });
+        }
+
+        // AI内容生成（实际项目中这里调用真实的AI API）
+        async function generateAIContent(plotDescription, targetWords, styleId, stylesData) {
+            // 获取选中的风格配置
+            const style = stylesData.styles.find(s => s.id === styleId) || stylesData.styles[0];
+            
+            // 构建提示词
+            const prompt = buildWritingPrompt(plotDescription, targetWords, style);
+            
+            // 这里模拟AI生成，实际项目中应该调用真实的AI API
+            // 例如：return await callOpenAI(prompt, targetWords);
+            
+            // 模拟生成延迟
+            await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+            
+            // 生成模拟内容（实际项目中替换为真实AI调用）
+            return generateMockContent(plotDescription, targetWords, style);
+        }
+
+        // 构建写作提示词
+        function buildWritingPrompt(plotDescription, targetWords, style) {
+            let prompt = `请根据以下剧情描述，创作一篇网文章节。\n\n`;
+            prompt += `【剧情描述】\n${plotDescription}\n\n`;
+            prompt += `【写作要求】\n`;
+            prompt += `- 目标字数：${targetWords}字左右\n`;
+            prompt += `- 确保情节紧凑、引人入胜\n`;
+            prompt += `- 注意节奏把控，有起承转合\n\n`;
+            
+            if (style && style.id !== 'default' && style.features) {
+                prompt += `【文风要求 - ${style.name}风格】\n`;
+                
+                if (style.features.sentencePattern) {
+                    prompt += `- 句式特点：${style.features.sentencePattern.description}\n`;
+                }
+                if (style.features.vocabulary) {
+                    prompt += `- 用词风格：${style.features.vocabulary.description}\n`;
+                }
+                if (style.features.pacing) {
+                    prompt += `- 节奏感：${style.features.pacing.description}\n`;
+                }
+                if (style.features.description) {
+                    prompt += `- 描写手法：${style.features.description.description}\n`;
+                }
+                if (style.features.dialogue) {
+                    prompt += `- 对话风格：${style.features.dialogue.description}\n`;
+                }
+            }
+            
+            return prompt;
+        }
+
+        // 生成模拟内容（演示用）
+        function generateMockContent(plotDescription, targetWords, style) {
+            const paragraphs = [];
+            const targetParagraphs = Math.ceil(targetWords / 150);
+            
+            // 开头段落
+            paragraphs.push(generateOpeningParagraph(plotDescription, style));
+            
+            // 中间段落
+            for (let i = 0; i < targetParagraphs - 2; i++) {
+                paragraphs.push(generateMiddleParagraph(i, style));
+            }
+            
+            // 结尾段落
+            paragraphs.push(generateEndingParagraph(style));
+            
+            let content = paragraphs.join('\n\n');
+            
+            // 调整字数到目标范围
+            while (content.length < targetWords * 0.9) {
+                content += '\n\n' + generateMiddleParagraph(paragraphs.length, style);
+            }
+            
+            return content;
+        }
+
+        function generateOpeningParagraph(plotDescription, style) {
+            const openings = [
+                `夜幕低垂，城市的霓虹灯在雨后的街道上投下斑驳的光影。`,
+                `这是一片被遗忘的土地，千百年来无人踏足。`,
+                `当第一缕阳光穿透云层，新的一天开始了。`,
+                `风吹过荒芜的街道，带来一丝不安的气息。`,
+                `在这个看似平凡的世界里，隐藏着不为人知的秘密。`
+            ];
+            return openings[Math.floor(Math.random() * openings.length)] + `\n\n${plotDescription.substring(0, 50)}...的故事，就从这里开始。主角站在命运的十字路口，即将踏上一段未知的旅程。`;
+        }
+
+        function generateMiddleParagraph(index, style) {
+            const scenes = [
+                `四周的空气仿佛凝固了，每一秒都变得无比漫长。他深吸一口气，努力让自己保持冷静。眼前的景象既熟悉又陌生，记忆中的一切似乎都在扭曲变形。`,
+                `"你终于来了。"一个声音从黑暗中传来，带着说不清道不明的意味。他转过头，却只看到一片虚无。那声音再次响起，"我等你很久了。"`,
+                `时间一分一秒地流逝，他知道自己必须做出选择。向左，还是向右？每一个决定都可能改变未来的走向。他闭上眼睛，让直觉指引方向。`,
+                `突然，一阵剧烈的震动传来，整个空间都在颤抖。他勉强站稳身形，目光紧盯着前方。那里，一扇门正在缓缓打开，透出诡异的光芒。`,
+                `记忆如潮水般涌来，那些被遗忘的画面一一浮现。原来，一切都不是偶然，命运早已在暗中安排好了这一切。他苦笑一声，接受了这个事实。`
+            ];
+            return scenes[index % scenes.length];
+        }
+
+        function generateEndingParagraph(style) {
+            return `当一切归于平静，他站在原地，回想着刚才发生的一切。这只是开始，真正的挑战还在后面。他握紧拳头，眼中闪烁着坚定的光芒。无论前方有什么在等待着，他都已经做好了准备。\n\n故事，才刚刚开始。`;
         }
 
         // 快捷键支持
