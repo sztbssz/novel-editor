@@ -7595,10 +7595,31 @@
 
         // 初始化情节大纲数据
         async function initPlotData() {
+            console.log('🚀 initPlotData 被调用');
+            
+            // 从 localStorage 读取保存的 currentWorkId
+            const savedWorkId = localStorage.getItem('currentWorkId');
+            console.log('📖 从 localStorage 读取的 currentWorkId:', savedWorkId);
+            
             await loadWorksList();
-            if (!currentWorkId && worksData.length > 0) {
+            
+            if (savedWorkId) {
+                const workId = Number(savedWorkId);
+                // 验证该作品是否存在于列表中
+                const workExists = worksData.some(w => w.id === workId);
+                if (workExists) {
+                    currentWorkId = workId;
+                    console.log('✅ 恢复已保存的作品ID:', currentWorkId);
+                } else {
+                    console.log('⚠️ 保存的作品ID不存在，使用第一个作品');
+                    currentWorkId = worksData.length > 0 ? worksData[0].id : null;
+                }
+            } else if (!currentWorkId && worksData.length > 0) {
                 currentWorkId = worksData[0].id;
+                console.log('📌 使用第一个作品:', currentWorkId);
             }
+            
+            console.log('📊 initPlotData 完成，currentWorkId:', currentWorkId);
         }
 
         // 加载作品列表
@@ -7983,10 +8004,17 @@
 
         // 切换作品
         async function switchWork(workId) {
+            console.log('🔄 switchWork 被调用，切换到作品:', workId);
             currentWorkId = workId;
+            
+            // 保存到 localStorage
+            localStorage.setItem('currentWorkId', String(workId));
+            console.log('💾 currentWorkId 已保存到 localStorage:', workId);
+            
             expandedVolumes.clear();
             await refreshChaptersData();
             await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            console.log('✅ switchWork 完成');
         }
 
         // 展开/折叠卷
@@ -8008,8 +8036,12 @@
 
         // 添加作品
         async function addWork() {
+            console.log('📝 addWork 被调用');
             const name = prompt('请输入作品名称：');
-            if (!name) return;
+            if (!name) {
+                console.log('❌ 用户取消输入');
+                return;
+            }
 
             const description = prompt('请输入作品简介（可选）：') || '';
 
@@ -8021,8 +8053,15 @@
             };
 
             const id = await db.add('works', work);
+            console.log('✅ 作品已创建，ID:', id);
+            
             await loadWorksList();
             currentWorkId = id;
+            
+            // 保存到 localStorage
+            localStorage.setItem('currentWorkId', String(id));
+            console.log('💾 currentWorkId 已保存到 localStorage:', id);
+            
             await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 作品创建成功');
         }
@@ -8044,13 +8083,16 @@
 
         // 删除作品
         async function deleteWork(id) {
+            console.log('🗑️ deleteWork 被调用，作品ID:', id, 'currentWorkId:', currentWorkId);
             if (!confirm('确定要删除这个作品吗？所有相关的卷和章节都将被删除！')) return;
             if (!confirm('再次确认：此操作不可恢复！')) return;
 
             // 删除相关卷和章节
             const volumes = await db.getAll('volumes', 'workId', id);
+            console.log('📚 删除相关卷数:', volumes.length);
             for (const vol of volumes) {
                 const chapters = await db.getAll('chapters', 'volumeId', vol.id);
+                console.log('  📝 删除卷', vol.id, '的章节数:', chapters.length);
                 for (const chap of chapters) {
                     await db.delete('chapters', chap.id);
                 }
@@ -8058,9 +8100,12 @@
             }
 
             await db.delete('works', id);
+            console.log('✅ 作品已删除');
 
             if (currentWorkId === id) {
                 currentWorkId = null;
+                localStorage.removeItem('currentWorkId');
+                console.log('🗑️ currentWorkId 已从 localStorage 清除');
             }
 
             await loadWorksList();
