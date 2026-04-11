@@ -7466,8 +7466,9 @@
 
         // 加载卷的章节
         async function loadVolumeChapters(volumeId) {
-            console.log('  📖 loadVolumeChapters 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
-            const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            const vid = Number(volumeId);
+            console.log('  📖 loadVolumeChapters 被调用，volumeId:', volumeId, '类型:', typeof volumeId, '转换后:', vid, '类型:', typeof vid);
+            const chapters = await db.getAll('chapters', 'volumeId', vid);
             console.log('    获取到章节数:', chapters.length, '章节:', chapters.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId})));
             return chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
         }
@@ -7705,8 +7706,9 @@
             console.log('📚 获取到卷数:', volumes.length);
             chaptersData = [];
             for (const volume of volumes) {
-                console.log('  加载卷:', volume.id, volume.title);
-                const chapters = await loadVolumeChapters(volume.id);
+                const vid = Number(volume.id);
+                console.log('  加载卷:', vid, volume.title, '(原始ID:', volume.id, '类型:', typeof volume.id + ')');
+                const chapters = await loadVolumeChapters(vid);
                 console.log('    章节数:', chapters.length);
                 chaptersData.push(...chapters);
             }
