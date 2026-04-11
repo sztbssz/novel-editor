@@ -7335,7 +7335,7 @@
             }
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // 刷新章节数据
@@ -7410,7 +7410,7 @@
 
             await db.incrementTemplateUsage(template.id);
             await initPlotData();
-            renderPlot(document.getElementById('mainContent'));
+            renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification(`✅ 已使用模板 "${template.name}" 创建作品`);
         }
 
@@ -7474,7 +7474,7 @@
             currentWorkId = workId;
             expandedVolumes.clear();
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // 展开/折叠卷
@@ -7509,7 +7509,7 @@
             const id = await db.add('works', work);
             await loadWorksList();
             currentWorkId = id;
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 作品创建成功');
         }
 
@@ -7523,7 +7523,7 @@
                 work.name = newName.trim();
                 await db.update('works', work);
                 await loadWorksList();
-                await renderPlot(document.getElementById('mainContent'));
+                await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
                 showNotification('✅ 已重命名');
             }
         }
@@ -7550,7 +7550,7 @@
             }
 
             await loadWorksList();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 作品已删除');
         }
 
@@ -7633,7 +7633,7 @@
             await db.update('volumes', volumes[index]);
             await db.update('volumes', volumes[index - 1]);
 
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // 下移卷
@@ -7652,7 +7652,7 @@
             await db.update('volumes', volumes[index]);
             await db.update('volumes', volumes[index + 1]);
 
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // 添加章节
@@ -7682,7 +7682,7 @@
             });
             
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 章节添加成功');
         }
 
@@ -7717,7 +7717,7 @@
             });
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 已更新');
         }
 
@@ -7741,7 +7741,7 @@
             }
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
             showNotification('✅ 章节已删除');
         }
 
@@ -7765,7 +7765,7 @@
             await db.update('chapters', chapters[index - 1]);
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         // 下移章节
@@ -7788,25 +7788,25 @@
             await db.update('chapters', chapters[index + 1]);
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('mainContent'));
+            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function toggleTropePanel() {
             showTropePanel = !showTropePanel;
             const panel = document.getElementById('tropePanel');
             if (panel) panel.classList.toggle('active', showTropePanel);
-            else renderPlot(document.getElementById('mainContent'));
+            else renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function filterTropes(category) {
             currentTropeFilter = category;
             currentSubTypeFilter = null;
-            renderPlot(document.getElementById('mainContent'));
+            renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function searchTropes() {
             tropeSearchQuery = document.getElementById('tropeSearch')?.value || '';
-            renderPlot(document.getElementById('mainContent'));
+            renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function renderTropeItems() {
