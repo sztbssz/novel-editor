@@ -5090,8 +5090,10 @@
             // 懒加载：进入世界观页时加载世界观数据
             else if (page === 'world' && !dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
                 loadWorldviewDataWithUI();
+                // 注意：loadWorldviewDataWithUI 会在数据加载完成后自动重新渲染页面
             }
             
+            // 立即加载页面（如果数据未加载，会显示加载中状态）
             loadPage(page);
         }
         
@@ -5444,7 +5446,14 @@
             if (onProgress) onProgress(5);
 
             // 1. 先检查智能缓存
-            const cachedData = await smartCache.getData('data.json');
+            let cachedData = await smartCache.getData('data.json');
+            
+            // 验证缓存数据是否包含世界观数据
+            if (cachedData && !cachedData.worldbuildingLibrary) {
+                console.log('⚠️ 缓存数据缺少世界观数据，强制重新加载');
+                cachedData = null;
+            }
+            
             if (cachedData && cachedData.worldbuildingLibrary) {
                 console.log('✅ 从智能缓存加载世界观数据');
                 dataLoadState.worldview.data = cachedData;
@@ -5480,6 +5489,8 @@
 
             // 2. 从网络加载
             if (onProgress) onProgress(10);
+            
+            console.log('🌐 从网络加载世界观数据...');
 
             const response = await fetchWithCDNRetry('data.json?t=' + Date.now());
 
@@ -5499,6 +5510,8 @@
                 await importWorldviewToDB(data, onProgress);
                 dataLoadState.worldview.loaded = true;
                 console.log('✅ 世界观数据已加载并缓存');
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
         }
 
@@ -5618,6 +5631,13 @@
                     { "id": "dushi", "name": "都市题材专属", "subTypes": [{"name": "商战博弈"}, {"name": "娱乐圈逆袭"}, {"name": "职场反杀"}, {"name": "技术碾压"}, {"name": "古玩鉴宝"}] },
                     { "id": "xuanyi", "name": "悬疑/无限流专属", "subTypes": [{"name": "规则怪谈破解"}, {"name": "密室逃脱"}, {"name": "时间循环"}, {"name": "死亡回溯"}, {"name": "凶手反转"}] },
                     { "id": "chuanshu", "name": "重生/穿越专属", "subTypes": [{"name": "重生复仇"}, {"name": "穿越改命"}, {"name": "穿书自救"}, {"name": "前世弥补"}, {"name": "角色觉醒"}] }
+                ],
+                "tropes": [
+                    {"id": "default_1", "title": "装逼打脸示例", "category": "universal", "description": "主角隐藏实力被众人嘲讽，关键时刻展现实力让所有人震惊。", "usage": "装逼打脸", "examples": ["示例小说"], "word_count": 200},
+                    {"id": "default_2", "title": "废物逆袭示例", "category": "growth", "description": "主角从废材状态觉醒特殊能力，开始逆袭之路。", "usage": "废物逆袭", "examples": ["示例小说"], "word_count": 200},
+                    {"id": "default_3", "title": "天降机缘示例", "category": "growth", "description": "主角意外获得神秘宝物或传承，开启变强之路。", "usage": "天降机缘", "examples": ["示例小说"], "word_count": 200},
+                    {"id": "default_4", "title": "武魂觉醒示例", "category": "xuanhuan", "description": "主角在关键时刻觉醒隐藏武魂，获得强大力量。", "usage": "武魂觉醒", "examples": ["示例小说"], "word_count": 200},
+                    {"id": "default_5", "title": "重生复仇示例", "category": "chuanshu", "description": "主角重生回到过去，利用先知优势改变命运并复仇。", "usage": "重生复仇", "examples": ["示例小说"], "word_count": 200}
                 ]
             };
         }
@@ -6815,9 +6835,9 @@
                     <div class="scene-reference-item">
                         <div class="scene-reference-title">
                             <span>📖 参考例子 ${idx + 1}</span>
-                            <span class="scene-reference-source">《${ex.book}》${ex.author}</span>
+                            <span class="scene-reference-source">《${ex.title || '未知'}》${ex.examples && ex.examples[0] ? ex.examples[0] : ''}</span>
                         </div>
-                        <div class="scene-reference-content">${ex.content}</div>
+                        <div class="scene-reference-content">${ex.description || ex.content || ''}</div>
                         <div class="scene-reference-analysis">
                             <strong>结构分析：</strong>场景设定 → 冲突爆发 → 转折高潮 → 结局落定
                         </div>
@@ -8579,40 +8599,96 @@
             });
         }
 
-        function openTropeDetailModal(trope) {
-            currentTropeDetail = trope;
-            document.getElementById('tropeDetailTitle').textContent = trope.title || trope.name || '桥段';
-            document.getElementById('tropeDetailContent').textContent = trope.content || trope.description || '';
-            document.getElementById('tropeDetailSource').textContent = trope.book ? `《${trope.book}》${trope.author || ''}` : '未知出处';
-
-            const tagsContainer = document.getElementById('tropeDetailTags');
-            if (trope.tags && trope.tags.length > 0) {
-                tagsContainer.innerHTML = trope.tags.map(tag => `<span class="trope-detail-tag">${tag}</span>`).join('');
-            } else {
-                tagsContainer.innerHTML = '';
-            }
-
-            document.getElementById('tropeDetailModal').classList.add('active');
+        // 打开子类型详情弹窗
+        function openTropeSubTypeDetail(categoryId, subTypeName) {
+            console.log('🎭 打开桥段详情:', categoryId, subTypeName);
             
-            // 添加推荐内容
-            setTimeout(async () => {
-                const modalBody = document.querySelector('#tropeDetailModal .modal-body');
-                if (modalBody) {
-                    const recHtml = await renderTropeRecommendations(trope);
-                    if (recHtml) {
-                        // 移除已有的推荐
-                        modalBody.querySelectorAll('.recommendation-section').forEach(el => el.remove());
-                        modalBody.insertAdjacentHTML('beforeend', recHtml);
-                    }
-                }
-            }, 100);
+            // 查找对应的类别和子类型
+            const category = tropesData?.categories?.find(c => c.id === categoryId);
+            if (!category) {
+                showNotification('❌ 找不到类别');
+                return;
+            }
+            
+            const subType = category.subTypes?.find(s => s.name === subTypeName);
+            if (!subType) {
+                showNotification('❌ 找不到子类型');
+                return;
+            }
+            
+            // 构建桥段对象
+            const trope = {
+                id: `${categoryId}_${subTypeName}`,
+                name: subTypeName,
+                title: subTypeName,
+                category: category.name,
+                categoryId: categoryId,
+                description: subType.description || `${subTypeName}是${category.name}中的经典桥段类型。`,
+                content: subType.content || subType.description || `${subTypeName}是网文中常见的桥段套路，适用于${category.name}类型的小说创作。`,
+                book: subType.book || '',
+                author: subType.author || '',
+                tags: [category.name, subTypeName],
+                subType: subTypeName
+            };
+            
+            // 打开详情弹窗
+            openTropeDetailModal(trope);
+        }
 
-            // 记录历史
-            historyManager.addHistory('trope', trope.id || Date.now(), trope.title || trope.name || '桥段', 'view', {
-                book: trope.book,
-                author: trope.author,
-                subType: trope.subType
-            });
+        function openTropeDetailModal(trope) {
+            try {
+                currentTropeDetail = trope;
+                
+                const titleEl = document.getElementById('tropeDetailTitle');
+                const contentEl = document.getElementById('tropeDetailContent');
+                const sourceEl = document.getElementById('tropeDetailSource');
+                const tagsContainer = document.getElementById('tropeDetailTags');
+                const modal = document.getElementById('tropeDetailModal');
+                
+                if (!titleEl || !contentEl || !sourceEl || !tagsContainer || !modal) {
+                    console.error('❌ 弹窗元素未找到');
+                    showNotification('❌ 弹窗初始化失败');
+                    return;
+                }
+                
+                titleEl.textContent = trope.title || trope.name || '桥段';
+                contentEl.textContent = trope.content || trope.description || '暂无内容';
+                sourceEl.textContent = trope.book ? `《${trope.book}》${trope.author || ''}` : '未知出处';
+
+                if (trope.tags && trope.tags.length > 0) {
+                    tagsContainer.innerHTML = trope.tags.map(tag => `<span class="trope-detail-tag">${tag}</span>`).join('');
+                } else {
+                    tagsContainer.innerHTML = '';
+                }
+
+                modal.classList.add('active');
+                
+                // 添加推荐内容
+                setTimeout(async () => {
+                    try {
+                        const modalBody = document.querySelector('#tropeDetailModal .trope-detail-body');
+                        if (modalBody) {
+                            const recHtml = await renderTropeRecommendations(trope);
+                            if (recHtml) {
+                                modalBody.querySelectorAll('.recommendation-section').forEach(el => el.remove());
+                                modalBody.insertAdjacentHTML('beforeend', recHtml);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('渲染推荐内容失败:', e);
+                    }
+                }, 100);
+
+                // 记录历史
+                historyManager.addHistory('trope', trope.id || Date.now(), trope.title || trope.name || '桥段', 'view', {
+                    book: trope.book,
+                    author: trope.author,
+                    subType: trope.subType
+                });
+            } catch (error) {
+                console.error('❌ 打开桥段详情失败:', error);
+                showNotification('❌ 打开详情失败');
+            }
         }
 
         function closeTropeDetailModal() {
@@ -8623,6 +8699,13 @@
         function closeTropeDetailModalOnOverlay(event) {
             if (event.target.id === 'tropeDetailModal') closeTropeDetailModal();
         }
+
+        // 确保桥段相关函数在全局作用域可用
+        window.openTropeSubTypeDetail = openTropeSubTypeDetail;
+        window.openTropeDetailModal = openTropeDetailModal;
+        window.closeTropeDetailModal = closeTropeDetailModal;
+        window.closeTropeDetailModalOnOverlay = closeTropeDetailModalOnOverlay;
+        window.refreshTropeData = refreshTropeData;
 
         // ==================== 通用详情弹窗函数 ====================
         function showDetailModal(title, contentHtml) {
@@ -8954,7 +9037,7 @@
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
                             ${subTypes.map(sub => `
-                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="showNotification('桥段：${(sub.name || '未命名').replace(/'/g, "\\'")}')">
+                                <div class="trope-item" style="padding: 12px; cursor: pointer; transition: all 0.2s;" onclick="openTropeSubTypeDetail('${cat.id}', '${(sub.name || '未命名').replace(/'/g, "\\'")}')">
                                     <div style="font-size: 13px; font-weight: 500; color: #fff;">${sub.name || '未命名'}</div>
                                 </div>
                             `).join('')}
@@ -8992,6 +9075,9 @@
             const contentDiv = document.getElementById('tropeContent');
             if (contentDiv) contentDiv.innerHTML = renderTropeContent();
         }
+
+        // 确保桥段筛选函数在全局作用域可用
+        window.filterTropeByCategory = filterTropeByCategory;
 
         // ==================== 起名字功能 ====================
         let currentNameType = 'chinese'; // chinese 或 western
@@ -11437,7 +11523,7 @@
                             <span class="mindmap-title">🗺️ 大纲导图</span>
                             <select class="mindmap-work-select" id="mindmapWorkSelect" onchange="onMindmapWorkChange(this.value)">
                                 ${works.map(w => `
-                                    <option value="${w.id}" ${w.id === mindmapCurrentWorkId ? 'selected' : ''}>${w.title}</option>
+                                    <option value="${w.id}" ${w.id === mindmapCurrentWorkId ? 'selected' : ''}>${w.name || w.title || '未命名作品'}</option>
                                 `).join('')}
                             </select>
                         </div>
@@ -11495,7 +11581,7 @@
             // 构建树形数据
             const root = {
                 id: 'work_' + work.id,
-                name: work.title,
+                name: work.name || work.title || '未命名作品',
                 type: 'work',
                 children: []
             };
