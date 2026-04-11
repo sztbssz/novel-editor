@@ -6813,17 +6813,17 @@
         // 生成变体1
         function generateVariation1(subType, scenario, char1, char2, ability) {
             const scenes = {
-                '装逼打脸': `${scenario}现场，${char1}静静站在角落，目光淡然。周围人议论纷纷，有人冷笑道："区区${char1}也敢来此？"话音未落，${char1}身上忽然爆发出一股惊人气息，${ability}显露无遗。全场瞬间寂静，方才嘲笑之人面色惨白，双腿发软。${char1}淡淡扫视众人，转身离去，留下满场震撼。`,
-                '扮猪吃老虎': `${scenario}之上，${char1}刻意收敛气息，装作普通${char2}。对手嚣张跋扈，不断出言嘲讽。就在胜负将分之际，${char1}眼中精光一闪，${ability}骤然爆发，一招制敌。对手难以置信地看着这一切，而${char1}早已收起气息，仿佛什么都没发生。`,
-                '废物逆袭': `曾经的${char1}受尽白眼，被所有人视为废物。今日${scenario}开启，众人依旧嘲笑不断。然而当测试开始，${char1}体内${ability}轰然觉醒，耀眼的光芒直冲云霄。曾经嘲笑他的人目瞪口呆，而${char1}只是平静地说：这，只是开始。`,
-                '天降机缘': `${char1}跌入${scenario}深处，本以为必死无疑，却意外发现一处隐秘空间。古老的传承在黑暗中闪烁，${ability}静静等待着有缘人。当${char1}触碰到那道光芒时，命运从此改变，一段传奇即将开启。`,
-                '智斗博弈': `${scenario}之中，${char2}步步紧逼，招式阴险毒辣。${char1}神色从容，每一个应对都恰到好处。当对手自以为得计时，${char1}微微一笑，${ability}展现，原来早已布局深远。局势瞬间逆转，${char2}陷入绝境。`,
-                '越级反杀': `${char2}的实力远超${char1}，所有人都认为这将是一场单方面的碾压。然而${char1}眼中战意燃烧，${ability}在绝境中爆发。一招之差，胜负逆转，${char2}轰然倒下，而${char1}屹立场中，浑身浴血却气势如虹。`,
-                '绝境翻盘': `${char1}被困${scenario}，四面楚歌，看似无路可退。生死关头，${ability}在绝境中升华。那是不屈的意志，是向死而生的勇气。当${char1}再次睁开眼时，局势已然逆转，生机重现在眼前。`,
-                '全场震惊': `${scenario}现场，所有人都认为${char1}必败无疑。质疑声、嘲笑声此起彼伏。然而当结果揭晓的那一刻，${ability}展现出的威力让全场鸦雀无声。那是超出所有人认知的力量，${char1}用实际行动证明了一切。`
+                '装逼打脸': `${scenario}现场人头攒动，各路强者云集于此。${char1}静静站在角落，目光淡然地注视着前方。周围人议论纷纷，有人认出了他的身份，冷笑道："区区${char1}也敢来此？真是不知天高地厚！"话音未落，${char1}身上忽然爆发出一股惊人气息，${ability}显露无遗，威压如潮水般席卷全场。全场瞬间寂静，方才嘲笑之人面色惨白，双腿发软，额头冷汗直流。${char1}淡淡扫视众人，眼中闪过一丝不屑，转身离去，只留下满场震撼和久久无法平息的议论声。`,
+                '扮猪吃老虎': `${scenario}之上风云汇聚，各路高手齐聚一堂。${char1}刻意收敛气息，装作普通${char2}混迹于人群之中。对手嚣张跋扈，不断出言嘲讽，言语间满是轻蔑与不屑。就在胜负将分之际，${char1}眼中精光一闪，${ability}骤然爆发，一招制敌，快如闪电。对手难以置信地看着这一切，而${char1}早已收起气息，仿佛什么都没发生，只留下众人震惊的目光和窃窃私语。`,
+                '废物逆袭': `曾经的${char1}受尽白眼，被所有人视为废物，连最基本的尊重都得不到。今日${scenario}开启，众人依旧嘲笑不断，言语刻薄如刀。然而当测试开始，${char1}体内${ability}轰然觉醒，耀眼的光芒直冲云霄，震撼全场。曾经嘲笑他的人目瞪口呆，脸上的表情从讥讽变成了难以置信，从难以置信变成了恐惧。而${char1}只是平静地说：这，只是开始，真正的传奇才刚刚拉开序幕。`,
+                '天降机缘': `${char1}跌入${scenario}深处，周围一片漆黑，本以为必死无疑，生命即将走到尽头。然而命运弄人，在这绝境之中，他却意外发现一处隐秘空间，古老的符文在墙壁上闪烁。神秘的传承在黑暗中等待着有缘人，${ability}静静悬浮在虚空之中，散发着神秘的光芒。当${char1}颤抖着触碰到那道光芒时，一股浩瀚的力量涌入体内，命运从此改变，一段传奇即将开启，他的名字将响彻整个大陆。`,
+                '智斗博弈': `${scenario}之中暗流涌动，${char2}步步紧逼，招式阴险毒辣，每一招都直取要害。${char1}神色从容，每一个应对都恰到好处，看似被动实则主动。当对手自以为得计时，${char1}微微一笑，${ability}展现，原来早已布局深远，每一步都是精心设计的陷阱。局势瞬间逆转，${char2}陷入绝境，直到此刻才明白自己从一开始就落入了圈套，为时已晚，只能眼睁睁看着败局已定。`,
+                '越级反杀': `${char2}的实力远超${char1}，境界上的差距如同天堑，所有人都认为这将是一场单方面的碾压，甚至有人已经准备离去。然而${char1}眼中战意燃烧，不屈的意志支撑着他一次次站起，${ability}在绝境中轰然爆发。一招之差，胜负逆转，${char2}轰然倒下，而${char1}屹立场中，浑身浴血却气势如虹。这一战，打破了境界不可逾越的神话，证明了意志和信念的力量可以创造奇迹。`,
+                '绝境翻盘': `${char1}被困${scenario}，四面楚歌，强敌环伺，看似无路可退，必死无疑。生死关头，${ability}在绝境中升华，那是不屈的意志，是向死而生的勇气，是破釜沉舟的决心。当${char1}再次睁开眼时，眼中燃烧着熊熊战火，局势已然逆转，生机重现在眼前。那些自以为胜券在握的敌人，此刻才惊觉眼前的猎物已经变成了猎手，恐惧开始在他们心中蔓延。`,
+                '全场震惊': `${scenario}现场人山人海，所有人都认为${char1}必败无疑，甚至有人已经开盘下注他的失败。质疑声、嘲笑声此起彼伏，如同潮水般涌来。然而当结果揭晓的那一刻，${ability}展现出的威力让全场鸦雀无声，所有的声音都在这一刻凝固。那是超出所有人认知的力量，是颠覆常理的存在，${char1}用实际行动证明了一切，让那些曾经嘲笑他的人无地自容，留下了永恒的传说。`
             };
 
-            return scenes[subType] || `${scenario}之中，${char1}面对${char2}的挑衅，不慌不忙。关键时刻，${ability}展现，局势瞬间逆转，震惊全场。`;
+            return scenes[subType] || `${scenario}之中，${char1}面对${char2}的挑衅，不慌不忙，神态从容。关键时刻，${ability}展现，光芒万丈，局势瞬间逆转，震惊全场。那些曾经看轻他的人都低下了头，而那些支持他的人则欢呼雀跃。这一战，不仅证明了实力，更证明了坚持和信念的价值，${char1}的名字从此刻开始，将被无数人传颂。`;
         }
 
         // 生成变体2
@@ -7781,14 +7781,24 @@
             const targetId = Number(volumeId);
             console.log('🎯 targetId:', targetId, '类型:', typeof targetId);
             
+            // 过滤并去重
+            const seenIds = new Set();
             const chapters = chaptersData.filter(c => {
                 const cVolumeId = Number(c.volumeId);
                 const match = cVolumeId === targetId;
+                if (match) {
+                    // 去重检查
+                    if (seenIds.has(c.id)) {
+                        console.warn('⚠️ renderChapters 发现重复章节:', c.id, c.title);
+                        return false;
+                    }
+                    seenIds.add(c.id);
+                }
                 console.log(`  比较: c.volumeId=${c.volumeId} (${typeof c.volumeId}) -> ${cVolumeId} vs targetId=${targetId}, 匹配=${match}`);
                 return match;
             });
             
-            console.log('✅ 匹配到的章节数:', chapters.length);
+            console.log('✅ 匹配到的章节数:', chapters.length, '(去重后)');
             
             if (chapters.length === 0) {
                 return `<div class="chapters-empty">暂无章节，点击上方 ➕ 添加</div>`;
@@ -7888,14 +7898,23 @@
             const volumes = await db.getAll('volumes', 'workId', currentWorkId);
             console.log('📚 获取到卷数:', volumes.length);
             chaptersData = [];
+            const seenIds = new Set(); // 用于去重
             for (const volume of volumes) {
                 const vid = Number(volume.id);
                 console.log('  加载卷:', vid, volume.title, '(原始ID:', volume.id, '类型:', typeof volume.id + ')');
                 const chapters = await loadVolumeChapters(vid);
                 console.log('    章节数:', chapters.length);
-                chaptersData.push(...chapters);
+                // 去重：只添加不存在的章节
+                for (const chapter of chapters) {
+                    if (!seenIds.has(chapter.id)) {
+                        seenIds.add(chapter.id);
+                        chaptersData.push(chapter);
+                    } else {
+                        console.warn('⚠️ 跳过重复章节:', chapter.id, chapter.title);
+                    }
+                }
             }
-            console.log('✅ chaptersData 刷新完成，总章节数:', chaptersData.length);
+            console.log('✅ chaptersData 刷新完成，总章节数:', chaptersData.length, '(去重后)');
         }
 
         // 应用大纲模板
