@@ -3031,7 +3031,8 @@
                 <a class="nav-item" data-page="history" onclick="handleNavClick(this, 'history')"><i>🕐</i>历史记录</a>
                 <a class="nav-item" data-page="characters" onclick="handleNavClick(this, 'characters')"><i>👤</i>角色管理</a>
                 <a class="nav-item" data-page="world" onclick="handleNavClick(this, 'world')"><i>🌍</i>世界观</a>
-                <a class="nav-item" data-page="plot" onclick="handleNavClick(this, 'plot')"><i>📖</i>情节大纲</a>
+                <a class="nav-item" data-page="plot" onclick="handleNavClick(this, 'plot')"><i>📖</i>正文创作</a>
+                <a class="nav-item" data-page="outline" onclick="handleNavClick(this, 'outline')"><i>📋</i>情节大纲</a>
                 <a class="nav-item" data-page="mindmap" onclick="handleNavClick(this, 'mindmap')"><i>🗺️</i>大纲导图</a>
                 <a class="nav-item" data-page="trope" onclick="handleNavClick(this, 'trope')"><i>🎭</i>桥段素材</a>
                 <a class="nav-item" data-page="scene" onclick="handleNavClick(this, 'scene')"><i>📝</i>桥段生成</a>
@@ -3999,7 +4000,7 @@
 
             async init() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, 4);
+                    const request = indexedDB.open(this.dbName, 5);
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         this.db = request.result;
@@ -4020,7 +4021,7 @@
                             const plotStore = db.createObjectStore('plots', { keyPath: 'id', autoIncrement: true });
                             plotStore.createIndex('volume', 'volume', { unique: false });
                         }
-                        // 多级作品管理
+                        // 多级作品管理（正文创作用）
                         if (!db.objectStoreNames.contains('works')) {
                             db.createObjectStore('works', { keyPath: 'id', autoIncrement: true });
                         }
@@ -4031,6 +4032,25 @@
                         if (!db.objectStoreNames.contains('chapters')) {
                             const chapStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
                             chapStore.createIndex('volumeId', 'volumeId', { unique: false });
+                        }
+                        // 情节大纲专用存储
+                        if (!db.objectStoreNames.contains('outline_works')) {
+                            db.createObjectStore('outline_works', { keyPath: 'id', autoIncrement: true });
+                        }
+                        if (!db.objectStoreNames.contains('outline_settings')) {
+                            const settingStore = db.createObjectStore('outline_settings', { keyPath: 'id', autoIncrement: true });
+                            settingStore.createIndex('workId', 'workId', { unique: false });
+                            settingStore.createIndex('type', 'type', { unique: false });
+                            settingStore.createIndex('workId_type', ['workId', 'type'], { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('outline_volumes')) {
+                            const ovStore = db.createObjectStore('outline_volumes', { keyPath: 'id', autoIncrement: true });
+                            ovStore.createIndex('workId', 'workId', { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains('outline_plots')) {
+                            const opStore = db.createObjectStore('outline_plots', { keyPath: 'id', autoIncrement: true });
+                            opStore.createIndex('volumeId', 'volumeId', { unique: false });
+                            opStore.createIndex('workId', 'workId', { unique: false });
                         }
                         // 历史记录表
                         if (!db.objectStoreNames.contains('history')) {
@@ -5216,6 +5236,7 @@
                     case 'characters': renderCharacters(editorContent); break;
                     case 'world': renderWorld(editorContent); break;
                     case 'plot': renderPlot(editorContent); break;
+                    case 'outline': renderOutline(editorContent); break;
                     case 'mindmap': renderMindmap(editorContent); break;
                     case 'trope': renderTrope(editorContent); break;
                     case 'scene': renderSceneEditor(editorContent); break;
@@ -5234,6 +5255,7 @@
                     case 'characters': renderCharacters(target); break;
                     case 'world': renderWorld(target); break;
                     case 'plot': renderPlot(target); break;
+                    case 'outline': renderOutline(target); break;
                     case 'mindmap': renderMindmap(target); break;
                     case 'trope': renderTrope(target); break;
                     case 'scene': renderSceneEditor(target); break;
@@ -5259,7 +5281,8 @@
                 'history': '历史记录',
                 'characters': '角色管理',
                 'world': '世界观',
-                'plot': '情节大纲',
+                'plot': '正文创作',
+                'outline': '情节大纲',
                 'mindmap': '大纲导图',
                 'trope': '桥段素材',
                 'scene': '桥段生成',
@@ -8657,6 +8680,1229 @@
 
             await refreshChaptersData();
             await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+
+        // ==================== 情节大纲新功能（大纲编辑） ====================
+        // 当前情节大纲作品ID
+        let currentOutlineWorkId = null;
+        // 当前选中的设定分类
+        let currentSettingType = 'character';
+        // 当前选中的设定条目ID
+        let currentSettingId = null;
+        // 展开的卷集合
+        let expandedOutlineVolumes = new Set();
+
+        // 设定分类配置
+        const settingTypes = [
+            { id: 'character', name: '角色设定', icon: '👤' },
+            { id: 'worldview', name: '世界观设定', icon: '🌍' },
+            { id: 'faction', name: '势力设定', icon: '⚔️' },
+            { id: 'organization', name: '组织设定', icon: '🏛️' },
+            { id: 'power', name: '力量体系', icon: '✨' },
+            { id: 'monster', name: '怪物设定', icon: '👹' }
+        ];
+
+        // 渲染情节大纲页面
+        async function renderOutline(container) {
+            if (!container) return;
+            
+            // 加载作品列表
+            const works = await db.getAll('outline_works');
+            
+            // 如果没有选中作品，默认选择第一个
+            if (!currentOutlineWorkId && works.length > 0) {
+                currentOutlineWorkId = works[0].id;
+            }
+            
+            const currentWork = works.find(w => w.id === currentOutlineWorkId);
+            
+            // 加载当前作品的设定条目
+            let settings = [];
+            if (currentOutlineWorkId) {
+                const allSettings = await db.getAll('outline_settings');
+                settings = allSettings.filter(s => s.workId === currentOutlineWorkId && s.type === currentSettingType);
+            }
+            
+            // 加载当前作品的卷
+            let volumes = [];
+            if (currentOutlineWorkId) {
+                const allVolumes = await db.getAll('outline_volumes');
+                volumes = allVolumes.filter(v => v.workId === currentOutlineWorkId).sort((a, b) => a.volumeNumber - b.volumeNumber);
+            }
+            
+            container.innerHTML = `
+                <div class="outline-container" style="display: flex; height: 100%; gap: 15px;">
+                    <!-- 左侧：作品列表和分类标签 -->
+                    <div class="outline-left" style="width: 220px; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- 作品管理 -->
+                        <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 14px; color: #fff;">📚 作品列表</h3>
+                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="addOutlineWork()">+ 新建</button>
+                            </div>
+                            <div class="outline-works-list" style="max-height: 150px; overflow-y: auto;">
+                                ${works.length === 0 ? '<div style="color: #666; font-size: 12px; text-align: center; padding: 10px;">暂无作品</div>' : 
+                                    works.map(work => `
+                                        <div class="outline-work-item ${work.id === currentOutlineWorkId ? 'active' : ''}" 
+                                             onclick="switchOutlineWork(${work.id})"
+                                             style="padding: 10px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; 
+                                                    background: ${work.id === currentOutlineWorkId ? '#0f3460' : 'transparent'};
+                                                    border-left: 3px solid ${work.id === currentOutlineWorkId ? '#e94560' : 'transparent'};
+                                                    display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-size: 13px; color: ${work.id === currentOutlineWorkId ? '#fff' : '#ccc'}; overflow: hidden; text-overflow: ellipsis;">${work.title || '未命名作品'}</span>
+                                            <button onclick="event.stopPropagation(); deleteOutlineWork(${work.id})" 
+                                                    style="background: none; border: none; color: #e94560; cursor: pointer; font-size: 12px; padding: 2px 5px;">×</button>
+                                        </div>
+                                    `).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- 分类标签 -->
+                        <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 15px; flex: 1;">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; color: #fff;">📂 分类设定</h3>
+                            <div class="outline-type-list">
+                                ${settingTypes.map(type => `
+                                    <div class="outline-type-item ${type.id === currentSettingType ? 'active' : ''}" 
+                                         onclick="switchSettingType('${type.id}')"
+                                         style="padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer;
+                                                background: ${type.id === currentSettingType ? '#0f3460' : 'transparent'};
+                                                border-left: 3px solid ${type.id === currentSettingType ? '#e94560' : 'transparent'};
+                                                display: flex; align-items: center; gap: 10px;">
+                                        <span style="font-size: 18px;">${type.icon}</span>
+                                        <span style="font-size: 13px; color: ${type.id === currentSettingType ? '#fff' : '#ccc'};">${type.name}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 中间：设定条目列表 -->
+                    <div class="outline-center" style="width: 280px; display: flex; flex-direction: column; background: #1a1a2e; border-radius: 12px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0; font-size: 14px; color: #fff;">
+                                ${settingTypes.find(t => t.id === currentSettingType)?.icon} 
+                                ${settingTypes.find(t => t.id === currentSettingType)?.name}
+                            </h3>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="randomGenerateSetting()">🎲 随机</button>
+                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 12px;" onclick="aiGenerateSetting()">✨ AI生成</button>
+                            </div>
+                        </div>
+                        
+                        ${!currentOutlineWorkId ? '<div style="color: #666; text-align: center; padding: 40px 20px;">请先选择或创建一个作品</div>' :
+                            settings.length === 0 ? '<div style="color: #666; text-align: center; padding: 40px 20px;">暂无设定条目<br><span style="font-size: 12px;">点击上方按钮生成</span></div>' :
+                            `<div class="outline-settings-list" style="flex: 1; overflow-y: auto;">
+                                ${settings.map(setting => `
+                                    <div class="outline-setting-item ${setting.id === currentSettingId ? 'active' : ''}" 
+                                         onclick="selectSetting(${setting.id})"
+                                         style="padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer;
+                                                background: ${setting.id === currentSettingId ? '#0f3460' : '#16213e'};
+                                                border: 1px solid ${setting.id === currentSettingId ? '#e94560' : 'transparent'};">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                            <span style="font-size: 14px; font-weight: 600; color: #fff;">${setting.name || '未命名'}</span>
+                                            <button onclick="event.stopPropagation(); deleteSetting(${setting.id})" 
+                                                    style="background: none; border: none; color: #e94560; cursor: pointer; font-size: 12px;">×</button>
+                                        </div>
+                                        <div style="font-size: 12px; color: #888; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                                            ${setting.description?.substring(0, 100) || '暂无描述'}${setting.description?.length > 100 ? '...' : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>`
+                        }
+                    </div>
+                    
+                    <!-- 右侧：设定详情编辑区 -->
+                    <div class="outline-right" style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- 设定详情 -->
+                        <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 20px; flex: 1; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; font-size: 16px; color: #fff;">📝 设定详情</h3>
+                                ${currentSettingId ? `<button class="btn btn-primary" style="padding: 6px 16px; font-size: 13px;" onclick="saveSettingDetail()">💾 保存</button>` : ''}
+                            </div>
+                            <div id="outlineSettingDetail" style="flex: 1; overflow-y: auto;">
+                                ${!currentSettingId ? 
+                                    '<div style="color: #666; text-align: center; padding: 60px 20px;">请选择一个设定条目</div>' :
+                                    ''
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- 卷与剧情梗概 -->
+                        <div class="outline-section" style="background: #1a1a2e; border-radius: 12px; padding: 15px; max-height: 350px; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h3 style="margin: 0; font-size: 14px; color: #fff;">📖 卷与剧情梗概</h3>
+                                ${currentOutlineWorkId ? `<button class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;" onclick="addOutlineVolume()">+ 添加卷</button>` : ''}
+                            </div>
+                            
+                            ${!currentOutlineWorkId ? '<div style="color: #666; text-align: center; padding: 20px;">请先选择作品</div>' :
+                                volumes.length === 0 ? '<div style="color: #666; text-align: center; padding: 20px;">暂无卷<br><span style="font-size: 12px;">点击添加卷</span></div>' :
+                                `<div class="outline-volumes-list" style="flex: 1; overflow-y: auto;">
+                                    ${await Promise.all(volumes.map(async vol => {
+                                        const plots = await db.getAll('outline_plots');
+                                        const volPlots = plots.filter(p => p.volumeId === vol.id).sort((a, b) => a.order - b.order);
+                                        const isExpanded = expandedOutlineVolumes.has(vol.id);
+                                        return `
+                                            <div class="outline-volume-item" style="margin-bottom: 10px; background: #16213e; border-radius: 8px; overflow: hidden;">
+                                                <div style="padding: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+                                                     onclick="toggleOutlineVolume(${vol.id})">
+                                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                                        <span style="font-size: 12px; color: #666;">${isExpanded ? '▼' : '▶'}</span>
+                                                        <span style="font-size: 13px; font-weight: 600; color: #fff;">第${vol.volumeNumber}卷：${vol.title}</span>
+                                                    </div>
+                                                    <div style="display: flex; gap: 5px;">
+                                                        <button onclick="event.stopPropagation(); addOutlinePlot(${vol.id})" style="background: none; border: none; color: #00d4ff; cursor: pointer; font-size: 12px; padding: 2px 8px;">+剧情</button>
+                                                        <button onclick="event.stopPropagation(); deleteOutlineVolume(${vol.id})" style="background: none; border: none; color: #e94560; cursor: pointer; font-size: 12px; padding: 2px 8px;">删除</button>
+                                                    </div>
+                                                </div>
+                                                ${isExpanded ? `
+                                                    <div style="padding: 0 12px 12px 35px;">
+                                                        ${volPlots.length === 0 ? '<div style="color: #666; font-size: 12px; padding: 8px 0;">暂无剧情节点</div>' :
+                                                            volPlots.map(plot => `
+                                                                <div style="padding: 10px; margin-bottom: 8px; background: #1a1a2e; border-radius: 6px;">
+                                                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                                                        <span style="font-size: 13px; font-weight: 600; color: #00d4ff;">${plot.title}</span>
+                                                                        <span style="font-size: 11px; color: #888;">第${plot.startChapter}-${plot.endChapter}章</span>
+                                                                    </div>
+                                                                    <div style="font-size: 12px; color: #aaa; line-height: 1.5;">${plot.content?.substring(0, 80) || '暂无内容'}${plot.content?.length > 80 ? '...' : ''}</div>
+                                                                    <button onclick="deleteOutlinePlot(${plot.id})" style="margin-top: 6px; background: none; border: none; color: #e94560; cursor: pointer; font-size: 11px;">删除</button>
+                                                                </div>
+                                                            `).join('')}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        `;
+                                    })).then(html => html.join(''))}
+                                </div>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 如果有选中的设定，加载详情
+            if (currentSettingId) {
+                await loadSettingDetail(currentSettingId);
+            }
+        }
+
+        // ==================== 作品管理函数 ====================
+        
+        // 添加作品
+        async function addOutlineWork() {
+            const title = prompt('请输入作品名称：');
+            if (!title) return;
+            
+            const work = {
+                title: title.trim(),
+                description: '',
+                createdAt: new Date().toISOString()
+            };
+            
+            const workId = await db.add('outline_works', work);
+            currentOutlineWorkId = workId;
+            showNotification('✅ 作品创建成功');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 删除作品
+        async function deleteOutlineWork(id) {
+            if (!confirm('确定要删除这个作品吗？所有相关设定、卷和剧情都将被删除！')) return;
+            
+            // 删除相关设定
+            const settings = await db.getAll('outline_settings');
+            for (const setting of settings.filter(s => s.workId === id)) {
+                await db.delete('outline_settings', setting.id);
+            }
+            
+            // 删除相关卷和剧情
+            const volumes = await db.getAll('outline_volumes');
+            for (const vol of volumes.filter(v => v.workId === id)) {
+                const plots = await db.getAll('outline_plots');
+                for (const plot of plots.filter(p => p.volumeId === vol.id)) {
+                    await db.delete('outline_plots', plot.id);
+                }
+                await db.delete('outline_volumes', vol.id);
+            }
+            
+            await db.delete('outline_works', id);
+            
+            if (currentOutlineWorkId === id) {
+                currentOutlineWorkId = null;
+                currentSettingId = null;
+            }
+            
+            showNotification('✅ 作品已删除');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 切换当前作品
+        async function switchOutlineWork(id) {
+            currentOutlineWorkId = id;
+            currentSettingId = null;
+            expandedOutlineVolumes.clear();
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+
+        // ==================== 设定分类管理 ====================
+        
+        // 切换设定分类
+        async function switchSettingType(type) {
+            currentSettingType = type;
+            currentSettingId = null;
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+
+        // ==================== 设定条目管理 ====================
+        
+        // 选择设定条目
+        async function selectSetting(id) {
+            currentSettingId = id;
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 加载设定详情到编辑区
+        async function loadSettingDetail(id) {
+            const setting = await db.get('outline_settings', id);
+            if (!setting) return;
+            
+            const detailContainer = document.getElementById('outlineSettingDetail');
+            if (!detailContainer) return;
+            
+            detailContainer.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 15px; height: 100%;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">名称</label>
+                        <input type="text" id="settingName" value="${setting.name || ''}" 
+                               style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px;">
+                    </div>
+                    
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">详细描述（至少200字）</label>
+                        <textarea id="settingDescription" 
+                                  style="flex: 1; padding: 12px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 14px; line-height: 1.6; resize: none;"
+                                  placeholder="请输入详细描述...
+
+建议包含：
+- 基本介绍
+- 特点/能力
+- 背景故事
+- 与其他元素的关系">${setting.description || ''}</textarea>
+                        <div style="text-align: right; margin-top: 5px; font-size: 12px; color: #888;">
+                            字数: <span id="settingWordCount">${(setting.description || '').length}</span>
+                        </div>
+                    </div>
+                    
+                    ${setting.generatedFrom ? `
+                        <div style="padding: 10px; background: rgba(0, 212, 255, 0.1); border-radius: 6px; font-size: 12px; color: #00d4ff;">
+                            生成来源: ${setting.generatedFrom}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // 字数统计
+            const textarea = document.getElementById('settingDescription');
+            const wordCountSpan = document.getElementById('settingWordCount');
+            if (textarea && wordCountSpan) {
+                textarea.addEventListener('input', () => {
+                    wordCountSpan.textContent = textarea.value.length;
+                });
+            }
+        }
+        
+        // 保存设定详情
+        async function saveSettingDetail() {
+            if (!currentSettingId) return;
+            
+            const name = document.getElementById('settingName')?.value?.trim();
+            const description = document.getElementById('settingDescription')?.value?.trim();
+            
+            if (!name) {
+                showNotification('❌ 请输入名称');
+                return;
+            }
+            
+            const setting = await db.get('outline_settings', currentSettingId);
+            if (!setting) return;
+            
+            setting.name = name;
+            setting.description = description;
+            
+            await db.update('outline_settings', setting);
+            showNotification('✅ 设定已保存');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 删除设定条目
+        async function deleteSetting(id) {
+            if (!confirm('确定要删除这个设定吗？')) return;
+            
+            await db.delete('outline_settings', id);
+            
+            if (currentSettingId === id) {
+                currentSettingId = null;
+            }
+            
+            showNotification('✅ 设定已删除');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+
+        // ==================== 随机生成设定 ====================
+        
+        // 随机生成设定
+        async function randomGenerateSetting() {
+            if (!currentOutlineWorkId) {
+                showNotification('❌ 请先选择一个作品');
+                return;
+            }
+            
+            let generatedSetting = null;
+            
+            switch (currentSettingType) {
+                case 'character':
+                    generatedSetting = await randomGenerateCharacter();
+                    break;
+                case 'worldview':
+                    generatedSetting = await randomGenerateWorldview();
+                    break;
+                case 'faction':
+                    generatedSetting = await randomGenerateFaction();
+                    break;
+                case 'organization':
+                    generatedSetting = await randomGenerateOrganization();
+                    break;
+                case 'power':
+                    generatedSetting = await randomGeneratePowerSystem();
+                    break;
+                case 'monster':
+                    generatedSetting = await randomGenerateMonster();
+                    break;
+            }
+            
+            if (generatedSetting) {
+                generatedSetting.workId = currentOutlineWorkId;
+                generatedSetting.type = currentSettingType;
+                generatedSetting.createdAt = new Date().toISOString();
+                
+                const id = await db.add('outline_settings', generatedSetting);
+                currentSettingId = id;
+                showNotification(`✅ 已生成${settingTypes.find(t => t.id === currentSettingType)?.name}`);
+                await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            }
+        }
+        
+        // 随机生成角色
+        async function randomGenerateCharacter() {
+            // 从 characters_all_expanded.json 加载角色数据
+            try {
+                let characters = [];
+                const cachedData = await smartCache.getData('characters_all_expanded.json');
+                if (cachedData && cachedData.characters) {
+                    characters = cachedData.characters;
+                } else {
+                    // 尝试从网络加载
+                    try {
+                        const response = await fetch('characters_all_expanded.json');
+                        if (response.ok) {
+                            const data = await response.json();
+                            characters = data.characters || [];
+                            await smartCache.setData('characters_all_expanded.json', data, '1.0');
+                        }
+                    } catch (e) {
+                        console.warn('加载角色数据失败:', e);
+                    }
+                }
+                
+                if (characters.length > 0) {
+                    const randomChar = characters[Math.floor(Math.random() * characters.length)];
+                    return {
+                        name: randomChar.name || randomChar['姓名'] || '未命名角色',
+                        description: randomChar.biography || randomChar['小传'] || randomChar.description || `
+【基本介绍】
+${randomChar.name || randomChar['姓名'] || '这个角色'}是一个充满魅力的角色。
+
+【身份背景】
+${randomChar.role || randomChar['身份'] || '身份神秘的特殊人物'}，在故事中扮演着重要角色。
+
+【性格特点】
+${randomChar.personality || randomChar['性格'] || '性格复杂多面，有着独特的个人魅力和行事风格。'}
+
+【主要经历】
+${randomChar.background || randomChar['背景'] || '经历丰富，有着不为人知的过往和故事。'}
+
+【特殊能力/关系】
+${randomChar.tags ? '相关标签: ' + randomChar.tags.join(', ') : '与其他角色和事件有着复杂的联系。'}
+                        `.trim(),
+                        generatedFrom: '素材库随机'
+                    };
+                }
+            } catch (e) {
+                console.error('随机生成角色失败:', e);
+            }
+            
+            // 备用生成
+            const names = ['林墨', '苏晚晴', '顾临渊', '沈清欢', '萧云起', '陆景行', '楚星澜', '叶无双'];
+            const roles = ['主角', '反派', '导师', '挚友', '神秘人物', '世家子弟', '散修', '天才'];
+            const personalities = ['冷静理智', '热血冲动', '腹黑深沉', '善良正直', '玩世不恭', '坚韧不拔'];
+            
+            return {
+                name: names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100),
+                description: `
+【基本介绍】
+这是一个${personalities[Math.floor(Math.random() * personalities.length)]}的角色。
+
+【身份背景】
+身份为${roles[Math.floor(Math.random() * roles.length)]}，在故事中有着重要的地位和作用。
+
+【性格特点】
+性格鲜明独特，有着自己的行事准则和价值观。在面对困难和挑战时表现出强大的内心力量。
+
+【主要经历】
+经历了种种磨难和考验，逐渐成长为故事中的关键人物。有着不为人知的过去和隐藏的秘密。
+
+【人物关系】
+与故事中的其他角色有着复杂的联系，既是推动剧情发展的重要力量，也是情感线的核心人物。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+        
+        // 随机生成世界观
+        async function randomGenerateWorldview() {
+            const worldTypes = ['玄幻', '仙侠', '都市', '科幻', '末日', '古武', '奇幻', '历史'];
+            const worldStyles = ['黑暗压抑', '光明正义', '悬疑诡秘', '热血激昂', '悲壮苍凉', '轻松诙谐'];
+            
+            const type = worldTypes[Math.floor(Math.random() * worldTypes.length)];
+            const style = worldStyles[Math.floor(Math.random() * worldStyles.length)];
+            
+            return {
+                name: `${type}世界`,
+                description: `
+【世界类型】
+这是一个以${type}为核心的世界，整体风格偏向${style}。
+
+【基本设定】
+在这个世界中，有着独特的规则和秩序。天地之间存在着神秘的力量，影响着万物的运行和生命的演化。
+
+【社会结构】
+世界由多个势力和种族组成，彼此之间既有合作也有争斗。强者可以掌控自己的命运，而弱者只能在夹缝中求生存。
+
+【力量体系】
+存在着完整的修炼体系和晋升路径。通过不断的努力和机遇，角色可以突破自身的极限，获得更强大的力量。
+
+【主要特色】
+这个世界有着丰富的历史文化和独特的地理环境。各种神秘的地域和遗迹等待着探索，隐藏着无数的机缘和危险。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+        
+        // 随机生成势力
+        async function randomGenerateFaction() {
+            const sizes = ['大', '中', '小'];
+            const natures = ['正义', '邪恶', '中立'];
+            const types = ['宗门', '家族', '王朝', '商会', '联盟', '邪教', '隐世势力'];
+            
+            const size = sizes[Math.floor(Math.random() * sizes.length)];
+            const nature = natures[Math.floor(Math.random() * natures.length)];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            return {
+                name: `${size}型${nature}${type}`,
+                description: `
+【势力概况】
+这是一个${size}型${nature}性质的${type}，在故事中扮演着重要的角色。
+
+【势力结构】
+内部有着严格的等级制度和权力架构。高层掌握着核心资源和决策权，底层成员则需要通过贡献来获得晋升机会。
+
+【主要成员】
+拥有一批实力强劲的成员，包括核心领导、中层骨干和普通成员。每个人都有着自己的目标和野心。
+
+【势力目标】
+致力于实现自身的理想和目标，在与其他势力的竞争中不断壮大。有着明确的战略规划和发展方向。
+
+【对外关系】
+与其他势力保持着复杂的关系网，既有盟友也有敌人。在利益的驱使下，关系随时可能发生变化。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+        
+        // 随机生成组织
+        async function randomGenerateOrganization() {
+            const types = ['情报机构', '杀手组织', '商会联盟', '研究机构', '地下势力', '宗教组织', '佣兵团体'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            return {
+                name: `神秘${type}`,
+                description: `
+【组织性质】
+这是一个神秘的${type}，在暗中影响着世界的走向。
+
+【组织架构】
+采用隐秘的层级结构，成员之间可能互不相识。通过特殊的联系方式和暗号进行沟通。
+
+【运作模式】
+有着独特的运作方式和规则。成员需要遵守严格的纪律，违反者将受到严厉的惩罚。
+
+【组织目标】
+追求着不为人知的目标，可能是权力、财富、知识或者更深层的东西。
+
+【社会影响】
+虽然隐藏在暗处，但其影响力渗透到了社会的各个层面。许多重大事件背后都有其身影。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+        
+        // 随机生成力量体系
+        async function randomGeneratePowerSystem() {
+            const types = ['修真', '魔法', '科技', '异能', '武道', '血脉', '信仰', '契约'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            return {
+                name: `${type}体系`,
+                description: `
+【体系类型】
+这是一个以${type}为核心的力量体系，有着完整的修炼路径和晋升机制。
+
+【基本原理】
+通过特定的方式获取和运用能量，不断提升自身的力量层次。每个层次都有着质的飞跃。
+
+【修炼阶段】
+分为多个阶段，每个阶段都有其特点和瓶颈。突破瓶颈需要特定的条件和契机。
+
+【力量表现】
+在不同阶段表现出不同的能力特征。高阶强者可以移山填海、毁天灭地。
+
+【体系限制】
+每个体系都有其限制和代价。过度追求力量可能导致严重的后果，甚至失去人性。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+        
+        // 随机生成怪物
+        async function randomGenerateMonster() {
+            const levels = ['普通', '精英', 'BOSS'];
+            const features = ['火焰', '冰霜', '毒素', '雷电', '暗影', '岩石', '风暴', '腐蚀'];
+            
+            const level = levels[Math.floor(Math.random() * levels.length)];
+            const feature = features[Math.floor(Math.random() * features.length)];
+            
+            return {
+                name: `${feature}之${level}怪`,
+                description: `
+【怪物等级】
+这是一个${level}级别的怪物，拥有${feature}属性的强大力量。
+
+【外形特征】
+外形狰狞恐怖，浑身散发着${feature}的气息。体型庞大，给人以强烈的压迫感。
+
+【能力特点】
+擅长使用${feature}相关的攻击方式，威力惊人。有着极强的防御力和生命力。
+
+【弱点分析】
+虽然强大，但也有着特定的弱点。需要找到正确的方式才能有效击败。
+
+【出现场景】
+通常出现在特定的环境中，守护着某些重要的东西或者单纯是为了猎杀入侵者。
+                `.trim(),
+                generatedFrom: '系统随机生成'
+            };
+        }
+
+        // ==================== AI生成设定 ====================
+        
+        // AI生成设定弹窗
+        async function aiGenerateSetting() {
+            if (!currentOutlineWorkId) {
+                showNotification('❌ 请先选择一个作品');
+                return;
+            }
+            
+            const typeNames = {
+                character: '角色',
+                worldview: '世界观',
+                faction: '势力',
+                organization: '组织',
+                power: '力量体系',
+                monster: '怪物'
+            };
+            
+            const type = currentSettingType;
+            const typeName = typeNames[type];
+            
+            // 创建弹窗
+            const modal = document.createElement('div');
+            modal.id = 'aiGenerateModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center;
+            `;
+            
+            let paramsHtml = '';
+            
+            switch (type) {
+                case 'character':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">性别</label>
+                            <select id="aiParamGender" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">年龄</label>
+                            <select id="aiParamAge" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="年轻">年轻</option>
+                                <option value="中年">中年</option>
+                                <option value="老年">老年</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">阵营</label>
+                            <select id="aiParamAlignment" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="正派">正派</option>
+                                <option value="中立">中立</option>
+                                <option value="反派">反派</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">姓名（可选）</label>
+                            <input type="text" id="aiParamName" placeholder="留空则自动生成" 
+                                   style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                        </div>
+                    `;
+                    break;
+                case 'worldview':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">类型</label>
+                            <select id="aiParamWorldType" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="玄幻">玄幻</option>
+                                <option value="都市">都市</option>
+                                <option value="科幻">科幻</option>
+                                <option value="仙侠">仙侠</option>
+                                <option value="末日">末日</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">风格</label>
+                            <select id="aiParamStyle" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="黑暗">黑暗</option>
+                                <option value="光明">光明</option>
+                                <option value="悬疑">悬疑</option>
+                                <option value="热血">热血</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'faction':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">规模</label>
+                            <select id="aiParamSize" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="大">大型</option>
+                                <option value="中">中型</option>
+                                <option value="小">小型</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">性质</label>
+                            <select id="aiParamNature" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="正义">正义</option>
+                                <option value="邪恶">邪恶</option>
+                                <option value="中立">中立</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'organization':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">规模</label>
+                            <select id="aiParamOrgSize" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="大">大型</option>
+                                <option value="中">中型</option>
+                                <option value="小">小型</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">性质</label>
+                            <select id="aiParamOrgNature" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="正义">正义</option>
+                                <option value="邪恶">邪恶</option>
+                                <option value="中立">中立</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'power':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">类型</label>
+                            <select id="aiParamPowerType" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="修真">修真</option>
+                                <option value="魔法">魔法</option>
+                                <option value="科技">科技</option>
+                                <option value="异能">异能</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                case 'monster':
+                    paramsHtml = `
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">等级</label>
+                            <select id="aiParamMonsterLevel" style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                                <option value="">随机</option>
+                                <option value="普通">普通</option>
+                                <option value="精英">精英</option>
+                                <option value="BOSS">BOSS</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">特征</label>
+                            <input type="text" id="aiParamFeature" placeholder="例如：火焰、毒素、雷电等" 
+                                   style="width: 100%; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff;">
+                        </div>
+                    `;
+                    break;
+            }
+            
+            modal.innerHTML = `
+                <div style="background: #1a1a2e; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+                    <div style="padding: 20px; border-bottom: 1px solid #333;">
+                        <h3 style="margin: 0; color: #fff;">✨ AI生成${typeName}设定</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        ${paramsHtml}
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 6px;">补充描述（可选）</label>
+                            <textarea id="aiParamExtra" placeholder="输入额外要求，如：希望角色有悲惨的过去..." 
+                                      style="width: 100%; height: 80px; padding: 10px; background: #16213e; border: 1px solid #333; border-radius: 6px; color: #fff; resize: none;"></textarea>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; border-top: 1px solid #333; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button onclick="document.getElementById('aiGenerateModal').remove()" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">取消</button>
+                        <button id="aiGenerateBtn" style="padding: 10px 20px; background: #e94560; color: #fff; border: none; border-radius: 6px; cursor: pointer;">🚀 生成设定</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // 生成按钮点击事件
+            document.getElementById('aiGenerateBtn').addEventListener('click', async () => {
+                const params = collectAIParams(type);
+                modal.remove();
+                
+                showNotification('🔄 正在生成设定...');
+                
+                // 模拟AI生成（实际项目中可以接入真正的AI接口）
+                const generatedSetting = await simulateAIGeneration(type, params);
+                
+                if (generatedSetting) {
+                    generatedSetting.workId = currentOutlineWorkId;
+                    generatedSetting.type = currentSettingType;
+                    generatedSetting.createdAt = new Date().toISOString();
+                    generatedSetting.generatedFrom = 'AI生成';
+                    
+                    const id = await db.add('outline_settings', generatedSetting);
+                    currentSettingId = id;
+                    showNotification(`✅ AI生成${typeName}成功`);
+                    await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+                }
+            });
+            
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // 收集AI参数
+        function collectAIParams(type) {
+            const params = { extra: document.getElementById('aiParamExtra')?.value || '' };
+            
+            switch (type) {
+                case 'character':
+                    params.gender = document.getElementById('aiParamGender')?.value || '';
+                    params.age = document.getElementById('aiParamAge')?.value || '';
+                    params.alignment = document.getElementById('aiParamAlignment')?.value || '';
+                    params.name = document.getElementById('aiParamName')?.value || '';
+                    break;
+                case 'worldview':
+                    params.worldType = document.getElementById('aiParamWorldType')?.value || '';
+                    params.style = document.getElementById('aiParamStyle')?.value || '';
+                    break;
+                case 'faction':
+                    params.size = document.getElementById('aiParamSize')?.value || '';
+                    params.nature = document.getElementById('aiParamNature')?.value || '';
+                    break;
+                case 'organization':
+                    params.size = document.getElementById('aiParamOrgSize')?.value || '';
+                    params.nature = document.getElementById('aiParamOrgNature')?.value || '';
+                    break;
+                case 'power':
+                    params.powerType = document.getElementById('aiParamPowerType')?.value || '';
+                    break;
+                case 'monster':
+                    params.level = document.getElementById('aiParamMonsterLevel')?.value || '';
+                    params.feature = document.getElementById('aiParamFeature')?.value || '';
+                    break;
+            }
+            
+            return params;
+        }
+        
+        // 模拟AI生成（实际项目中可以接入真正的AI接口）
+        async function simulateAIGeneration(type, params) {
+            // 模拟延迟
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const typeGenerators = {
+                character: () => generateAICharacter(params),
+                worldview: () => generateAIWorldview(params),
+                faction: () => generateAIFaction(params),
+                organization: () => generateAIOrganization(params),
+                power: () => generateAIPowerSystem(params),
+                monster: () => generateAIMonster(params)
+            };
+            
+            return typeGenerators[type] ? typeGenerators[type]() : null;
+        }
+        
+        // AI生成角色
+        function generateAICharacter(params) {
+            const genders = ['男', '女'];
+            const ages = ['年轻', '中年', '老年'];
+            const alignments = ['正派', '中立', '反派'];
+            const names = {
+                '男': ['林墨', '顾临渊', '萧云起', '陆景行', '楚星澜', '沈墨'],
+                '女': ['苏晚晴', '沈清欢', '叶无双', '慕容雪', '楚瑶', '林婉儿']
+            };
+            
+            const gender = params.gender || genders[Math.floor(Math.random() * genders.length)];
+            const age = params.age || ages[Math.floor(Math.random() * ages.length)];
+            const alignment = params.alignment || alignments[Math.floor(Math.random() * alignments.length)];
+            const name = params.name || names[gender][Math.floor(Math.random() * names[gender].length)];
+            
+            const personalities = {
+                '正派': '正直善良，有着坚定的信念和正义感',
+                '中立': '理智客观，根据情况做出最有利于自己的选择',
+                '反派': '为达目的不择手段，但也有着自己的原则和底线'
+            };
+            
+            const ageDesc = {
+                '年轻': '充满朝气和活力，有着无限的潜力和可能',
+                '中年': '经验丰富，处事稳重，是团队的顶梁柱',
+                '老年': '历经沧桑，智慧深沉，深谙世事'
+            };
+            
+            return {
+                name: name,
+                description: `
+【基本介绍】
+${name}是一位${age}的${gender}性角色，属于${alignment}阵营。${personalities[alignment]}。
+
+【外貌特征】
+${ageDesc[age]}，外表${gender === '男' ? '英挺俊朗' : '美丽动人'}，眼神中透露出一种独特的气质。
+
+【性格特点】
+性格鲜明独特，${personalities[alignment]}。在面对困难和挑战时表现出强大的内心力量和决断力。
+
+【主要经历】
+${params.extra || '经历了种种磨难和考验，逐渐成长为故事中的关键人物。有着不为人知的过去和隐藏的秘密。'}
+
+【能力与目标】
+拥有独特的能力和天赋，在故事中追求着自己的目标和理想。与其他角色有着复杂的联系，是推动剧情发展的重要力量。
+
+【人物关系】
+在故事中与各方势力都有着千丝万缕的联系，既是某些人的盟友，也是另一些人的敌人。其选择和行动将深刻影响故事的走向。
+                `.trim()
+            };
+        }
+        
+        // AI生成世界观
+        function generateAIWorldview(params) {
+            const types = ['玄幻', '都市', '科幻', '仙侠', '末日'];
+            const styles = ['黑暗', '光明', '悬疑', '热血'];
+            
+            const type = params.worldType || types[Math.floor(Math.random() * types.length)];
+            const style = params.style || styles[Math.floor(Math.random() * styles.length)];
+            
+            return {
+                name: `${style}风格${type}世界`,
+                description: `
+【世界类型】
+这是一个以${type}为核心的${style}风格世界，有着独特的规则和秩序。
+
+【基本设定】
+在这个${type}世界中，${params.extra || '天地之间存在着神秘的力量，影响着万物的运行和生命的演化。'}
+
+【社会结构】
+世界由多个势力和种族组成，彼此之间既有合作也有争斗。强者可以掌控自己的命运，而弱者只能在夹缝中求生存。
+
+【力量体系】
+存在着完整的修炼体系和晋升路径。通过不断的努力和机遇，角色可以突破自身的极限，获得更强大的力量。
+
+【地理环境】
+这个世界有着丰富的地理特征，包括神秘的禁地、繁华的都市、荒凉的边陲等。每个地方都有着独特的风景和危险。
+
+【历史文化】
+悠久的历史孕育了灿烂的文化，各种传说和神话流传于世。古老的遗迹中隐藏着无数的秘密等待探索。
+                `.trim()
+            };
+        }
+        
+        // AI生成势力
+        function generateAIFaction(params) {
+            const sizes = ['大', '中', '小'];
+            const natures = ['正义', '邪恶', '中立'];
+            const types = ['宗门', '家族', '王朝', '商会', '联盟'];
+            
+            const size = params.size || sizes[Math.floor(Math.random() * sizes.length)];
+            const nature = params.nature || natures[Math.floor(Math.random() * natures.length)];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            return {
+                name: `${size}型${nature}${type}`,
+                description: `
+【势力概况】
+这是一个${size}型${nature}性质的${type}，${params.extra || '在故事中扮演着重要的角色。'}
+
+【势力结构】
+内部有着严格的等级制度和权力架构。高层掌握着核心资源和决策权，底层成员则需要通过贡献来获得晋升机会。
+
+【主要成员】
+拥有一批实力强劲的成员，包括核心领导、中层骨干和普通成员。每个人都有着自己的目标和野心。
+
+【势力目标】
+致力于实现自身的理想和目标，在与其他势力的竞争中不断壮大。有着明确的战略规划和发展方向。
+
+【资源与底蕴】
+作为${size}型势力，掌握着相应的资源和底蕴。拥有独特的传承和秘法，是其在竞争中立足的根本。
+
+【对外关系】
+与其他势力保持着复杂的关系网，既有盟友也有敌人。在利益的驱使下，关系随时可能发生变化。
+                `.trim()
+            };
+        }
+        
+        // AI生成组织
+        function generateAIOrganization(params) {
+            const types = ['情报机构', '杀手组织', '商会联盟', '研究机构', '地下势力'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            return {
+                name: `${params.nature || '神秘'}${type}`,
+                description: `
+【组织性质】
+这是一个${params.nature || '神秘'}的${type}，${params.extra || '在暗中影响着世界的走向。'}
+
+【组织架构】
+采用隐秘的层级结构，成员之间可能互不相识。通过特殊的联系方式和暗号进行沟通。
+
+【运作模式】
+有着独特的运作方式和规则。成员需要遵守严格的纪律，违反者将受到严厉的惩罚。
+
+【核心成员】
+由一群精英组成，每个人都有着独特的能力和背景。核心成员掌握着组织的最高机密。
+
+【组织目标】
+追求着不为人知的目标，可能是权力、财富、知识或者更深层的东西。
+
+【社会影响】
+虽然隐藏在暗处，但其影响力渗透到了社会的各个层面。许多重大事件背后都有其身影。
+                `.trim()
+            };
+        }
+        
+        // AI生成力量体系
+        function generateAIPowerSystem(params) {
+            const types = ['修真', '魔法', '科技', '异能', '武道'];
+            const type = params.powerType || types[Math.floor(Math.random() * types.length)];
+            
+            const stageNames = {
+                '修真': ['炼气', '筑基', '金丹', '元婴', '化神', '渡劫', '大乘'],
+                '魔法': ['学徒', '法师', '大法师', '魔导士', '圣魔导', '法神'],
+                '科技': ['初级', '中级', '高级', '专家', '大师', '传奇'],
+                '异能': ['觉醒', '掌控', '精通', '领域', '规则', '本源'],
+                '武道': ['锻体', '凝气', '化劲', '宗师', '大宗师', '武圣']
+            };
+            
+            const stages = stageNames[type] || stageNames['修真'];
+            
+            return {
+                name: `${type}修炼体系`,
+                description: `
+【体系类型】
+这是一个以${type}为核心的力量体系，有着完整的修炼路径和晋升机制。
+
+【基本原理】
+通过${type === '科技' ? '科技改造和学习' : '特定的修炼方法'}获取和运用能量，不断提升自身的力量层次。
+
+【修炼阶段】
+共分为${stages.length}个阶段：${stages.join('、')}。每个阶段都有其特点和瓶颈，突破瓶颈需要特定的条件和契机。
+
+【力量表现】
+在不同阶段表现出不同的能力特征。低阶时只能${type === '魔法' ? '施展简单的法术' : '发挥基础能力'}，高阶强者则可以${type === '修真' ? '移山填海、毁天灭地' : type === '魔法' ? '禁咒毁城、改写规则' : '拥有毁天灭地的力量'}。
+
+【体系特点】
+${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? '强调元素亲和和知识积累' : type === '科技' ? '依靠科技装备和理论知识' : type === '异能' ? '依赖天赋觉醒和潜能开发' : '讲究肉身锤炼和战斗技巧'}。
+
+【体系限制】
+每个体系都有其限制和代价。${params.extra || '过度追求力量可能导致严重的后果，甚至失去人性。'}
+                `.trim()
+            };
+        }
+        
+        // AI生成怪物
+        function generateAIMonster(params) {
+            const levels = ['普通', '精英', 'BOSS'];
+            const features = ['火焰', '冰霜', '毒素', '雷电', '暗影', '岩石', '风暴', '腐蚀'];
+            
+            const level = params.level || levels[Math.floor(Math.random() * levels.length)];
+            const feature = params.feature || features[Math.floor(Math.random() * features.length)];
+            
+            const levelDesc = {
+                '普通': '数量众多，单个威胁不大',
+                '精英': '实力强劲，需要小心应对',
+                'BOSS': '极度危险，是区域霸主'
+            };
+            
+            return {
+                name: `${feature}之${level}兽`,
+                description: `
+【怪物等级】
+这是一个${level}级别的怪物，${levelDesc[level]}。拥有${feature}属性的强大力量。
+
+【外形特征】
+外形狰狞恐怖，浑身散发着${feature}的气息。体型${level === 'BOSS' ? '巨大如山' : level === '精英' ? '庞大' : '中等'}，给人以强烈的压迫感。
+
+【能力特点】
+擅长使用${feature}相关的攻击方式，威力${level === 'BOSS' ? '毁天灭地' : level === '精英' ? '惊人' : '不俗'}。有着极强的${level === '普通' ? '防御力' : '防御力和生命力'}。
+
+【攻击方式】
+可以释放${feature}属性的攻击，造成${feature === '火焰' ? '灼烧' : feature === '冰霜' ? '冰冻' : feature === '毒素' ? '中毒' : feature === '雷电' ? '麻痹' : feature === '暗影' ? '腐蚀' : feature === '岩石' ? '击飞' : feature === '风暴' ? '眩晕' : '持续伤害'}效果。
+
+【弱点分析】
+虽然强大，但也有着特定的弱点。${params.extra || '需要找到正确的方式才能有效击败。'}
+
+【出现场景】
+通常出现在${level === 'BOSS' ? '危险的禁地深处' : level === '精英' ? '危险的区域' : '各种环境中'}，守护着某些重要的东西或者单纯是为了猎杀入侵者。
+                `.trim()
+            };
+        }
+
+        // ==================== 卷与剧情管理 ====================
+        
+        // 添加卷
+        async function addOutlineVolume() {
+            if (!currentOutlineWorkId) {
+                showNotification('❌ 请先选择一个作品');
+                return;
+            }
+            
+            const volumes = await db.getAll('outline_volumes');
+            const workVolumes = volumes.filter(v => v.workId === currentOutlineWorkId);
+            const nextNumber = workVolumes.length + 1;
+            
+            const title = prompt(`请输入第${nextNumber}卷标题：`);
+            if (!title) return;
+            
+            const volume = {
+                workId: currentOutlineWorkId,
+                volumeNumber: nextNumber,
+                title: title.trim(),
+                createdAt: new Date().toISOString()
+            };
+            
+            const volumeId = await db.add('outline_volumes', volume);
+            expandedOutlineVolumes.add(volumeId);
+            showNotification('✅ 卷添加成功');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 删除卷
+        async function deleteOutlineVolume(id) {
+            if (!confirm('确定要删除这个卷吗？所有剧情节点都将被删除！')) return;
+            
+            // 删除相关剧情
+            const plots = await db.getAll('outline_plots');
+            for (const plot of plots.filter(p => p.volumeId === id)) {
+                await db.delete('outline_plots', plot.id);
+            }
+            
+            await db.delete('outline_volumes', id);
+            expandedOutlineVolumes.delete(id);
+            
+            showNotification('✅ 卷已删除');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 展开/收起卷
+        async function toggleOutlineVolume(id) {
+            if (expandedOutlineVolumes.has(id)) {
+                expandedOutlineVolumes.delete(id);
+            } else {
+                expandedOutlineVolumes.add(id);
+            }
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 添加剧情梗概
+        async function addOutlinePlot(volumeId) {
+            const title = prompt('请输入剧情节点标题：');
+            if (!title) return;
+            
+            const startChapter = parseInt(prompt('起始章节：', '1')) || 1;
+            const endChapter = parseInt(prompt('结束章节：', String(startChapter))) || startChapter;
+            
+            // 获取当前最大order
+            const plots = await db.getAll('outline_plots');
+            const volumePlots = plots.filter(p => p.volumeId === volumeId);
+            const maxOrder = volumePlots.length > 0 ? Math.max(...volumePlots.map(p => p.order || 0)) : 0;
+            
+            const plot = {
+                workId: currentOutlineWorkId,
+                volumeId: volumeId,
+                title: title.trim(),
+                content: '',
+                startChapter: startChapter,
+                endChapter: endChapter,
+                order: maxOrder + 1,
+                createdAt: new Date().toISOString()
+            };
+            
+            await db.add('outline_plots', plot);
+            showNotification('✅ 剧情节点添加成功');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+        }
+        
+        // 删除剧情梗概
+        async function deleteOutlinePlot(id) {
+            if (!confirm('确定要删除这个剧情节点吗？')) return;
+            
+            await db.delete('outline_plots', id);
+            showNotification('✅ 剧情节点已删除');
+            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
 
         function toggleTropePanel() {
