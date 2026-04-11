@@ -5813,6 +5813,275 @@
         }
 
         // 获取桥段子类型描述        // ==================== 姓名生成器页面 ====================
+        // 关键词匹配规则 - 用于根据描述智能生成名字
+        const keywordRules = {
+            cold: ['冷酷', '冷', '剑客', '剑', '杀', '杀伐', '无情', '刺客', '暗影', '寒', '冰', '孤', '独', '绝', '煞', '刃', '血', '死亡', '冷漠'],
+            gentle: ['温柔', '女', '女主', '柔', '雅', '美', '仙', '清雅', '温婉', '善良', '纯真', '可爱', '甜', '梦', '花', '月', '雪', '诗', '画'],
+            domineering: ['霸气', '王', '皇', '帝', '霸', '强势', '霸主', '至尊', '无敌', '龙', '天', '傲', '狂', '尊', '圣', '威', '权', '统治', '征服'],
+            scholarly: ['书生', '儒', '文', '墨', '谋士', '智囊', '聪明', '智慧', '学者', '才子', '读书人', '文雅', '谦逊', '深思', '博学'],
+            evil: ['邪', '魔', '妖', '反派', '恶', '魅', '诡异', '阴森', '黑暗', '毒', '蛊', '鬼', '魑', '魅', '魍', '魉', '诅咒', '邪魅'],
+            resolute: ['坚毅', '硬', '刚', '战士', '不屈', '坚定', '铁', '钢', '岩', '岳', '勇', '猛', '壮', '武', '毅', '恒'],
+            lively: ['灵动', '活泼', '机敏', '自由', '轻', '快', '乐', '笑', '舞', '羽', '翔', '飞', '跃', '俏皮', '可爱', '天真']
+        };
+
+        // 分析描述，确定风格和性别
+        function analyzeDescription(description) {
+            const desc = description.toLowerCase();
+            const scores = {};
+
+            for (const [style, keywords] of Object.entries(keywordRules)) {
+                scores[style] = 0;
+                for (const keyword of keywords) {
+                    if (desc.includes(keyword)) {
+                        scores[style] += 1;
+                    }
+                }
+            }
+
+            // 找出最高分的风格
+            let maxScore = 0;
+            let selectedStyle = 'cold'; // 默认冷峻风格
+
+            for (const [style, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    selectedStyle = style;
+                }
+            }
+
+            // 检测性别
+            let gender = 'male';
+            const femaleKeywords = ['女', '女主', '她', '温柔', '柔', '美', '仙子', '姑娘', '小姐', '母', '姐妹'];
+            const maleKeywords = ['男', '男主', '他', '剑客', '公子', '少侠', '爷', '父', '兄弟', '汉'];
+
+            let femaleScore = 0, maleScore = 0;
+            for (const kw of femaleKeywords) {
+                if (desc.includes(kw)) femaleScore++;
+            }
+            for (const kw of maleKeywords) {
+                if (desc.includes(kw)) maleScore++;
+            }
+
+            if (femaleScore > maleScore) gender = 'female';
+            else if (maleScore > femaleScore) gender = 'male';
+            else gender = Math.random() > 0.5 ? 'male' : 'female';
+
+            return { style: selectedStyle, gender };
+        }
+
+        // 根据描述智能生成名字
+        function generateNamesFromDescription() {
+            const description = document.getElementById('nameDescription')?.value?.trim();
+            if (!description) {
+                showNotification('请输入角色描述');
+                return;
+            }
+
+            const { style, gender } = analyzeDescription(description);
+            generatedNames = [];
+
+            for (let i = 0; i < 8; i++) {
+                if (currentNameType === 'chinese') {
+                    generatedNames.push(generateChineseName(style, gender));
+                } else if (currentNameType === 'western') {
+                    generatedNames.push(generateWesternName(gender));
+                } else if (currentNameType === 'modern') {
+                    generatedNames.push(generateModernName(gender));
+                } else if (currentNameType === 'ancient') {
+                    generatedNames.push(generateAncientName(gender));
+                }
+            }
+
+            renderNamesResult();
+        }
+
+        // 生成中文名字（指定风格）
+        function generateChineseName(style, gender) {
+            const styleData = nameDatabase[style] || nameDatabase.cold;
+            const surnames = Math.random() > 0.7 ? nameDatabase.surnames.rare : nameDatabase.surnames.common;
+            const surname = surnames[Math.floor(Math.random() * surnames.length)];
+
+            // 决定是单字名还是双字名
+            const isDouble = Math.random() > 0.4;
+
+            let name, meaning;
+            if (isDouble) {
+                const char1 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                const char2 = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                name = surname + char1 + char2;
+                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
+            } else {
+                const char = styleData.chars[Math.floor(Math.random() * styleData.chars.length)];
+                name = surname + char;
+                meaning = styleData.meanings[Math.floor(Math.random() * styleData.meanings.length)];
+            }
+
+            return { name, meaning, style: getStyleName(style), type: '中文名' };
+        }
+
+        // 生成现代名字
+        function generateModernName(gender) {
+            const modernSurnames = ['李', '王', '张', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高', '林', '何', '郭', '马', '罗'];
+            const modernMaleChars = ['宇', '轩', '浩', '然', '泽', '睿', '晨', '逸', '辰', '昊', '俊', '杰', '皓', '一', '博', '文', '子', '涵', '梓', '航'];
+            const modernFemaleChars = ['梓', '涵', '欣', '怡', '诗', '雅', '梦', '琪', '雨', '萱', '子', '晴', '语', '桐', '若', '溪', '思', '妍', '佳', '瑶'];
+            const chars = gender === 'male' ? modernMaleChars : modernFemaleChars;
+
+            const surname = modernSurnames[Math.floor(Math.random() * modernSurnames.length)];
+            const char1 = chars[Math.floor(Math.random() * chars.length)];
+            const char2 = chars[Math.floor(Math.random() * chars.length)];
+            const name = Math.random() > 0.4 ? surname + char1 : surname + char1 + char2;
+
+            return {
+                name,
+                meaning: '现代时尚风格，寓意美好',
+                style: '现代名',
+                type: '现代名'
+            };
+        }
+
+        // 生成古代名字
+        function generateAncientName(gender) {
+            const ancientSurnames = ['慕容', '欧阳', '上官', '司徒', '诸葛', '司马', '南宫', '夏侯', '轩辕', '令狐', '皇甫', '宇文', '独孤', '东方', '百里', '尉迟', '长孙', '拓跋', '耶律', '完颜'];
+            const ancientMaleChars = ['渊', '墨', '卿', '尘', '离', '殇', '璃', '陌', '瑾', '瑜', '轩', '辕', '枫', '羽', '寒', '霜', '夜', '影', '剑', '箫'];
+            const ancientFemaleChars = ['婉', '清', '瑶', '月', '雪', '霜', '璃', '裳', '烟', '雨', '芷', '若', '萱', '琴', '舞', '诗', '画', '音', '容', '华'];
+            const chars = gender === 'male' ? ancientMaleChars : ancientFemaleChars;
+
+            const surname = ancientSurnames[Math.floor(Math.random() * ancientSurnames.length)];
+            const char1 = chars[Math.floor(Math.random() * chars.length)];
+            const char2 = chars[Math.floor(Math.random() * chars.length)];
+            const name = Math.random() > 0.3 ? surname + char1 : surname + char1 + char2;
+
+            return {
+                name,
+                meaning: '古风雅致，韵味悠长',
+                style: '古代名',
+                type: '古代名'
+            };
+        }
+
+        // 生成西方名字
+        function generateWesternName(gender) {
+            const names = gender === 'female' ? nameDatabase.westernFemale : nameDatabase.westernMale;
+            const name = names[Math.floor(Math.random() * names.length)];
+
+            const meanings = {
+                'Alexander': 'Defender of mankind, strong and noble',
+                'Maximus': 'The greatest, powerful leader',
+                'Sebastian': 'Revered, dignified and majestic',
+                'Nathaniel': 'Gift of God, blessed soul',
+                'Dominic': 'Belonging to the Lord, masterful',
+                'Gabriel': 'God is my strength, divine messenger',
+                'Raphael': 'God has healed, healing touch',
+                'Damien': 'To tame, powerful conqueror',
+                'Lucas': 'Bringer of light, illuminating',
+                'Orion': 'Rising in the sky, celestial hunter',
+                'Draven': 'Hunter of shadows, mysterious',
+                'Kael': 'Slender, swift and agile',
+                'Zane': 'Gift from God, unique blessing',
+                'Jasper': 'Treasurer, precious stone',
+                'Felix': 'Happy and fortunate, blessed',
+                'Silas': 'Of the forest, wild and free',
+                'Cassius': 'Empty, hollow - ready to be filled',
+                'Darius': 'Maintains possessions well, wealthy',
+                'Magnus': 'Great, mighty and powerful',
+                'Cyrus': 'Sun, radiant and warm',
+                'Seraphina': 'Burning one, fiery angel',
+                'Isabella': 'Devoted to God, beautiful soul',
+                'Victoria': 'Victory, triumphant spirit',
+                'Cassandra': 'Shining upon men, prophetess',
+                'Arabella': 'Yielding to prayer, graceful',
+                'Genevieve': 'Tribe woman, noble and kind',
+                'Penelope': 'Weaver, faithful and clever',
+                'Evangeline': 'Bearer of good news, angelic',
+                'Rosalind': 'Beautiful rose, lovely and sweet',
+                'Lilith': 'Of the night, mysterious and dark',
+                'Aurora': 'Dawn, new beginning',
+                'Celeste': 'Heavenly, divine beauty',
+                'Miranda': 'Worthy of admiration, wonderful',
+                'Ophelia': 'Help, compassionate helper',
+                'Gwendolyn': 'White ring, fair and blessed',
+                'Valentina': 'Strong and healthy, vigorous',
+                'Adriana': 'From Hadria, dark and rich',
+                'Natalia': 'Christmas Day, born of celebration',
+                'Sabrina': 'From the River Severn, flowing',
+                'Elara': 'Bright, shining star'
+            };
+
+            return {
+                name,
+                meaning: meanings[name] || 'A name of noble character',
+                style: '西方名',
+                type: '西方名'
+            };
+        }
+
+        // 获取风格中文名
+        function getStyleName(style) {
+            const names = {
+                cold: '冷峻风格',
+                gentle: '柔美风格',
+                domineering: '霸气风格',
+                scholarly: '儒雅风格',
+                evil: '邪魅风格',
+                resolute: '坚毅风格',
+                lively: '灵动风格'
+            };
+            return names[style] || '古风';
+        }
+
+        // 渲染名字生成结果
+        function renderNamesResult() {
+            const container = document.getElementById('namesResult');
+            if (!container) return;
+
+            if (generatedNames.length === 0) {
+                container.innerHTML = '<div class="empty-names-state"><div class="empty-names-state-icon">✨</div><p>输入描述或选择风格，点击生成</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="names-result-title">
+                    <span>🎲 为你生成的${generatedNames.length}个名字</span>
+                    <span style="font-size: 13px; color: #888;">点击卡片复制</span>
+                </div>
+                <div class="names-grid">
+                    ${generatedNames.map((item, index) => `
+                        <div class="name-card" onclick="copyName('${item.name.replace(/'/g, "\\'")}', ${index})">
+                            <div class="name-card-name">${item.name}</div>
+                            <div class="name-card-meaning">${item.meaning}</div>
+                            <div class="name-card-style">${item.style}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 复制名字
+        async function copyName(name, index) {
+            if (!name) return;
+
+            try {
+                await navigator.clipboard.writeText(name);
+                const card = document.getElementById(`nameCard${index}`);
+                if (card) {
+                    card.classList.add('copied');
+                    const hint = card.querySelector('.copy-hint');
+                    if (hint) hint.textContent = '✅ 已复制';
+                }
+                showNotification(`已复制：${name}`);
+
+                setTimeout(() => {
+                    if (card) {
+                        card.classList.remove('copied');
+                        const hint = card.querySelector('.copy-hint');
+                        if (hint) hint.textContent = '📋 点击复制';
+                    }
+                }, 1500);
+            } catch (err) {
+                console.error('复制失败:', err);
+            }
+        }
+
         async function renderNameGenerator(container) {
             container.innerHTML = `
                 <div class="header">
@@ -5820,6 +6089,26 @@
                 </div>
 
                 <div class="name-generator-container">
+                    <!-- 智能描述生成区域 -->
+                    <div class="name-input-section" style="background: #16213e; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+                        <div class="name-input-label" style="font-size: 14px; color: #888; margin-bottom: 10px;">📝 智能生成：描述角色的性格、身份、背景等信息</div>
+                        <textarea
+                            class="name-input-textarea"
+                            id="nameDescription"
+                            placeholder="例如：一个冷酷无情的剑客，出身贫寒，性格坚毅，行走江湖十年，从不留活口..."
+                            style="width: 100%; min-height: 100px; padding: 15px; background: #1a1a2e; border: 2px solid #0f3460; border-radius: 12px; color: #fff; font-size: 15px; resize: vertical; transition: border-color 0.3s; margin-bottom: 15px;"
+                        ></textarea>
+                        <button class="btn btn-primary" onclick="generateNamesFromDescription()" style="width: 100%; padding: 14px; font-size: 16px;">
+                            ✨ 根据描述智能生成
+                        </button>
+                    </div>
+
+                    <!-- 分隔线 -->
+                    <div style="text-align: center; margin: 20px 0; position: relative;">
+                        <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #0f3460;"></div>
+                        <span style="position: relative; background: #0a0a0a; padding: 0 20px; color: #666; font-size: 13px;">或选择风格手动生成</span>
+                    </div>
+
                     <div class="name-type-selector">
                         <button class="name-type-btn ${currentNameType === 'chinese' ? 'active' : ''}" onclick="switchNameType('chinese')">
                             🇨🇳 中文名
@@ -5856,12 +6145,26 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary generate-names-btn" onclick="startGenerateNames()">
-                        🎲 生成名字
+                    <button class="btn btn-secondary generate-names-btn" onclick="startGenerateNames()">
+                        🎲 按风格生成
                     </button>
 
                     <div id="namesResult" class="names-result-section">
-                        ${generatedNames.length > 0 ? renderNamesList() : '<div class="empty-names-state"><div class="empty-names-state-icon">✨</div><p>点击上方按钮生成名字</p></div>'}
+                        ${generatedNames.length > 0 ? `
+                            <div class="names-result-title">
+                                <span>🎲 为你生成的${generatedNames.length}个名字</span>
+                                <span style="font-size: 13px; color: #888;">点击卡片复制</span>
+                            </div>
+                            <div class="names-grid">
+                                ${generatedNames.map((item, index) => `
+                                    <div class="name-card" onclick="copyName('${item.name.replace(/'/g, "\\'")}', ${index})">
+                                        <div class="name-card-name">${item.name}</div>
+                                        <div class="name-card-meaning">${item.meaning}</div>
+                                        <div class="name-card-style">${item.style}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div class="empty-names-state"><div class="empty-names-state-icon">✨</div><p>输入描述或选择风格，点击生成</p></div>'}
                     </div>
                 </div>
             `;
