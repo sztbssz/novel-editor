@@ -7598,10 +7598,11 @@
             console.log('🚀 initPlotData 被调用');
             
             // 从 localStorage 读取保存的 currentWorkId
-            const savedWorkId = localStorage.getItem('currentWorkId');
-            console.log('📖 从 localStorage 读取的 currentWorkId:', savedWorkId);
+            const savedWorkId = localStorage.getItem('novel_editor_current_work_id');
+            console.log('📖 从 localStorage 读取 novel_editor_current_work_id:', savedWorkId);
             
             await loadWorksList();
+            console.log('📊 加载作品列表完成，作品数量:', worksData.length);
             
             if (savedWorkId) {
                 const workId = Number(savedWorkId);
@@ -7624,8 +7625,13 @@
 
         // 加载作品列表
         async function loadWorksList() {
+            console.log('📚 loadWorksList 被调用');
             worksData = await db.getAll('works');
             worksData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+            console.log('📊 作品列表加载完成，作品数量:', worksData.length);
+            if (worksData.length > 0) {
+                console.log('📋 作品列表:', worksData.map(w => ({ id: w.id, name: w.name })));
+            }
         }
 
         // 加载卷的章节
@@ -7639,8 +7645,17 @@
 
         // 渲染情节大纲页面
         async function renderPlot(container) {
+            console.log('🎨 renderPlot 被调用，当前 worksData.length:', worksData.length, 'currentWorkId:', currentWorkId);
+            
             if (worksData.length === 0) {
+                console.log('📊 worksData 为空，调用 initPlotData');
                 await initPlotData();
+            }
+            
+            // 如果有当前作品，确保章节数据已加载
+            if (currentWorkId) {
+                console.log('📖 有 currentWorkId，调用 refreshChaptersData');
+                await refreshChaptersData();
             }
 
             const worksListHtml = worksData.length === 0
@@ -8004,11 +8019,11 @@
 
         // 切换作品
         async function switchWork(workId) {
-            console.log('🔄 switchWork 被调用，切换到作品:', workId);
+            console.log('🔄 switchWork 被调用，切换前 currentWorkId:', currentWorkId, '切换后:', workId);
             currentWorkId = workId;
             
             // 保存到 localStorage
-            localStorage.setItem('currentWorkId', String(workId));
+            localStorage.setItem('novel_editor_current_work_id', String(workId));
             console.log('💾 currentWorkId 已保存到 localStorage:', workId);
             
             expandedVolumes.clear();
@@ -8059,7 +8074,7 @@
             currentWorkId = id;
             
             // 保存到 localStorage
-            localStorage.setItem('currentWorkId', String(id));
+            localStorage.setItem('novel_editor_current_work_id', String(id));
             console.log('💾 currentWorkId 已保存到 localStorage:', id);
             
             await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
@@ -8104,7 +8119,7 @@
 
             if (currentWorkId === id) {
                 currentWorkId = null;
-                localStorage.removeItem('currentWorkId');
+                localStorage.removeItem('novel_editor_current_work_id');
                 console.log('🗑️ currentWorkId 已从 localStorage 清除');
             }
 
