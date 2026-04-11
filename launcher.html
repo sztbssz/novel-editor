@@ -3880,12 +3880,13 @@
             throw lastError;
         }
 
-        // ==================== GitHub 同步模块 ====================
+        // ==================== GitHub 同步模块（扩展版 - 支持多文件）====================
         class GitHubSync {
             constructor() {
                 this.token = localStorage.getItem('github_token');
                 this.gistId = localStorage.getItem('github_gist_id');
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
+                this.fileVersions = JSON.parse(localStorage.getItem('github_file_versions') || '{}');
             }
 
             isConfigured() { return !!this.token; }
@@ -3898,9 +3899,8 @@
             async verifyToken() {
                 if (!this.token) return false;
                 try {
-                    const response = await fetchWithRetry('https://api.github.com/user', {
-                        retries: 2,
-                        timeout: 15000
+                    const response = await fetch('https://api.github.com/user', {
+                        headers: { 'Authorization': `token ${this.token}` }
                     });
                     return response.ok;
                 } catch (e) {
@@ -3911,9 +3911,8 @@
             async getOrCreateGist() {
                 if (this.gistId) {
                     try {
-                        const response = await fetchWithRetry(`https://api.github.com/gists/${this.gistId}`, {
-                            retries: 2,
-                            timeout: 15000
+                        const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                            headers: { 'Authorization': `token ${this.token}` }
                         });
                         if (response.ok) return this.gistId;
                     } catch (e) {
@@ -3921,11 +3920,34 @@
                     }
                 }
 
+                // 创建新的Gist
                 try {
-                    const response = await fetchWithRetry('https://api.github.com/gists', {
-                        retries: 2,
-                        timeout: 20000
+                    const response = await fetch('https://api.github.com/gists', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${this.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            description: 'Novel Editor Data Storage',
+                            public: false,
+                            files: {
+                                'novel_editor_works.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_volumes.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_chapters.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_outline_settings.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_outline_volumes.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_outline_plots.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_world_settings.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_plots.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_writing_stats.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_history.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_favorites.json': { content: JSON.stringify({ data: [], version: 1 }) },
+                                'novel_editor_templates.json': { content: JSON.stringify({ data: [], version: 1 }) }
+                            }
+                        })
                     });
+                    
                     if (response.ok) {
                         const data = await response.json();
                         this.gistId = data.id;
@@ -3938,57 +3960,512 @@
                 }
             }
 
-            async loadFromGist() {
+            // 从Gist加载指定文件
+            async loadFile(filename) {
                 if (!this.gistId || !this.token) return null;
                 try {
-                    const response = await fetchWithRetry(`https://api.github.com/gists/${this.gistId}`, {
-                        retries: 2,
-                        timeout: 20000
+                    const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                        headers: { 'Authorization': `token ${this.token}` }
                     });
+                    
                     if (response.ok) {
                         const data = await response.json();
-                        const file = data.files['novel_editor_data.json'];
+                        const file = data.files[filename];
                         if (file) {
-                            this.lastSyncTime = new Date().toISOString();
-                            localStorage.setItem('last_sync_time', this.lastSyncTime);
+                            this.fileVersions[filename] = {
+                                raw_url: file.raw_url,
+                                updated_at: file.updated_at,
+                                size: file.size
+                            };
+                            localStorage.setItem('github_file_versions', JSON.stringify(this.fileVersions));
                             return JSON.parse(file.content);
                         }
                     }
                 } catch (e) {
-                    console.error('Load from gist failed:', e);
+                    console.error(`Load ${filename} from gist failed:`, e);
                 }
                 return null;
             }
 
-            async saveToGist(data) {
+            // 保存指定文件到Gist
+            async saveFile(filename, content) {
                 const gistId = await this.getOrCreateGist();
                 try {
-                    const response = await fetchWithRetry(`https://api.github.com/gists/${gistId}`, {
-                        retries: 2,
-                        timeout: 20000
+                    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `token ${this.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            files: {
+                                [filename]: { content: JSON.stringify(content) }
+                            }
+                        })
                     });
+                    
                     if (response.ok) {
                         this.lastSyncTime = new Date().toISOString();
                         localStorage.setItem('last_sync_time', this.lastSyncTime);
                         return true;
                     }
                 } catch (e) {
-                    console.error('Save to gist failed:', e);
+                    console.error(`Save ${filename} to gist failed:`, e);
                 }
                 return false;
+            }
+
+            // 批量保存多个文件
+            async saveFiles(files) {
+                const gistId = await this.getOrCreateGist();
+                try {
+                    const filesPayload = {};
+                    for (const [filename, content] of Object.entries(files)) {
+                        filesPayload[filename] = { content: JSON.stringify(content) };
+                    }
+                    
+                    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `token ${this.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ files: filesPayload })
+                    });
+                    
+                    if (response.ok) {
+                        this.lastSyncTime = new Date().toISOString();
+                        localStorage.setItem('last_sync_time', this.lastSyncTime);
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Save files to gist failed:', e);
+                }
+                return false;
+            }
+
+            // 获取所有文件列表
+            async getFileList() {
+                if (!this.gistId || !this.token) return null;
+                try {
+                    const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                        headers: { 'Authorization': `token ${this.token}` }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return Object.keys(data.files);
+                    }
+                } catch (e) {
+                    console.error('Get file list failed:', e);
+                }
+                return null;
             }
 
             clearConfig() {
                 this.token = null;
                 this.gistId = null;
                 this.lastSyncTime = null;
+                this.fileVersions = {};
                 localStorage.removeItem('github_token');
                 localStorage.removeItem('github_gist_id');
                 localStorage.removeItem('last_sync_time');
+                localStorage.removeItem('github_file_versions');
             }
         }
 
-        // ==================== 数据库模块 ====================
+        // ==================== 云端存储管理器基类 ====================
+        class CloudStorageManager {
+            constructor(db, storeName, gistFilename) {
+                this.db = db;
+                this.storeName = storeName;
+                this.gistFilename = gistFilename;
+                this.githubSync = new GitHubSync();
+                this.data = null;
+                this.lastSyncTime = null;
+                this.syncStatus = 'idle'; // idle, syncing, error, synced
+                this.syncCallbacks = [];
+            }
+
+            // 初始化：加载本地数据并尝试同步云端
+            async init() {
+                console.log(`[${this.storeName}] 初始化云端存储管理器...`);
+                
+                // 1. 先加载本地数据
+                await this.loadFromLocal();
+                
+                // 2. 如果配置了GitHub，尝试同步
+                if (this.githubSync.isConfigured()) {
+                    await this.syncFromCloud();
+                }
+                
+                return this.data;
+            }
+
+            // 从本地IndexedDB加载
+            async loadFromLocal() {
+                try {
+                    this.data = await this.db.getAll(this.storeName) || [];
+                    console.log(`[${this.storeName}] 从本地加载 ${this.data.length} 条记录`);
+                    return this.data;
+                } catch (e) {
+                    console.error(`[${this.storeName}] 本地加载失败:`, e);
+                    this.data = [];
+                    return this.data;
+                }
+            }
+
+            // 从云端同步
+            async syncFromCloud() {
+                if (!this.githubSync.isConfigured()) {
+                    console.log(`[${this.storeName}] 未配置GitHub，跳过云端同步`);
+                    return false;
+                }
+
+                this.setSyncStatus('syncing');
+                
+                try {
+                    const cloudData = await this.githubSync.loadFile(this.gistFilename);
+                    
+                    if (cloudData && cloudData.data) {
+                        const cloudRecords = cloudData.data;
+                        const cloudVersion = cloudData.version || 1;
+                        const localVersion = this.getLocalVersion();
+                        
+                        console.log(`[${this.storeName}] 云端数据: ${cloudRecords.length} 条 (v${cloudVersion})`);
+                        
+                        // 合并策略：以云端为准，但保留本地独有的记录
+                        const mergedData = this.mergeData(this.data, cloudRecords);
+                        this.data = mergedData;
+                        
+                        // 保存合并后的数据到本地
+                        await this.saveToLocal(false);
+                        
+                        // 如果本地有更新，同步回云端
+                        if (this.data.length !== cloudRecords.length || cloudVersion !== localVersion) {
+                            await this.syncToCloud();
+                        }
+                        
+                        this.setSyncStatus('synced');
+                        this.notifySync('success', `已同步 ${mergedData.length} 条记录`);
+                        return true;
+                    } else {
+                        // 云端没有数据，将本地数据上传
+                        console.log(`[${this.storeName}] 云端无数据，上传本地数据...`);
+                        await this.syncToCloud();
+                        this.setSyncStatus('synced');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error(`[${this.storeName}] 云端同步失败:`, e);
+                    this.setSyncStatus('error');
+                    this.notifySync('error', e.message);
+                    return false;
+                }
+            }
+
+            // 同步到云端
+            async syncToCloud() {
+                if (!this.githubSync.isConfigured()) return false;
+
+                this.setSyncStatus('syncing');
+                
+                try {
+                    const payload = {
+                        data: this.data,
+                        version: this.getLocalVersion() + 1,
+                        lastSync: new Date().toISOString(),
+                        count: this.data.length
+                    };
+                    
+                    const success = await this.githubSync.saveFile(this.gistFilename, payload);
+                    
+                    if (success) {
+                        this.lastSyncTime = new Date().toISOString();
+                        this.setSyncStatus('synced');
+                        this.notifySync('success', `已上传 ${this.data.length} 条记录`);
+                        console.log(`[${this.storeName}] 同步到云端成功: ${this.data.length} 条记录`);
+                        return true;
+                    }
+                } catch (e) {
+                    console.error(`[${this.storeName}] 同步到云端失败:`, e);
+                    this.setSyncStatus('error');
+                    this.notifySync('error', e.message);
+                }
+                return false;
+            }
+
+            // 合并本地和云端数据（以云端为准，保留本地独有的）
+            mergeData(localData, cloudData) {
+                const cloudIds = new Set(cloudData.map(item => item.id));
+                const localOnly = localData.filter(item => !cloudIds.has(item.id));
+                
+                // 云端数据 + 本地独有的数据
+                return [...cloudData, ...localOnly];
+            }
+
+            // 获取本地版本号
+            getLocalVersion() {
+                const version = localStorage.getItem(`${this.storeName}_version`);
+                return version ? parseInt(version) : 1;
+            }
+
+            // 保存到本地
+            async saveToLocal(syncToCloud = true) {
+                try {
+                    // 清空并重新写入
+                    await this.db.clear(this.storeName);
+                    
+                    for (const item of this.data) {
+                        await this.db.add(this.storeName, item);
+                    }
+                    
+                    // 更新版本号
+                    localStorage.setItem(`${this.storeName}_version`, this.getLocalVersion() + 1);
+                    
+                    console.log(`[${this.storeName}] 保存到本地: ${this.data.length} 条记录`);
+                    
+                    // 同步到云端
+                    if (syncToCloud && this.githubSync.isConfigured()) {
+                        await this.syncToCloud();
+                    }
+                    
+                    return true;
+                } catch (e) {
+                    console.error(`[${this.storeName}] 保存到本地失败:`, e);
+                    return false;
+                }
+            }
+
+            // CRUD操作
+            async getAll() {
+                return this.data || [];
+            }
+
+            async get(id) {
+                return this.data.find(item => item.id === id) || null;
+            }
+
+            async add(item) {
+                item.id = item.id || Date.now();
+                item.created_at = new Date().toISOString();
+                item.updated_at = new Date().toISOString();
+                
+                this.data.push(item);
+                await this.saveToLocal(true);
+                return item.id;
+            }
+
+            async update(id, updates) {
+                const index = this.data.findIndex(item => item.id === id);
+                if (index === -1) return null;
+                
+                this.data[index] = { ...this.data[index], ...updates, updated_at: new Date().toISOString() };
+                await this.saveToLocal(true);
+                return this.data[index];
+            }
+
+            async delete(id) {
+                const index = this.data.findIndex(item => item.id === id);
+                if (index === -1) return false;
+                
+                this.data.splice(index, 1);
+                await this.saveToLocal(true);
+                return true;
+            }
+
+            async clear() {
+                this.data = [];
+                await this.db.clear(this.storeName);
+                await this.syncToCloud();
+                return true;
+            }
+
+            // 同步状态管理
+            setSyncStatus(status) {
+                this.syncStatus = status;
+                this.notifySync(status);
+            }
+
+            onSync(callback) {
+                this.syncCallbacks.push(callback);
+            }
+
+            notifySync(status, message = '') {
+                this.syncCallbacks.forEach(cb => cb({ storeName: this.storeName, status, message }));
+            }
+
+            getSyncStatus() {
+                return {
+                    status: this.syncStatus,
+                    lastSync: this.lastSyncTime,
+                    count: this.data ? this.data.length : 0,
+                    gistFile: this.gistFilename
+                };
+            }
+
+            // 强制刷新（从云端重新加载）
+            async forceRefresh() {
+                if (!this.githubSync.isConfigured()) return false;
+                
+                this.setSyncStatus('syncing');
+                
+                try {
+                    const cloudData = await this.githubSync.loadFile(this.gistFilename);
+                    
+                    if (cloudData && cloudData.data) {
+                        this.data = cloudData.data;
+                        await this.saveToLocal(false);
+                        this.setSyncStatus('synced');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error(`[${this.storeName}] 强制刷新失败:`, e);
+                    this.setSyncStatus('error');
+                }
+                return false;
+            }
+
+            // 导出数据
+            async export() {
+                return {
+                    storeName: this.storeName,
+                    version: this.getLocalVersion(),
+                    lastSync: this.lastSyncTime,
+                    count: this.data.length,
+                    data: this.data
+                };
+            }
+
+            // 导入数据
+            async import(data) {
+                if (!data || !Array.isArray(data.data)) {
+                    throw new Error('Invalid data format');
+                }
+                
+                this.data = data.data;
+                await this.saveToLocal(true);
+                return this.data.length;
+            }
+        }
+
+        // ==================== 具体数据管理器 ====================
+        class WorksManager extends CloudStorageManager {
+            constructor(db) { super(db, 'works', 'novel_editor_works.json'); }
+        }
+
+        class VolumesManager extends CloudStorageManager {
+            constructor(db) { super(db, 'volumes', 'novel_editor_volumes.json'); }
+        }
+
+        class ChaptersManager extends CloudStorageManager {
+            constructor(db) { super(db, 'chapters', 'novel_editor_chapters.json'); }
+        }
+
+        class OutlineSettingsManager extends CloudStorageManager {
+            constructor(db) { super(db, 'outline_settings', 'novel_editor_outline_settings.json'); }
+        }
+
+        class OutlineVolumesManager extends CloudStorageManager {
+            constructor(db) { super(db, 'outline_volumes', 'novel_editor_outline_volumes.json'); }
+        }
+
+        class OutlinePlotsManager extends CloudStorageManager {
+            constructor(db) { super(db, 'outline_plots', 'novel_editor_outline_plots.json'); }
+        }
+
+        class WorldSettingsManager extends CloudStorageManager {
+            constructor(db) { super(db, 'world_settings', 'novel_editor_world_settings.json'); }
+        }
+
+        class PlotsManager extends CloudStorageManager {
+            constructor(db) { super(db, 'plots', 'novel_editor_plots.json'); }
+        }
+
+        class WritingStatsManager extends CloudStorageManager {
+            constructor(db) { super(db, 'writing_stats', 'novel_editor_writing_stats.json'); }
+        }
+
+        class HistoryDataManager extends CloudStorageManager {
+            constructor(db) { super(db, 'history', 'novel_editor_history.json'); }
+        }
+
+        class FavoritesManager extends CloudStorageManager {
+            constructor(db) { super(db, 'favorites', 'novel_editor_favorites.json'); }
+        }
+
+        class TemplatesManager extends CloudStorageManager {
+            constructor(db) { super(db, 'templates', 'novel_editor_templates.json'); }
+        }
+
+        // ==================== 云端存储管理器工厂 ====================
+        class CloudStorageFactory {
+            constructor(db) {
+                this.db = db;
+                this.managers = {};
+                this.syncStatusListeners = [];
+            }
+
+            init() {
+                this.managers = {
+                    works: new WorksManager(this.db),
+                    volumes: new VolumesManager(this.db),
+                    chapters: new ChaptersManager(this.db),
+                    outlineSettings: new OutlineSettingsManager(this.db),
+                    outlineVolumes: new OutlineVolumesManager(this.db),
+                    outlinePlots: new OutlinePlotsManager(this.db),
+                    worldSettings: new WorldSettingsManager(this.db),
+                    plots: new PlotsManager(this.db),
+                    writingStats: new WritingStatsManager(this.db),
+                    history: new HistoryDataManager(this.db),
+                    favorites: new FavoritesManager(this.db),
+                    templates: new TemplatesManager(this.db)
+                };
+
+                // 为每个管理器添加同步状态监听
+                for (const [name, manager] of Object.entries(this.managers)) {
+                    manager.onSync((event) => {
+                        this.notifySyncStatus(event);
+                    });
+                }
+
+                return this.managers;
+            }
+
+            get(name) {
+                return this.managers[name];
+            }
+
+            getAll() {
+                return this.managers;
+            }
+
+            async syncAll() {
+                const results = {};
+                for (const [name, manager] of Object.entries(this.managers)) {
+                    results[name] = await manager.syncFromCloud();
+                }
+                return results;
+            }
+
+            onSyncStatus(callback) {
+                this.syncStatusListeners.push(callback);
+            }
+
+            notifySyncStatus(event) {
+                this.syncStatusListeners.forEach(cb => cb(event));
+            }
+
+            getAllSyncStatus() {
+                const status = {};
+                for (const [name, manager] of Object.entries(this.managers)) {
+                    status[name] = manager.getSyncStatus();
+                }
+                return status;
+            }
+        }
+
+        // ==================== 数据库模块（集成云端存储）====================
         class Database {
             constructor() {
                 this.db = null;
@@ -3996,14 +4473,20 @@
                 this.dbVersion = 1;
                 this.githubSync = new GitHubSync();
                 this.syncEnabled = true;
+                this.cloudStorage = null; // 云端存储管理器工厂
+                this._cloudReady = false;
             }
 
             async init() {
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, 5);
+                    const request = indexedDB.open(this.dbName, 6);
                     request.onerror = () => reject(request.error);
-                    request.onsuccess = () => {
+                    request.onsuccess = async () => {
                         this.db = request.result;
+                        
+                        // 初始化云端存储管理器
+                        await this.initCloudStorage();
+                        
                         resolve();
                     };
                     request.onupgradeneeded = (event) => {
@@ -4021,7 +4504,7 @@
                             const plotStore = db.createObjectStore('plots', { keyPath: 'id', autoIncrement: true });
                             plotStore.createIndex('volume', 'volume', { unique: false });
                         }
-                        // 多级作品管理（正文创作用）
+                        // 多级作品管理（正文创作用）- 云端同步
                         if (!db.objectStoreNames.contains('works')) {
                             db.createObjectStore('works', { keyPath: 'id', autoIncrement: true });
                         }
@@ -4033,8 +4516,7 @@
                             const chapStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
                             chapStore.createIndex('volumeId', 'volumeId', { unique: false });
                         }
-                        // 情节大纲专用存储 - 使用works表，不再独立创建
-                        // outline_works 已弃用，使用 works 表统一管理作品
+                        // 情节大纲专用存储 - 云端同步
                         if (!db.objectStoreNames.contains('outline_settings')) {
                             const settingStore = db.createObjectStore('outline_settings', { keyPath: 'id', autoIncrement: true });
                             settingStore.createIndex('workId', 'workId', { unique: false });
@@ -4050,21 +4532,21 @@
                             opStore.createIndex('volumeId', 'volumeId', { unique: false });
                             opStore.createIndex('workId', 'workId', { unique: false });
                         }
-                        // 历史记录表
+                        // 历史记录表 - 云端同步
                         if (!db.objectStoreNames.contains('history')) {
                             const historyStore = db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
                             historyStore.createIndex('type', 'type', { unique: false });
                             historyStore.createIndex('timestamp', 'timestamp', { unique: false });
                             historyStore.createIndex('typeItemId', ['type', 'itemId'], { unique: false });
                         }
-                        // 收藏表
+                        // 收藏表 - 云端同步
                         if (!db.objectStoreNames.contains('favorites')) {
                             const favStore = db.createObjectStore('favorites', { keyPath: 'id', autoIncrement: true });
                             favStore.createIndex('type', 'type', { unique: false });
                             favStore.createIndex('itemId', 'itemId', { unique: false });
                             favStore.createIndex('createdAt', 'createdAt', { unique: false });
                         }
-                        // 模板表
+                        // 模板表 - 云端同步
                         if (!db.objectStoreNames.contains('templates')) {
                             const templateStore = db.createObjectStore('templates', { keyPath: 'id', autoIncrement: true });
                             templateStore.createIndex('type', 'type', { unique: false });
@@ -4073,7 +4555,7 @@
                             templateStore.createIndex('createdAt', 'createdAt', { unique: false });
                             templateStore.createIndex('usageCount', 'usageCount', { unique: false });
                         }
-                        // 写作统计表
+                        // 写作统计表 - 云端同步
                         if (!db.objectStoreNames.contains('writing_stats')) {
                             const statsStore = db.createObjectStore('writing_stats', { keyPath: 'id', autoIncrement: true });
                             statsStore.createIndex('date', 'date', { unique: true });
@@ -4083,7 +4565,89 @@
                 });
             }
 
+            // 初始化云端存储管理器
+            async initCloudStorage() {
+                console.log('🌐 初始化云端存储管理器...');
+                this.cloudStorage = new CloudStorageFactory(this);
+                this.cloudStorage.init();
+                
+                // 监听同步状态
+                this.cloudStorage.onSyncStatus((event) => {
+                    console.log(`[云端同步] ${event.storeName}: ${event.status}${event.message ? ' - ' + event.message : ''}`);
+                });
+                
+                // 初始化各个管理器
+                for (const [name, manager] of Object.entries(this.cloudStorage.getAll())) {
+                    await manager.init();
+                }
+                
+                this._cloudReady = true;
+                console.log('✅ 云端存储管理器初始化完成');
+            }
+
+            // 获取云端管理器
+            getCloudManager(name) {
+                return this.cloudStorage ? this.cloudStorage.get(name) : null;
+            }
+
+            // 检查云端是否就绪
+            isCloudReady() {
+                return this._cloudReady;
+            }
+
+            // 数据迁移：将现有本地数据迁移到云端
+            async migrateToCloud(storeName) {
+                const manager = this.getCloudManager(this.mapStoreName(storeName));
+                if (!manager) return false;
+                
+                const localData = await this.getAll(storeName);
+                if (localData.length > 0) {
+                    console.log(`[迁移] ${storeName}: ${localData.length} 条记录`);
+                    manager.data = localData;
+                    await manager.syncToCloud();
+                    return true;
+                }
+                return false;
+            }
+
+            // 映射storeName到manager name
+            mapStoreName(storeName) {
+                const mapping = {
+                    'works': 'works',
+                    'volumes': 'volumes',
+                    'chapters': 'chapters',
+                    'outline_settings': 'outlineSettings',
+                    'outline_volumes': 'outlineVolumes',
+                    'outline_plots': 'outlinePlots',
+                    'world_settings': 'worldSettings',
+                    'plots': 'plots',
+                    'writing_stats': 'writingStats',
+                    'history': 'history',
+                    'favorites': 'favorites',
+                    'templates': 'templates'
+                };
+                return mapping[storeName] || storeName;
+            }
+
+            // 判断store是否使用云端同步
+            usesCloudSync(storeName) {
+                const cloudStores = ['works', 'volumes', 'chapters', 'outline_settings', 
+                    'outline_volumes', 'outline_plots', 'world_settings', 'plots', 
+                    'writing_stats', 'history', 'favorites', 'templates'];
+                return cloudStores.includes(storeName);
+            }
+
+            // ========== 基础CRUD操作 ==========
             async add(storeName, data) {
+                // 如果使用云端同步，使用云端管理器
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        return await manager.add(data);
+                    }
+                }
+                
+                // 否则使用本地IndexedDB
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
@@ -4096,6 +4660,13 @@
             }
 
             async get(storeName, id) {
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        return await manager.get(id);
+                    }
+                }
+                
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readonly');
                     const store = tx.objectStore(storeName);
@@ -4106,6 +4677,23 @@
             }
 
             async getAll(storeName, indexName = null, value = null) {
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        let data = await manager.getAll();
+                        
+                        // 如果有索引过滤
+                        if (indexName && value !== null) {
+                            data = data.filter(item => item[indexName] === value);
+                        }
+                        
+                        // 按更新时间排序
+                        return data.sort((a, b) =>
+                            new Date(b.updated_at || 0) - new Date(a.updated_at || 0)
+                        );
+                    }
+                }
+                
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readonly');
                     const store = tx.objectStore(storeName);
@@ -4127,6 +4715,13 @@
             }
 
             async update(storeName, data) {
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        return await manager.update(data.id, data);
+                    }
+                }
+                
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
@@ -4138,6 +4733,13 @@
             }
 
             async delete(storeName, id) {
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        return await manager.delete(id);
+                    }
+                }
+                
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
@@ -4148,6 +4750,13 @@
             }
 
             async clear(storeName) {
+                if (this.usesCloudSync(storeName) && this._cloudReady) {
+                    const manager = this.getCloudManager(this.mapStoreName(storeName));
+                    if (manager) {
+                        return await manager.clear();
+                    }
+                }
+                
                 return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
@@ -4157,8 +4766,18 @@
                 });
             }
 
-            // ==================== 模板管理方法 ====================
+            // ========== 模板管理方法 ==========
             async addTemplate(template) {
+                if (this._cloudReady) {
+                    const manager = this.getCloudManager('templates');
+                    if (manager) {
+                        return await manager.add({
+                            ...template,
+                            usageCount: 0
+                        });
+                    }
+                }
+                
                 const data = {
                     ...template,
                     createdAt: new Date().toISOString(),
@@ -4169,11 +4788,27 @@
             }
 
             async getTemplate(id) {
+                if (this._cloudReady) {
+                    const manager = this.getCloudManager('templates');
+                    if (manager) {
+                        return await manager.get(id);
+                    }
+                }
                 return await this.get('templates', id);
             }
 
             async getAllTemplates(type = null) {
-                const templates = await this.getAll('templates');
+                let templates;
+                if (this._cloudReady) {
+                    const manager = this.getCloudManager('templates');
+                    if (manager) {
+                        templates = await manager.getAll();
+                    }
+                }
+                if (!templates) {
+                    templates = await this.getAll('templates');
+                }
+                
                 if (type) {
                     return templates.filter(t => t.type === type);
                 }
@@ -4181,7 +4816,7 @@
             }
 
             async getTemplatesByCategory(category) {
-                const templates = await this.getAll('templates');
+                const templates = await this.getAllTemplates();
                 return templates.filter(t => t.category === category);
             }
 
@@ -5885,14 +6520,57 @@
             const plots = await db.getAll('plots');
             const recentHistory = await historyManager.getHistoryList(5);
 
-            const syncStatusHtml = githubSync.isConfigured() ? `
-                <div id="syncStatus" class="sync-status ${githubSync.lastSyncTime ? 'synced' : 'unsynced'}">
-                    ${githubSync.lastSyncTime ? '✅ 数据已同步' : '⏳ 等待首次同步'}
-                    <span style="color: #666; margin-left: auto; font-size: 12px;">
-                        ${githubSync.lastSyncTime ? new Date(githubSync.lastSyncTime).toLocaleDateString('zh-CN') : ''}
-                    </span>
-                </div>
-            ` : '';
+            // 获取云端同步状态
+            let syncStatusHtml = '';
+            const githubSyncInstance = new GitHubSync();
+            
+            if (githubSyncInstance.isConfigured()) {
+                const lastSync = githubSyncInstance.lastSyncTime;
+                const syncDate = lastSync ? new Date(lastSync).toLocaleString('zh-CN') : '从未';
+                
+                // 获取各存储的同步状态
+                let storageStatusHtml = '';
+                if (db.isCloudReady && db.isCloudReady()) {
+                    const allStatus = db.cloudStorage.getAllSyncStatus();
+                    const syncedCount = Object.values(allStatus).filter(s => s.status === 'synced').length;
+                    const totalCount = Object.keys(allStatus).length;
+                    storageStatusHtml = `<div style="font-size: 11px; color: #888; margin-top: 4px;">${syncedCount}/${totalCount} 个存储已同步</div>`;
+                }
+                
+                syncStatusHtml = `
+                    <div id="syncStatus" class="sync-status ${lastSync ? 'synced' : 'unsynced'}">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span>${lastSync ? '🌐 云端同步已启用' : '⏳ 等待首次同步'}</span>
+                            <span style="color: #666; margin-left: auto; font-size: 12px;">
+                                上次同步: ${syncDate}
+                            </span>
+                        </div>
+                        ${storageStatusHtml}
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button class="btn btn-sm" onclick="forceSyncAll()" title="立即同步所有数据到云端">
+                            🔄 立即同步
+                        </button>
+                        <button class="btn btn-sm" onclick="showSyncStatusDetails()" title="查看详细同步状态">
+                            📊 同步详情
+                        </button>
+                        ${db.isCloudReady && db.isCloudReady() ? `
+                        <button class="btn btn-sm" onclick="migrateAllToCloud()" title="将本地数据迁移到云端">
+                            ☁️ 数据迁移
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                syncStatusHtml = `
+                    <div class="sync-status unsynced">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span>💾 本地存储模式</span>
+                            <span style="color: #888; font-size: 12px;">数据仅保存在本机</span>
+                        </div>
+                    </div>
+                `;
+            }
 
             // 最近查看区域
             const recentSectionHtml = recentHistory.length > 0 ? `
@@ -5936,7 +6614,7 @@
                             <span class="search-trigger-shortcut">Ctrl K</span>
                         </div>
                         <button class="btn btn-secondary" onclick="openGitHubSettings()">
-                            🔧 ${githubSync.isConfigured() ? '同步设置' : '启用云同步'}
+                            🔧 ${githubSyncInstance.isConfigured() ? '同步设置' : '启用云同步'}
                         </button>
                     </div>
                 </div>
@@ -13299,6 +13977,145 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             }
         }
 
+        // ==================== 云端同步功能 ====================
+        
+        // 强制同步所有数据到云端
+        async function forceSyncAll() {
+            if (!db.isCloudReady || !db.isCloudReady()) {
+                showNotification('⚠️ 云端存储尚未就绪', 'warning');
+                return;
+            }
+
+            showNotification('🔄 正在同步所有数据到云端...', 'info');
+            
+            try {
+                const results = await db.cloudStorage.syncAll();
+                const successCount = Object.values(results).filter(r => r).length;
+                const totalCount = Object.keys(results).length;
+                
+                showNotification(`✅ 同步完成: ${successCount}/${totalCount} 个存储已同步`, 'success');
+                
+                // 刷新首页显示
+                if (currentPage === 'home') {
+                    loadPage('home');
+                }
+            } catch (e) {
+                console.error('同步失败:', e);
+                showNotification('❌ 同步失败: ' + e.message, 'error');
+            }
+        }
+
+        // 显示同步状态详情
+        function showSyncStatusDetails() {
+            if (!db.isCloudReady || !db.isCloudReady()) {
+                showNotification('⚠️ 云端存储尚未就绪', 'warning');
+                return;
+            }
+
+            const allStatus = db.cloudStorage.getAllSyncStatus();
+            
+            // 创建状态表格
+            let statusRows = '';
+            for (const [name, status] of Object.entries(allStatus)) {
+                const statusIcon = {
+                    'synced': '✅',
+                    'syncing': '🔄',
+                    'error': '❌',
+                    'idle': '⏳'
+                }[status.status] || '⏳';
+                
+                statusRows += `
+                    <tr>
+                        <td style="padding:8px;border-bottom:1px solid #333;">${name}</td>
+                        <td style="padding:8px;border-bottom:1px solid #333;">${statusIcon} ${status.status}</td>
+                        <td style="padding:8px;border-bottom:1px solid #333;">${status.count || 0} 条</td>
+                        <td style="padding:8px;border-bottom:1px solid #333;">${status.lastSync ? new Date(status.lastSync).toLocaleString('zh-CN') : '从未'}</td>
+                    </tr>
+                `;
+            }
+
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">📊 云端同步状态</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                            <thead>
+                                <tr style="background:#0f3460;">
+                                    <th style="padding:10px;text-align:left;">存储名称</th>
+                                    <th style="padding:10px;text-align:left;">状态</th>
+                                    <th style="padding:10px;text-align:left;">记录数</th>
+                                    <th style="padding:10px;text-align:left;">上次同步</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${statusRows}
+                            </tbody>
+                        </table>
+                        <div style="margin-top:20px;padding:15px;background:#16213e;border-radius:8px;">
+                            <div style="font-size:13px;color:#888;margin-bottom:8px;">💡 说明</div>
+                            <div style="font-size:12px;color:#666;line-height:1.6;">
+                                • 数据首先保存在本地，然后自动同步到GitHub Gist<br>
+                                • 每个存储对应一个独立的Gist文件<br>
+                                • 云端数据可在任何设备通过相同GitHub Token访问<br>
+                                • 冲突时以云端数据为准，本地独有数据会被保留
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+                        <button class="btn btn-primary" onclick="forceSyncAll(); this.closest('.modal-overlay').remove();">🔄 立即同步</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 迁移所有本地数据到云端
+        async function migrateAllToCloud() {
+            if (!db.isCloudReady || !db.isCloudReady()) {
+                showNotification('⚠️ 云端存储尚未就绪', 'warning');
+                return;
+            }
+
+            if (!confirm('确定要将所有本地数据迁移到云端吗？\n\n这将上传以下数据：\n• 作品、卷、章节\n• 大纲设定、卷、剧情\n• 世界观设定\n• 写作统计、历史记录\n• 收藏、模板')) {
+                return;
+            }
+
+            showNotification('☁️ 开始数据迁移...', 'info');
+            
+            const storesToMigrate = [
+                'works', 'volumes', 'chapters',
+                'outline_settings', 'outline_volumes', 'outline_plots',
+                'world_settings', 'plots',
+                'writing_stats', 'history', 'favorites', 'templates'
+            ];
+            
+            const results = {};
+            for (const storeName of storesToMigrate) {
+                try {
+                    results[storeName] = await db.migrateToCloud(storeName);
+                    console.log(`[迁移] ${storeName}: ${results[storeName] ? '成功' : '无数据'}`);
+                } catch (e) {
+                    console.error(`[迁移] ${storeName} 失败:`, e);
+                    results[storeName] = false;
+                }
+            }
+            
+            const successCount = Object.values(results).filter(r => r).length;
+            showNotification(`✅ 数据迁移完成: ${successCount}/${storesToMigrate.length} 个存储已迁移`, 'success');
+            
+            // 刷新首页
+            if (currentPage === 'home') {
+                loadPage('home');
+            }
+        }
+
         // ==================== 大纲导图功能 ====================
         let mindmapCurrentWorkId = null;
         let mindmapSvg = null;
@@ -16288,33 +17105,537 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             });
         }
 
-        // AI内容生成（实际项目中这里调用真实的AI API）
+        // AI内容生成
         async function generateAIContent(plotDescription, targetWords, styleId, stylesData) {
             // 获取选中的风格配置
             const style = stylesData.styles.find(s => s.id === styleId) || stylesData.styles[0];
             
-            // 构建提示词
-            const prompt = buildWritingPrompt(plotDescription, targetWords, style);
+            // 步骤1：桥段匹配
+            const matchedTropes = matchTropes(plotDescription, 4);
+            console.log('匹配的桥段:', matchedTropes);
             
-            // 这里模拟AI生成，实际项目中应该调用真实的AI API
-            // 例如：return await callOpenAI(prompt, targetWords);
+            // 步骤2：构建包含桥段素材的提示词
+            const prompt = buildWritingPrompt(plotDescription, targetWords, style, matchedTropes);
             
+            // 步骤3：调用AI生成（实际项目中这里调用真实的AI API）
             // 模拟生成延迟
             await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
             
-            // 生成模拟内容（实际项目中替换为真实AI调用）
-            return generateMockContent(plotDescription, targetWords, style);
+            // 基于桥段素材生成内容
+            return generateContentFromTropes(plotDescription, targetWords, style, matchedTropes);
+        }
+        
+        // 基于桥段素材生成正文内容
+        function generateContentFromTropes(plotDescription, targetWords, style, matchedTropes) {
+            if (!matchedTropes || matchedTropes.length === 0) {
+                return generateFallbackContent(plotDescription, targetWords, style);
+            }
+            
+            const paragraphs = [];
+            const targetParagraphs = Math.ceil(targetWords / 150);
+            
+            // 按桥段结构组织内容
+            const structure = ['scene', 'development', 'climax', 'ending'];
+            
+            // 开篇 - 基于桥段1的场景铺垫
+            if (matchedTropes[0]) {
+                const trope1 = matchedTropes[0].trope;
+                const parts1 = parseTropeDescription(trope1.description);
+                paragraphs.push(generateSceneOpening(plotDescription, trope1, parts1, style));
+            } else {
+                paragraphs.push(generateGenericOpening(plotDescription, style));
+            }
+            
+            // 发展 - 基于桥段1或桥段2的情节发展
+            if (matchedTropes.length >= 2) {
+                const trope2 = matchedTropes[1].trope;
+                const parts2 = parseTropeDescription(trope2.description);
+                paragraphs.push(generateDevelopment(plotDescription, trope2, parts2, style));
+            } else if (matchedTropes[0]) {
+                const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
+                if (parts1.development) {
+                    paragraphs.push(generateDevelopment(plotDescription, matchedTropes[0].trope, parts1, style));
+                }
+            }
+            
+            // 添加过渡段落填充内容
+            const remainingParagraphs = targetParagraphs - paragraphs.length - 2;
+            for (let i = 0; i < remainingParagraphs && i < 3; i++) {
+                const tropeIndex = Math.min(i + 1, matchedTropes.length - 1);
+                if (matchedTropes[tropeIndex]) {
+                    paragraphs.push(generateTransitionParagraph(plotDescription, matchedTropes[tropeIndex].trope, i, style));
+                }
+            }
+            
+            // 高潮 - 基于桥段的高潮转折
+            if (matchedTropes.length >= 3) {
+                const trope3 = matchedTropes[2].trope;
+                const parts3 = parseTropeDescription(trope3.description);
+                paragraphs.push(generateClimax(plotDescription, trope3, parts3, style));
+            } else if (matchedTropes.length >= 2) {
+                const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
+                if (parts2.climax) {
+                    paragraphs.push(generateClimax(plotDescription, matchedTropes[1].trope, parts2, style));
+                }
+            }
+            
+            // 结尾 - 基于最后一个桥段的收尾呼应
+            const lastTrope = matchedTropes[matchedTropes.length - 1];
+            if (lastTrope) {
+                const lastParts = parseTropeDescription(lastTrope.trope.description);
+                paragraphs.push(generateEnding(plotDescription, lastTrope.trope, lastParts, style));
+            } else {
+                paragraphs.push(generateGenericEnding(style));
+            }
+            
+            let content = paragraphs.filter(p => p && p.trim()).join('\n\n');
+            
+            // 调整字数
+            const currentLength = content.length;
+            if (currentLength < targetWords * 0.8) {
+                // 需要扩充内容
+                const expansionNeeded = Math.ceil((targetWords - currentLength) / 150);
+                for (let i = 0; i < expansionNeeded; i++) {
+                    const tropeIndex = i % matchedTropes.length;
+                    const expansion = generateExpansionParagraph(plotDescription, matchedTropes[tropeIndex].trope, i, style);
+                    if (expansion) {
+                        // 在适当位置插入扩充内容
+                        const insertIndex = Math.floor(paragraphs.length / 2);
+                        paragraphs.splice(insertIndex, 0, expansion);
+                    }
+                }
+                content = paragraphs.filter(p => p && p.trim()).join('\n\n');
+            }
+            
+            // 添加桥段使用说明（作为注释，不出现在正文中）
+            const tropeUsageNote = `<!-- 本章节使用了以下桥段素材：\n${matchedTropes.map((m, i) => `${i + 1}. ${m.trope.title} (${m.trope.category}) - 匹配度:${m.score}`).join('\n')}\n-->\n\n`;
+            
+            return tropeUsageNote + content;
+        }
+        
+        // 生成开篇段落
+        function generateSceneOpening(plotDescription, trope, parts, style) {
+            const sceneBase = parts.scene || trope.usage || '';
+            
+            // 根据桥段标题和场景生成开篇
+            const openings = [
+                `${sceneBase}。`,
+                `这是一个${trope.title}的时刻。${sceneBase}`,
+                `当${plotDescription.substring(0, 20)}时，没有人想到接下来会发生什么。${sceneBase}`
+            ];
+            
+            let opening = openings[Math.floor(Math.random() * openings.length)];
+            
+            // 添加剧情引入
+            opening += `\n\n${plotDescription.substring(0, 50)}...故事就从这里开始。主角站在命运的十字路口，即将面临人生中最重要的抉择。`;
+            
+            return opening;
+        }
+        
+        // 生成发展段落
+        function generateDevelopment(plotDescription, trope, parts, style) {
+            const devBase = parts.development || trope.usage || '';
+            
+            return `随着时间推移，局势开始发生变化。${devBase}\n\n主角深知，此刻的每一个决定都将影响未来的走向。他深吸一口气，做出了自己的选择。周围的空气仿佛凝固了，每一秒都变得无比漫长。`;
+        }
+        
+        // 生成高潮段落
+        function generateClimax(plotDescription, trope, parts, style) {
+            const climaxBase = parts.climax || trope.usage || '';
+            
+            return `就在这一刻，${climaxBase}\n\n主角感受到前所未有的压力，但他知道，这是无法回避的。他咬紧牙关，准备迎接最终的挑战。所有的铺垫，所有的努力，都将在这一刻得到检验。`;
+        }
+        
+        // 生成结尾段落
+        function generateEnding(plotDescription, trope, parts, style) {
+            const endingBase = parts.ending || '';
+            
+            let ending = '';
+            if (endingBase) {
+                ending = `${endingBase}\n\n`;
+            }
+            
+            ending += `当一切归于平静，主角站在原地，回想着刚才发生的一切。这只是开始，真正的挑战还在后面。他握紧拳头，眼中闪烁着坚定的光芒。无论前方有什么在等待着，他都已经做好了准备。\n\n故事，才刚刚开始。`;
+            
+            return ending;
+        }
+        
+        // 生成过渡段落
+        function generateTransitionParagraph(plotDescription, trope, index, style) {
+            const transitions = [
+                `与此同时，在另一个地方，相关的人也在行动着。${trope.usage || ''}`,
+                `事情并没有那么简单。${trope.title}的背后，隐藏着更深的秘密。`,
+                `主角的盟友也没有闲着。他们正在为了共同的目标而努力着。`,
+                `时间在流逝，而局势也在悄然改变。没有人知道下一秒会发生什么。`
+            ];
+            
+            return transitions[index % transitions.length];
+        }
+        
+        // 生成扩充段落
+        function generateExpansionParagraph(plotDescription, trope, index, style) {
+            const expansions = [
+                `${trope.title}的细节逐渐浮出水面。主角仔细观察着周围的一切，试图找出更多的线索。每一个细节都可能是关键，他不敢有丝毫的疏忽。`,
+                `回想起${trope.category || '之前'}的经历，主角心中五味杂陈。那些教训让他明白，在这个世界里，只有强者才能生存。`,
+                `旁人的反应也值得关注。有人露出惊讶的表情，有人则在暗中观察。每个人都有自己的打算，而主角必须小心应对。`
+            ];
+            
+            return expansions[index % expansions.length];
+        }
+        
+        // 通用开篇（无桥段匹配时备用）
+        function generateGenericOpening(plotDescription, style) {
+            return `${plotDescription.substring(0, 50)}...的故事，就从这里开始。\n\n主角站在命运的十字路口，即将踏上一段未知的旅程。周围的空气仿佛凝固了，每一秒都变得无比漫长。他深吸一口气，努力让自己保持冷静。`;
+        }
+        
+        // 通用结尾（无桥段匹配时备用）
+        function generateGenericEnding(style) {
+            return `当一切归于平静，主角站在原地，回想着刚才发生的一切。这只是开始，真正的挑战还在后面。他握紧拳头，眼中闪烁着坚定的光芒。\n\n故事，才刚刚开始。`;
+        }
+        
+        // 备用内容生成（无桥段匹配时使用）
+        function generateFallbackContent(plotDescription, targetWords, style) {
+            return generateGenericOpening(plotDescription, style) + '\n\n' + 
+                   generateGenericEnding(style);
         }
 
-        // 构建写作提示词
-        function buildWritingPrompt(plotDescription, targetWords, style) {
-            let prompt = `请根据以下剧情描述，创作一篇网文章节。\n\n`;
-            prompt += `【剧情描述】\n${plotDescription}\n\n`;
-            prompt += `【写作要求】\n`;
-            prompt += `- 目标字数：${targetWords}字左右\n`;
-            prompt += `- 确保情节紧凑、引人入胜\n`;
-            prompt += `- 注意节奏把控，有起承转合\n\n`;
+        // ==================== 桥段匹配与写作提示构建 ====================
+        
+        // 桥段匹配函数 - 根据剧情描述从data.json中搜索匹配桥段
+        function matchTropes(plotDescription, maxResults = 4) {
+            if (!tropesData || !tropesData.tropes || tropesData.tropes.length === 0) {
+                console.warn('桥段数据未加载，无法匹配');
+                return [];
+            }
             
+            // 提取关键词（从剧情描述中）
+            const keywords = extractPlotKeywords(plotDescription);
+            console.log('提取的关键词:', keywords);
+            
+            // 计算每个桥段的匹配度
+            const scoredTropes = tropesData.tropes.map(trope => {
+                let score = 0;
+                let matchReasons = [];
+                
+                const tropeText = `${trope.title || ''} ${trope.category || ''} ${trope.description || ''} ${trope.usage || ''}`.toLowerCase();
+                
+                // 关键词匹配（权重最高）
+                keywords.forEach(keyword => {
+                    if (tropeText.includes(keyword.toLowerCase())) {
+                        score += 3;
+                        matchReasons.push(keyword);
+                    }
+                });
+                
+                // 类别匹配
+                const categoryKeywords = {
+                    '装逼打脸': ['装逼', '打脸', '嘲讽', '反击', '震惊'],
+                    '扮猪吃老虎': ['隐藏', '伪装', '低调', '实力', ' reveal'],
+                    '智斗博弈': ['智斗', '博弈', '谋略', '计谋', '算计'],
+                    '越级反杀': ['越级', '反杀', '逆袭', '强敌', '战斗'],
+                    '绝境翻盘': ['绝境', '翻盘', '危机', '生死', '逆转'],
+                    '废物逆袭': ['废物', '逆袭', '天才', '崛起', '蜕变'],
+                    '身份揭晓': ['身份', '揭晓', '真相', '秘密', '隐藏'],
+                    '全场震惊': ['震惊', '全场', '哗然', '不可思议', '震撼'],
+                    '护短名场面': ['护短', '保护', '家人', '兄弟', '亲情'],
+                    '闷声发大财': ['发财', '暴富', '隐藏', '收获', '资源'],
+                    '捡漏淘宝': ['捡漏', '淘宝', '机缘', '宝物', '发现'],
+                    '天降机缘': ['机缘', '奇遇', '传承', '宝物', '天降'],
+                    '截胡机缘': ['截胡', '抢夺', '先机', '机缘', '对手'],
+                    '后手反制': ['后手', '反制', '底牌', '反击', '埋伏'],
+                    '规则破解': ['规则', '破解', '漏洞', '技巧', '方法'],
+                    '嘴炮对决': ['嘴炮', '嘲讽', '互怼', '辩论', '言语'],
+                    '情感爆发': ['情感', '爆发', '哭戏', '感动', '煽情'],
+                    '回忆杀': ['回忆', '往事', '童年', '过去', '记忆'],
+                    '牺牲奉献': ['牺牲', '奉献', '救人', '保护', '舍己'],
+                    '信念宣言': ['信念', '宣言', '誓言', '承诺', '决心'],
+                    '极限突破': ['突破', '极限', '瓶颈', '升级', '蜕变'],
+                    '恐怖揭秘': ['恐怖', '揭秘', '诡异', '悬疑', '惊悚'],
+                    '悬疑灵异': ['灵异', '鬼魂', '诅咒', '怪谈', '超自然'],
+                    '重生复仇': ['重生', '复仇', '前世', '仇人', '清算'],
+                    '穿越改命': ['穿越', '改命', '历史', '未来', '异界']
+                };
+                
+                const category = trope.category || '';
+                Object.entries(categoryKeywords).forEach(([catName, catKeywords]) => {
+                    if (category.includes(catName) || catKeywords.some(kw => tropeText.includes(kw))) {
+                        // 检查剧情描述中是否有相关关键词
+                        const descLower = plotDescription.toLowerCase();
+                        const hasMatch = catKeywords.some(kw => descLower.includes(kw.toLowerCase()));
+                        if (hasMatch) {
+                            score += 5;
+                            matchReasons.push(catName);
+                        }
+                    }
+                });
+                
+                // 场景匹配
+                const sceneKeywords = {
+                    '医院': ['医疗', '急救', '病房', '手术', '医生'],
+                    '学校': ['校园', '教室', '考试', '学生', '老师'],
+                    '战场': ['战争', '厮杀', '军营', '士兵', '将领'],
+                    '宗门': ['门派', '弟子', '长老', '掌门', '修炼'],
+                    '都市': ['城市', '街道', '公司', '商场', '现代'],
+                    '荒野': ['野外', '森林', '山脉', '妖兽', '探险'],
+                    '古墓': ['墓穴', '遗迹', '宝藏', '机关', '探险'],
+                    '拍卖会': ['拍卖', '竞价', '宝物', '财富', '争抢']
+                };
+                
+                Object.entries(sceneKeywords).forEach(([scene, sceneWords]) => {
+                    const descLower = plotDescription.toLowerCase();
+                    if (sceneWords.some(sw => descLower.includes(sw.toLowerCase()))) {
+                        if (tropeText.includes(scene.toLowerCase()) || 
+                            sceneWords.some(sw => tropeText.includes(sw.toLowerCase()))) {
+                            score += 4;
+                            matchReasons.push(scene);
+                        }
+                    }
+                });
+                
+                return {
+                    trope: trope,
+                    score: score,
+                    reasons: [...new Set(matchReasons)]
+                };
+            });
+            
+            // 按匹配度排序并取前N个
+            const sorted = scoredTropes
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, maxResults);
+            
+            // 如果没有匹配到，随机选几个热门桥段
+            if (sorted.length === 0) {
+                const randomTropes = tropesData.tropes
+                    .filter(t => t.word_count > 100)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, maxResults);
+                
+                return randomTropes.map(t => ({
+                    trope: t,
+                    score: 1,
+                    reasons: ['推荐桥段']
+                }));
+            }
+            
+            console.log(`匹配到 ${sorted.length} 个桥段:`, sorted.map(s => ({
+                title: s.trope.title,
+                score: s.score,
+                reasons: s.reasons
+            })));
+            
+            return sorted;
+        }
+        
+        // 提取剧情关键词
+        function extractPlotKeywords(plotDescription) {
+            const keywords = [];
+            const text = plotDescription.toLowerCase();
+            
+            // 核心情节词库
+            const coreKeywords = [
+                '战斗', '对决', '厮杀', '打斗', '攻击',
+                '修炼', '突破', '升级', '瓶颈', '境界',
+                '机缘', '奇遇', '传承', '宝物', '灵药',
+                '复仇', '仇恨', '仇人', '报复', '清算',
+                '隐藏', '伪装', '低调', '秘密', '身份',
+                '震惊', '震撼', '哗然', '不可思议',
+                '危机', '危险', '绝境', '生死', '逃生',
+                '智斗', '谋略', '计谋', '算计', '博弈',
+                '情感', '爱情', '友情', '亲情', '感动',
+                '恐怖', '诡异', '惊悚', '悬疑', '灵异',
+                '穿越', '重生', '异界', '转世', '轮回',
+                '宗门', '门派', '家族', '势力', '组织',
+                '拍卖', '交易', '财富', '赚钱', '资源',
+                '探险', '寻宝', '遗迹', '秘境', '古墓',
+                '医院', '学校', '都市', '战场', '荒野'
+            ];
+            
+            coreKeywords.forEach(kw => {
+                if (text.includes(kw)) {
+                    keywords.push(kw);
+                }
+            });
+            
+            // 提取2-4字词组
+            const chars = plotDescription.replace(/[^\u4e00-\u9fa5]/g, '').split('');
+            for (let i = 0; i < chars.length - 1; i++) {
+                const bigram = chars[i] + chars[i + 1];
+                if (bigram.length === 2 && !keywords.includes(bigram)) {
+                    keywords.push(bigram);
+                }
+            }
+            
+            return [...new Set(keywords)].slice(0, 20);
+        }
+        
+        // 解析桥段描述为四个部分
+        function parseTropeDescription(description) {
+            if (!description) {
+                return {
+                    scene: '',
+                    development: '',
+                    climax: '',
+                    ending: ''
+                };
+            }
+            
+            const parts = {
+                scene: '',
+                development: '',
+                climax: '',
+                ending: ''
+            };
+            
+            // 使用正则匹配四个部分
+            const sceneMatch = description.match(/【场景铺垫】([\s\S]*?)(?=【情节发展】|$)/);
+            const devMatch = description.match(/【情节发展】([\s\S]*?)(?=【高潮转折】|$)/);
+            const climaxMatch = description.match(/【高潮转折】([\s\S]*?)(?=【收尾呼应】|$)/);
+            const endingMatch = description.match(/【收尾呼应】([\s\S]*?)$/);
+            
+            if (sceneMatch) parts.scene = sceneMatch[1].trim();
+            if (devMatch) parts.development = devMatch[1].trim();
+            if (climaxMatch) parts.climax = climaxMatch[1].trim();
+            if (endingMatch) parts.ending = endingMatch[1].trim();
+            
+            // 如果没有匹配到格式，尝试按段落分割
+            if (!parts.scene && description) {
+                const paras = description.split(/\n+/).filter(p => p.trim());
+                if (paras.length >= 4) {
+                    parts.scene = paras[0];
+                    parts.development = paras[1];
+                    parts.climax = paras[2];
+                    parts.ending = paras[3];
+                } else if (paras.length > 0) {
+                    parts.scene = paras[0];
+                }
+            }
+            
+            return parts;
+        }
+        
+        // 构建写作提示词
+        function buildWritingPrompt(plotDescription, targetWords, style, matchedTropes = []) {
+            let prompt = `你是一位专业的网络小说作家，请根据以下要求创作一章小说正文。\n\n`;
+            
+            // 剧情描述
+            prompt += `【本章剧情】\n${plotDescription}\n\n`;
+            
+            // 桥段素材指导（核心修改）
+            if (matchedTropes && matchedTropes.length > 0) {
+                prompt += `【桥段素材指导 - 必须参考以下桥段结构创作】\n\n`;
+                
+                matchedTropes.forEach((match, index) => {
+                    const trope = match.trope;
+                    const parts = parseTropeDescription(trope.description);
+                    
+                    prompt += `桥段${index + 1}：${trope.title}\n`;
+                    prompt += `类别：${trope.category || '通用'}\n`;
+                    if (match.reasons.length > 0) {
+                        prompt += `匹配原因：${match.reasons.join('、')}\n`;
+                    }
+                    
+                    prompt += `核心冲突：${trope.usage || '参考描述'}\n`;
+                    
+                    // 四个结构部分
+                    if (parts.scene) {
+                        prompt += `- 场景铺垫：${parts.scene.substring(0, 100)}${parts.scene.length > 100 ? '...' : ''}\n`;
+                    }
+                    if (parts.development) {
+                        prompt += `- 情节发展：${parts.development.substring(0, 100)}${parts.development.length > 100 ? '...' : ''}\n`;
+                    }
+                    if (parts.climax) {
+                        prompt += `- 高潮转折：${parts.climax.substring(0, 100)}${parts.climax.length > 100 ? '...' : ''}\n`;
+                    }
+                    if (parts.ending) {
+                        prompt += `- 收尾呼应：${parts.ending.substring(0, 100)}${parts.ending.length > 100 ? '...' : ''}\n`;
+                    }
+                    
+                    // 示例参考
+                    if (trope.examples && trope.examples.length > 0) {
+                        prompt += `参考示例：${trope.examples[0].substring(0, 80)}${trope.examples[0].length > 80 ? '...' : ''}\n`;
+                    }
+                    
+                    prompt += `\n`;
+                });
+                
+                // 写作结构要求
+                prompt += `【写作结构要求】\n`;
+                prompt += `你必须按照以下四段式结构创作本章：\n\n`;
+                
+                if (matchedTropes.length >= 1) {
+                    const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
+                    prompt += `1. 【开篇】（约${Math.round(targetWords * 0.2)}字）\n`;
+                    prompt += `   - 基于桥段1的【场景铺垫】\n`;
+                    prompt += `   - 设置场景氛围，引入核心冲突\n`;
+                    if (parts1.scene) {
+                        prompt += `   - 参考：${parts1.scene.substring(0, 60)}...\n`;
+                    }
+                    prompt += `\n`;
+                }
+                
+                if (matchedTropes.length >= 2) {
+                    const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
+                    prompt += `2. 【发展】（约${Math.round(targetWords * 0.3)}字）\n`;
+                    prompt += `   - 基于桥段2的【情节发展】\n`;
+                    prompt += `   - 推进情节，人物互动，矛盾升级\n`;
+                    if (parts2.development) {
+                        prompt += `   - 参考：${parts2.development.substring(0, 60)}...\n`;
+                    }
+                    prompt += `\n`;
+                } else if (matchedTropes.length >= 1) {
+                    const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
+                    prompt += `2. 【发展】（约${Math.round(targetWords * 0.3)}字）\n`;
+                    prompt += `   - 基于桥段1的【情节发展】\n`;
+                    prompt += `   - 推进情节，人物互动，矛盾升级\n`;
+                    if (parts1.development) {
+                        prompt += `   - 参考：${parts1.development.substring(0, 60)}...\n`;
+                    }
+                    prompt += `\n`;
+                }
+                
+                if (matchedTropes.length >= 3) {
+                    const parts3 = parseTropeDescription(matchedTropes[2].trope.description);
+                    prompt += `3. 【高潮】（约${Math.round(targetWords * 0.3)}字）\n`;
+                    prompt += `   - 基于桥段3的【高潮转折】\n`;
+                    prompt += `   - 冲突爆发，重大转折，决定性时刻\n`;
+                    if (parts3.climax) {
+                        prompt += `   - 参考：${parts3.climax.substring(0, 60)}...\n`;
+                    }
+                    prompt += `\n`;
+                } else if (matchedTropes.length >= 2) {
+                    const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
+                    prompt += `3. 【高潮】（约${Math.round(targetWords * 0.3)}字）\n`;
+                    prompt += `   - 基于桥段2的【高潮转折】\n`;
+                    prompt += `   - 冲突爆发，重大转折，决定性时刻\n`;
+                    if (parts2.climax) {
+                        prompt += `   - 参考：${parts2.climax.substring(0, 60)}...\n`;
+                    }
+                    prompt += `\n`;
+                }
+                
+                const lastTrope = matchedTropes[matchedTropes.length - 1];
+                const lastParts = parseTropeDescription(lastTrope.trope.description);
+                prompt += `4. 【结尾】（约${Math.round(targetWords * 0.2)}字）\n`;
+                prompt += `   - 基于最后一个桥段的【收尾呼应】\n`;
+                prompt += `   - 留下悬念或过渡，引发读者继续阅读的欲望\n`;
+                if (lastParts.ending) {
+                    prompt += `   - 参考：${lastParts.ending.substring(0, 60)}...\n`;
+                }
+                prompt += `\n`;
+            }
+            
+            // 基础写作要求
+            prompt += `【写作要求】\n`;
+            prompt += `- 目标字数：${targetWords}字左右（请严格控制字数）\n`;
+            prompt += `- 情节必须有实质性内容，禁止空洞描写和过度抒情\n`;
+            prompt += `- 每个段落都要有推动剧情发展的作用\n`;
+            prompt += `- 对话要自然，符合人物性格\n`;
+            prompt += `- 场景描写要服务于情节，不要无意义的景物堆砌\n`;
+            prompt += `- 保持快节奏，不要拖沓\n\n`;
+            
+            // 文风要求
             if (style && style.id !== 'default' && style.features) {
                 prompt += `【文风要求 - ${style.name}风格】\n`;
                 
@@ -16333,7 +17654,16 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                 if (style.features.dialogue) {
                     prompt += `- 对话风格：${style.features.dialogue.description}\n`;
                 }
+                prompt += `\n`;
             }
+            
+            // 重要提醒
+            prompt += `【重要提醒】\n`;
+            prompt += `1. 必须基于提供的桥段素材进行创作，不要自由发挥偏离桥段核心\n`;
+            prompt += `2. 桥段的核心冲突、转折点、高潮必须体现在正文中\n`;
+            prompt += `3. 禁止"水字数"式的空洞描述和无意义的内心独白\n`;
+            prompt += `4. 每一部分都要紧扣桥段素材的结构要求\n`;
+            prompt += `5. 确保生成内容有实际剧情，读者看完后能清楚知道发生了什么\n\n`;
             
             return prompt;
         }
