@@ -7433,7 +7433,9 @@
 
         // 加载卷的章节
         async function loadVolumeChapters(volumeId) {
+            console.log('  📖 loadVolumeChapters 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
             const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            console.log('    获取到章节数:', chapters.length, '章节:', chapters.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId})));
             return chapters.sort((a, b) => a.chapterNumber - b.chapterNumber);
         }
 
@@ -7550,9 +7552,23 @@
 
         // 渲染章节列表（用于内部调用）
         function renderChapters(volumeId) {
+            console.log('🎨 renderChapters 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
+            console.log('📊 chaptersData 长度:', chaptersData.length);
+            console.log('📋 chaptersData 内容:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId, volumeIdType: typeof c.volumeId})));
+            
             // 确保 volumeId 是数字类型进行比较
             const targetId = Number(volumeId);
-            const chapters = chaptersData.filter(c => Number(c.volumeId) === targetId);
+            console.log('🎯 targetId:', targetId, '类型:', typeof targetId);
+            
+            const chapters = chaptersData.filter(c => {
+                const cVolumeId = Number(c.volumeId);
+                const match = cVolumeId === targetId;
+                console.log(`  比较: c.volumeId=${c.volumeId} (${typeof c.volumeId}) -> ${cVolumeId} vs targetId=${targetId}, 匹配=${match}`);
+                return match;
+            });
+            
+            console.log('✅ 匹配到的章节数:', chapters.length);
+            
             if (chapters.length === 0) {
                 return `<div class="chapters-empty">暂无章节，点击上方 ➕ 添加</div>`;
             }
@@ -7645,13 +7661,18 @@
 
         // 刷新章节数据
         async function refreshChaptersData() {
+            console.log('🔄 refreshChaptersData 被调用，currentWorkId:', currentWorkId);
             if (!currentWorkId) return;
             const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+            console.log('📚 获取到卷数:', volumes.length);
             chaptersData = [];
             for (const volume of volumes) {
+                console.log('  加载卷:', volume.id, volume.title);
                 const chapters = await loadVolumeChapters(volume.id);
+                console.log('    章节数:', chapters.length);
                 chaptersData.push(...chapters);
             }
+            console.log('✅ chaptersData 刷新完成，总章节数:', chaptersData.length);
         }
 
         // 应用大纲模板
@@ -7982,19 +8003,24 @@
 
         // 添加章节
         async function addChapter(volumeId) {
+            console.log('📝 addChapter 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
+            
             const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+            console.log('📚 当前卷已有章节数:', chapters.length);
+            
             const nextNumber = chapters.length + 1;
 
             const title = prompt(`请输入第${nextNumber}章标题：`);
             if (!title) return;
 
             const chapter = {
-                volumeId: volumeId,
+                volumeId: Number(volumeId),
                 chapterNumber: nextNumber,
                 title: title.trim(),
                 content: '',
                 wordCount: 0
             };
+            console.log('📝 准备添加章节:', chapter);
 
             // 添加章节并等待完成
             const chapterId = await db.add('chapters', chapter);
@@ -8004,6 +8030,7 @@
             await new Promise(resolve => setTimeout(resolve, 100));
             
             expandedVolumes.add(Number(volumeId));
+            console.log('📂 expandedVolumes:', Array.from(expandedVolumes));
             
             // 记录写作统计
             try {
@@ -8019,7 +8046,7 @@
             // 重新加载章节数据
             await refreshChaptersData();
             console.log('📊 章节数据已刷新，当前章节数:', chaptersData.length);
-            console.log('📋 章节列表:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId})));
+            console.log('📋 章节列表:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId, type: typeof c.volumeId})));
             
             // 重新渲染
             const container = document.getElementById('editorContent') || document.getElementById('mainContent');
