@@ -7576,10 +7576,17 @@
                 summary: summary.trim()
             };
 
-            await db.add('volumes', volume);
-            expandedVolumes.add(volume.id);
+            const volumeId = await db.add('volumes', volume);
+            console.log('✅ 卷已添加，ID:', volumeId);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            expandedVolumes.add(volumeId);
             await refreshChaptersData();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+            }
             showNotification('✅ 卷添加成功');
         }
 
@@ -7597,7 +7604,12 @@
             volume.title = newTitle.trim();
             volume.summary = newSummary.trim();
             await db.update('volumes', volume);
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+            }
             showNotification('✅ 已更新');
         }
 
@@ -7611,9 +7623,15 @@
             }
 
             await db.delete('volumes', id);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             expandedVolumes.delete(id);
             await refreshChaptersData();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+            }
             showNotification('✅ 卷已删除');
         }
 
@@ -7671,18 +7689,37 @@
                 wordCount: 0
             };
 
-            await db.add('chapters', chapter);
+            // 添加章节并等待完成
+            const chapterId = await db.add('chapters', chapter);
+            console.log('✅ 章节已添加，ID:', chapterId);
+            
+            // 确保数据已写入
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             expandedVolumes.add(volumeId);
             
             // 记录写作统计
-            await recordWritingStats('chapter_save', {
-                chaptersAdded: 1,
-                wordCount: 0,
-                minutesActive: 1
-            });
+            try {
+                await recordWritingStats('chapter_save', {
+                    chaptersAdded: 1,
+                    wordCount: 0,
+                    minutesActive: 1
+                });
+            } catch (e) {
+                console.warn('记录统计失败:', e);
+            }
             
+            // 重新加载章节数据
             await refreshChaptersData();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            console.log('📊 章节数据已刷新，当前章节数:', chaptersData.length);
+            
+            // 重新渲染
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+                console.log('🎨 界面已重新渲染');
+            }
+            
             showNotification('✅ 章节添加成功');
         }
 
@@ -7701,23 +7738,35 @@
             chapter.wordCount = (chapter.content || '').length;
 
             await db.update('chapters', chapter);
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // 记录历史
-            await historyManager.addHistory('plot', id, `第${chapter.chapterNumber}章: ${chapter.title}`, 'edit', {
-                volumeId: chapter.volumeId,
-                oldTitle,
-                newTitle: chapter.title
-            });
+            try {
+                await historyManager.addHistory('plot', id, `第${chapter.chapterNumber}章: ${chapter.title}`, 'edit', {
+                    volumeId: chapter.volumeId,
+                    oldTitle,
+                    newTitle: chapter.title
+                });
+            } catch (e) {
+                console.warn('记录历史失败:', e);
+            }
 
             // 记录写作统计
-            await recordWritingStats('chapter_save', {
-                chaptersAdded: 0,
-                wordCount: (newTitle || '').length - (oldTitle || '').length,
-                minutesActive: 1
-            });
+            try {
+                await recordWritingStats('chapter_save', {
+                    chaptersAdded: 0,
+                    wordCount: (newTitle || '').length - (oldTitle || '').length,
+                    minutesActive: 1
+                });
+            } catch (e) {
+                console.warn('记录统计失败:', e);
+            }
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+            }
             showNotification('✅ 已更新');
         }
 
@@ -7730,6 +7779,7 @@
 
             const volumeId = chapter.volumeId;
             await db.delete('chapters', id);
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // 重新排序该卷章节
             const chapters = await db.getAll('chapters', 'volumeId', volumeId);
@@ -7739,9 +7789,13 @@
                 chapters[i].chapterNumber = i + 1;
                 await db.update('chapters', chapters[i]);
             }
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             await refreshChaptersData();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+            if (container) {
+                await renderPlot(container);
+            }
             showNotification('✅ 章节已删除');
         }
 
