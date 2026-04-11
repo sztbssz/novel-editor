@@ -5094,6 +5094,9 @@
             
             loadPage(page);
         }
+        
+        // 确保 handleNavClick 在全局作用域可用
+        window.handleNavClick = handleNavClick;
 
         function loadPage(page) {
             currentPage = page;
