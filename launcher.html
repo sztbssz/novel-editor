@@ -9133,61 +9133,6 @@
             ]
         };
 
-        // 关键词匹配规则
-        const keywordRules = {
-            cold: ['冷酷', '冷', '剑客', '剑', '杀', '杀伐', '无情', '刺客', '暗影', '寒', '冰', '孤', '独', '绝', '煞', '刃', '血', '死亡', '冷漠'],
-            gentle: ['温柔', '女', '女主', '柔', '雅', '美', '仙', '清雅', '温婉', '善良', '纯真', '可爱', '甜', '梦', '花', '月', '雪', '诗', '画'],
-            domineering: ['霸气', '王', '皇', '帝', '霸', '强势', '霸主', '至尊', '无敌', '龙', '天', '傲', '狂', '尊', '圣', '威', '权', '统治', '征服'],
-            scholarly: ['书生', '儒', '文', '墨', '谋士', '智囊', '聪明', '智慧', '学者', '才子', '读书人', '文雅', '谦逊', '深思', '博学'],
-            evil: ['邪', '魔', '妖', '反派', '恶', '魅', '诡异', '阴森', '黑暗', '毒', '蛊', '鬼', '魑', '魅', '魍', '魉', '诅咒', '邪魅'],
-            resolute: ['坚毅', '硬', '刚', '战士', '不屈', '坚定', '铁', '钢', '岩', '岳', '勇', '猛', '壮', '武', '毅', '恒'],
-            lively: ['灵动', '活泼', '机敏', '自由', '轻', '快', '乐', '笑', '舞', '羽', '翔', '飞', '跃', '俏皮', '可爱', '天真']
-        };
-
-        // 分析描述，确定风格
-        function analyzeDescription(description) {
-            const desc = description.toLowerCase();
-            const scores = {};
-
-            for (const [style, keywords] of Object.entries(keywordRules)) {
-                scores[style] = 0;
-                for (const keyword of keywords) {
-                    if (desc.includes(keyword)) {
-                        scores[style] += 1;
-                    }
-                }
-            }
-
-            // 找出最高分的风格
-            let maxScore = 0;
-            let selectedStyle = 'cold'; // 默认冷峻风格
-
-            for (const [style, score] of Object.entries(scores)) {
-                if (score > maxScore) {
-                    maxScore = score;
-                    selectedStyle = style;
-                }
-            }
-
-            // 检测性别
-            let gender = 'male';
-            const femaleKeywords = ['女', '女主', '她', '温柔', '柔', '美', '仙子', '姑娘', '小姐', '母', '姐妹'];
-            const maleKeywords = ['男', '男主', '他', '剑客', '公子', '少侠', '爷', '父', '兄弟', '汉'];
-
-            let femaleScore = 0, maleScore = 0;
-            for (const kw of femaleKeywords) {
-                if (desc.includes(kw)) femaleScore++;
-            }
-            for (const kw of maleKeywords) {
-                if (desc.includes(kw)) maleScore++;
-            }
-            
-            // 根据得分判断性别
-            if (femaleScore > maleScore) {
-                gender = 'female';
-            }
-        }
-
         // 数据管理页面
         async function renderData(container) {
             const chars = await db.getAll('characters');
