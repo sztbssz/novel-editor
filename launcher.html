@@ -3242,10 +3242,10 @@
 
         // ==================== CDN 配置 ====================
         const CDN_CONFIG = {
-            // CDN 加速路径（国内访问快）- 使用版本号强制刷新缓存
-            cdnBase: 'https://cdn.jsdelivr.net/gh/sztbssz/novel-editor@master/',
-            // GitHub Pages 原始路径（回退用）
-            githubBase: 'https://sztbssz.github.io/novel-editor/',
+            // 主路径：GitHub Pages（避免CORS问题）
+            cdnBase: 'https://sztbssz.github.io/novel-editor/',
+            // 回退路径：jsdelivr CDN
+            jsdelivrBase: 'https://cdn.jsdelivr.net/gh/sztbssz/novel-editor@master/',
             // 本地路径（开发用）
             localBase: ''
         };
@@ -5966,8 +5966,8 @@
         // 带 CDN 回退的加载函数
         async function fetchWithCDNRetry(filename, options = {}) {
             const sources = [
-                { base: CDN_CONFIG.cdnBase, name: 'CDN' },
-                { base: CDN_CONFIG.githubBase, name: 'GitHub Pages' },
+                { base: CDN_CONFIG.cdnBase, name: 'GitHub Pages' },
+                { base: CDN_CONFIG.jsdelivrBase, name: 'jsdelivr CDN' },
                 { base: CDN_CONFIG.localBase, name: '本地' }
             ];
 
