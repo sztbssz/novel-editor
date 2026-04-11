@@ -5366,20 +5366,32 @@
 
             for (let i = 0; i < worldviews.length; i++) {
                 const world = worldviews[i];
-                const title = `${world.book} - 世界观`;
+                // 支持两种字段命名: title 或 book
+                const titleText = world.title || world.book || `世界观${i + 1}`;
+                const title = `${titleText} - 世界观`;
 
                 if (!existingTitles.has(title)) {
-                    const content = `**作者**: ${world.author}\n**年份**: ${world.year}\n**背景类型**: ${world.backgroundType}\n**力量类型**: ${world.powerType}\n\n**文化习俗**:\n${world.culture}\n\n**世界特色**:\n${world.features}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                    // 支持两种字段命名: description 或详细字段组合
+                    let content = '';
+                    if (world.description) {
+                        // 简洁格式
+                        content = world.description;
+                    } else {
+                        // 详细格式 (旧数据兼容)
+                        content = `**作者**: ${world.author || '未知'}\n**年份**: ${world.year || '未知'}\n**背景类型**: ${world.backgroundType || '未知'}\n**力量类型**: ${world.powerType || '未知'}\n\n**文化习俗**:\n${world.culture || '无'}\n\n**世界特色**:\n${world.features || '无'}\n\n**标签**: ${world.tags ? world.tags.join(', ') : '无'}`;
+                    }
 
                     let category = 'other';
                     const tags = world.tags || [];
-                    if (tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
-                    else if (tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
-                    else if (tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
-                    else if (tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
-                    else if (tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
-                    else if (tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
-                    else if (tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
+                    const desc = (world.description || '').toLowerCase();
+                    // 根据描述内容智能分类
+                    if (desc.includes('仙') || desc.includes('修真') || desc.includes('道') || tags.some(t => ['玄幻', '仙侠', '洪荒', '封神'].includes(t))) category = 'cultivation';
+                    else if (desc.includes('都市') || desc.includes('现代') || desc.includes('城市') || tags.some(t => ['都市', '现代', '国术', '医疗', '学霸'].includes(t))) category = 'modern';
+                    else if (desc.includes('星际') || desc.includes('机甲') || desc.includes('未来') || desc.includes('科技') || tags.some(t => ['科幻', '星际', '机甲', '未来'].includes(t))) category = 'scifi';
+                    else if (desc.includes('末世') || desc.includes('废土') || desc.includes('末日') || desc.includes('污染') || tags.some(t => ['末世', '废土', '末日', '污染'].includes(t))) category = 'apocalypse';
+                    else if (desc.includes('历史') || desc.includes('古代') || desc.includes('穿越') || tags.some(t => ['历史', '架空历史', '穿越'].includes(t))) category = 'history';
+                    else if (desc.includes('魔法') || desc.includes('奇幻') || desc.includes('西方') || tags.some(t => ['奇幻', '魔法', '西方'].includes(t))) category = 'magic';
+                    else if (desc.includes('灵异') || desc.includes('鬼') || desc.includes('盗墓') || tags.some(t => ['灵异', '民俗', '盗墓'].includes(t))) category = 'horror';
 
                     await db.add('world_settings', { category, title, content });
                     addedCount++;
