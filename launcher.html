@@ -12939,6 +12939,24 @@
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 [初始化] 启动系统...');
 
+            // 检查 URL 参数：?clear=1 强制清除缓存
+            const urlParams = new URLSearchParams(window.location.search);
+            const shouldClearCache = urlParams.get('clear') === '1';
+            
+            if (shouldClearCache) {
+                console.log('🧹 [初始化] 检测到清除缓存参数，正在清除...');
+                try {
+                    await smartCache.clearCache('characters_all.json');
+                    await smartCache.clearCache('data.json');
+                    await db.clear('characters');
+                    await db.clear('world_settings');
+                    console.log('✅ [初始化] 缓存已清除');
+                    showNotification('🧹 缓存已清除，正在重新加载...');
+                } catch (e) {
+                    console.error('❌ [初始化] 清除缓存失败:', e);
+                }
+            }
+
             await db.init();
             console.log('✅ [初始化] IndexedDB 就绪');
 
@@ -12954,16 +12972,21 @@
             let charData = null;
             let worldData = null;
 
-            try {
-                charData = await smartCache.getData('characters_all.json');
-            } catch (e) {
-                console.error('❌ [缓存] 读取角色缓存失败:', e);
-            }
+            // 如果强制清除，跳过缓存读取
+            if (!shouldClearCache) {
+                try {
+                    charData = await smartCache.getData('characters_all.json');
+                } catch (e) {
+                    console.error('❌ [缓存] 读取角色缓存失败:', e);
+                }
 
-            try {
-                worldData = await smartCache.getData('data.json');
-            } catch (e) {
-                console.error('❌ [缓存] 读取世界观缓存失败:', e);
+                try {
+                    worldData = await smartCache.getData('data.json');
+                } catch (e) {
+                    console.error('❌ [缓存] 读取世界观缓存失败:', e);
+                }
+            } else {
+                console.log('🔄 [初始化] 强制清除模式，跳过缓存读取');
             }
 
             if (charData) {
