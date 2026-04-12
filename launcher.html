@@ -4691,7 +4691,12 @@
                         
                         // 如果有索引过滤
                         if (indexName && value !== null) {
-                            data = data.filter(item => item[indexName] === value);
+                            // 类型兼容处理：将比较值都转为字符串进行比较
+                            const valueStr = String(value);
+                            data = data.filter(item => {
+                                const itemValue = item[indexName];
+                                return itemValue === value || String(itemValue) === valueStr;
+                            });
                         }
                         
                         // 按更新时间排序
