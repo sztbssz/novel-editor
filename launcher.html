@@ -4276,7 +4276,14 @@
 
             async clear() {
                 this.data = [];
-                await this.db.clear(this.storeName);
+                // 直接操作IndexedDB，避免通过Database.clear()导致递归调用
+                await new Promise((resolve, reject) => {
+                    const tx = this.db.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
                 await this.syncToCloud();
                 return true;
             }
