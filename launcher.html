@@ -4896,10 +4896,19 @@
         // ==================== 历史记录管理器 ====================
         class HistoryManager {
             constructor() {
-                this.db = db;
                 this.debounceTimers = new Map(); // 防抖定时器
                 this.debounceInterval = 5 * 60 * 1000; // 5分钟防抖
                 this.maxRecords = 100; // 最多保留100条
+            }
+
+            // 获取数据库实例（延迟获取，确保db已初始化）
+            getDB() {
+                // 优先使用云端存储管理器（如果已就绪）
+                if (db.isCloudReady()) {
+                    return db.getCloudManager('history');
+                }
+                // 回退到普通db操作
+                return db;
             }
 
             // 生成防抖key
@@ -4938,8 +4947,17 @@
                 };
 
                 try {
-                    await this.db.add('history', historyItem);
-                    await this.cleanupOldRecords();
+                    const dbInstance = this.getDB();
+                    if (dbInstance && dbInstance.add) {
+                        if (dbInstance === db) {
+                            // 使用普通db.add
+                            await db.add('history', historyItem);
+                        } else {
+                            // 使用云端管理器.add
+                            await dbInstance.add(historyItem);
+                        }
+                        await this.cleanupOldRecords();
+                    }
                 } catch (e) {
                     console.warn('添加历史记录失败:', e);
                 }
@@ -4948,7 +4966,17 @@
             // 获取历史记录列表
             async getHistoryList(limit = null) {
                 try {
-                    const allHistory = await this.db.getAll('history');
+                    const dbInstance = this.getDB();
+                    let allHistory = [];
+                    
+                    if (dbInstance && dbInstance.getAll) {
+                        if (dbInstance === db) {
+                            allHistory = await db.getAll('history');
+                        } else {
+                            allHistory = await dbInstance.getAll();
+                        }
+                    }
+                    
                     // 按时间倒序排列
                     const sorted = allHistory.sort((a, b) => b.timestamp - a.timestamp);
                     return limit ? sorted.slice(0, limit) : sorted;
@@ -4961,14 +4989,30 @@
             // 清理旧记录
             async cleanupOldRecords() {
                 try {
-                    const allHistory = await this.db.getAll('history');
+                    const dbInstance = this.getDB();
+                    let allHistory = [];
+                    
+                    if (dbInstance && dbInstance.getAll) {
+                        if (dbInstance === db) {
+                            allHistory = await db.getAll('history');
+                        } else {
+                            allHistory = await dbInstance.getAll();
+                        }
+                    }
+                    
                     if (allHistory.length > this.maxRecords) {
                         // 按时间升序排列，删除最旧的
                         const sorted = allHistory.sort((a, b) => a.timestamp - b.timestamp);
                         const toDelete = sorted.slice(0, allHistory.length - this.maxRecords);
 
                         for (const item of toDelete) {
-                            await this.db.delete('history', item.id);
+                            if (dbInstance && dbInstance.delete) {
+                                if (dbInstance === db) {
+                                    await db.delete('history', item.id);
+                                } else {
+                                    await dbInstance.delete(item.id);
+                                }
+                            }
                         }
                     }
                 } catch (e) {
@@ -4979,7 +5023,14 @@
             // 清除所有历史记录
             async clearAllHistory() {
                 try {
-                    await this.db.clear('history');
+                    const dbInstance = this.getDB();
+                    if (dbInstance && dbInstance.clear) {
+                        if (dbInstance === db) {
+                            await db.clear('history');
+                        } else {
+                            await dbInstance.clear();
+                        }
+                    }
                     this.debounceTimers.clear();
                     return true;
                 } catch (e) {
@@ -8172,18 +8223,21 @@
 
         // 世界观页面
         async function renderWorld(container, category = 'other') {
+            // 智能加载：如果数据未加载且未在加载中，自动加载
             if (!dataLoadState.worldview.loaded && !dataLoadState.worldview.loading) {
+                // 先显示加载状态，然后自动加载数据
                 container.innerHTML = `
                     <div class="header">
                         <h2>🌍 世界观设定</h2>
                     </div>
                     <div class="empty-state">
-                        <div class="empty-state-icon">⏳</div>
-                        <h3>世界观数据未加载</h3>
-                        <p>点击下方按钮加载世界观库数据</p>
-                        <button class="btn btn-primary" onclick="loadWorldviewDataWithUI()">加载世界观数据</button>
+                        <div class="loading-spinner" style="width:50px;height:50px;margin-bottom:20px;"></div>
+                        <h3>正在加载世界观数据...</h3>
+                        <p>首次加载可能需要一些时间</p>
                     </div>
                 `;
+                // 自动加载数据
+                loadWorldviewDataWithUI();
                 return;
             }
 
@@ -8469,8 +8523,40 @@
             } else {
                 const currentWork = worksData.find(w => w.id === currentWorkId);
                 const volumes = await db.getAll('volumes', 'workId', currentWorkId);
-                console.log('🎨 renderPlot: 获取到卷数:', volumes.length);
-                volumes.sort((a, b) => a.volumeNumber - b.volumeNumber);
+                
+                // 同时加载剧情大纲中的卷数据 (outline_volumes)
+                let outlineVolumes = [];
+                try {
+                    const allOutlineVolumes = await db.getAll('outline_volumes');
+                    outlineVolumes = allOutlineVolumes.filter(v => v.workId === currentWorkId);
+                } catch (e) {
+                    console.warn('加载剧情大纲卷数据失败:', e);
+                }
+                
+                // 合并两个来源的卷数据（去重）
+                const volumeMap = new Map();
+                
+                // 先添加正文创作的卷
+                volumes.forEach(v => {
+                    volumeMap.set(v.id, v);
+                });
+                
+                // 再添加剧情大纲中的卷（如果没有重复id）
+                outlineVolumes.forEach((v, index) => {
+                    if (!volumeMap.has(v.id)) {
+                        // 转换outline_volume格式为volume格式
+                        volumeMap.set(v.id, {
+                            ...v,
+                            volumeNumber: v.volumeNumber || (volumes.length + index + 1),
+                            workId: currentWorkId,
+                            isFromOutline: true  // 标记来自剧情大纲
+                        });
+                    }
+                });
+                
+                const mergedVolumes = Array.from(volumeMap.values());
+                console.log('🎨 renderPlot: 获取到卷数:', volumes.length, '+ 大纲卷数:', outlineVolumes.length, '= 合并后:', mergedVolumes.length);
+                mergedVolumes.sort((a, b) => (a.volumeNumber || 0) - (b.volumeNumber || 0));
 
                 editorHtml = `
                     <div class="plot-editor-header">
@@ -8481,25 +8567,27 @@
                         </div>
                     </div>
                     <div class="plot-editor-content">
-                        ${volumes.length === 0
+                        ${mergedVolumes.length === 0
                             ? `<div class="plot-empty-state">
                                 <div class="plot-empty-state-icon">📚</div>
                                 <h3>暂无卷</h3>
                                 <p>点击上方「添加卷」开始创建</p>
+                                <p style="font-size:12px;color:#666;margin-top:10px;">💡 提示：也可以在「剧情大纲」页面创建卷</p>
                                </div>`
-                            : volumes.map(volume => {
+                            : mergedVolumes.map(volume => {
                                 console.log('  渲染卷:', volume.id, volume.title, 'expandedVolumes:', Array.from(expandedVolumes));
                                 const isExpanded = expandedVolumes.has(Number(volume.id));
                                 console.log('    isExpanded:', isExpanded);
                                 const chaptersHtml = renderChapters(volume.id);
                                 console.log('    chaptersHtml 长度:', chaptersHtml.length);
+                                const isFromOutline = volume.isFromOutline ? '📋 ' : '';
                                 return `
                                     <div class="volume-item" data-volume-id="${volume.id}">
                                         <div class="volume-header" onclick="toggleVolume(${volume.id})">
                                             <div class="volume-title-section">
                                                 <span class="volume-toggle ${isExpanded ? '' : 'collapsed'}">▼</span>
                                                 <span class="volume-number">第${volume.volumeNumber}卷</span>
-                                                <span class="volume-title">${volume.title || '未命名卷'}</span>
+                                                <span class="volume-title">${isFromOutline}${volume.title || '未命名卷'}</span>
                                                 ${volume.summary ? `<span class="volume-summary">${volume.summary}</span>` : ''}
                                                 ${volume.outline ? `<span style="background: #4ade80; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">📄 大纲</span>` : ''}
                                             </div>
@@ -10585,6 +10673,23 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             };
             
             const volumeId = await db.add('outline_volumes', volume);
+            
+            // 同时创建正文创作的卷记录，实现关联
+            try {
+                await db.add('volumes', {
+                    workId: currentOutlineWorkId,
+                    volumeNumber: nextNumber,
+                    title: title.trim(),
+                    summary: '',
+                    outline: '',
+                    isFromOutline: true,  // 标记来自剧情大纲
+                    outlineVolumeId: volumeId  // 关联到剧情大纲的卷ID
+                });
+                console.log('✅ 已同步创建正文创作卷');
+            } catch (e) {
+                console.warn('同步创建正文创作卷失败:', e);
+            }
+            
             expandedOutlineVolumes.add(volumeId);
             showNotification('✅ 卷添加成功');
             await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
