@@ -7512,8 +7512,8 @@
         // 生成变体1
         function generateVariation1(subType, scenario, char1, char2, ability) {
             const scenes = {
-                '装逼打脸': `${scenario}现场人头攒动，各路强者云集于此。${char1}静静站在角落，目光淡然地注视着前方。周围人议论纷纷，有人认出了他的身份，冷笑道："区区${char1}也敢来此？真是不知天高地厚！"话音未落，${char1}身上忽然爆发出一股惊人气息，${ability}显露无遗，威压如潮水般席卷全场。全场瞬间寂静，方才嘲笑之人面色惨白，双腿发软，额头冷汗直流。${char1}淡淡扫视众人，眼中闪过一丝不屑，转身离去，只留下满场震撼和久久无法平息的议论声。`,
-                '扮猪吃老虎': `${scenario}之上风云汇聚，各路高手齐聚一堂。${char1}刻意收敛气息，装作普通${char2}混迹于人群之中。对手嚣张跋扈，不断出言嘲讽，言语间满是轻蔑与不屑。就在胜负将分之际，${char1}眼中精光一闪，${ability}骤然爆发，一招制敌，快如闪电。对手难以置信地看着这一切，而${char1}早已收起气息，仿佛什么都没发生，只留下众人震惊的目光和窃窃私语。`,
+                '装逼打脸': `${scenario}现场人头攒动，各路强者云集于此。${char1}静静站在角落，目光淡然地注视着前方。周围人议论纷纷，有人认出了他的身份，冷笑道："区区${char1}也敢来此？真是不知天高地厚！"话音未落，${char1}身上忽然爆发出一股惊人气息，${ability}显露无遗，威压如潮水般席卷全场。全场瞬间寂静，方才嘲笑之人面色惨白，双腿发软，额头冷汗直流，再也没了先前的嚣张气焰。${char1}淡淡扫视众人，眼中闪过一丝不屑，转身离去，只留下满场震撼和久久无法平息的议论声。这一日，所有人都记住了这个名字。`,
+                '扮猪吃老虎': `${scenario}之上风云汇聚，各路高手齐聚一堂。${char1}刻意收敛气息，装作普通${char2}混迹于人群之中，毫不起眼。对手嚣张跋扈，不断出言嘲讽，言语间满是轻蔑与不屑，引来了周围一阵哄笑。就在胜负将分之际，${char1}眼中精光一闪，${ability}骤然爆发，一招制敌，快如闪电。对手难以置信地看着这一切，脸上的表情从得意变成了惊恐，从惊恐变成了绝望。而${char1}早已收起气息，仿佛什么都没发生，只留下众人震惊的目光和窃窃私语。`,
                 '废物逆袭': `曾经的${char1}受尽白眼，被所有人视为废物，连最基本的尊重都得不到。今日${scenario}开启，众人依旧嘲笑不断，言语刻薄如刀。然而当测试开始，${char1}体内${ability}轰然觉醒，耀眼的光芒直冲云霄，震撼全场。曾经嘲笑他的人目瞪口呆，脸上的表情从讥讽变成了难以置信，从难以置信变成了恐惧。而${char1}只是平静地说：这，只是开始，真正的传奇才刚刚拉开序幕。`,
                 '天降机缘': `${char1}跌入${scenario}深处，周围一片漆黑，本以为必死无疑，生命即将走到尽头。然而命运弄人，在这绝境之中，他却意外发现一处隐秘空间，古老的符文在墙壁上闪烁。神秘的传承在黑暗中等待着有缘人，${ability}静静悬浮在虚空之中，散发着神秘的光芒。当${char1}颤抖着触碰到那道光芒时，一股浩瀚的力量涌入体内，命运从此改变，一段传奇即将开启，他的名字将响彻整个大陆。`,
                 '智斗博弈': `${scenario}之中暗流涌动，${char2}步步紧逼，招式阴险毒辣，每一招都直取要害。${char1}神色从容，每一个应对都恰到好处，看似被动实则主动。当对手自以为得计时，${char1}微微一笑，${ability}展现，原来早已布局深远，每一步都是精心设计的陷阱。局势瞬间逆转，${char2}陷入绝境，直到此刻才明白自己从一开始就落入了圈套，为时已晚，只能眼睁睁看着败局已定。`,
@@ -7522,7 +7522,7 @@
                 '全场震惊': `${scenario}现场人山人海，所有人都认为${char1}必败无疑，甚至有人已经开盘下注他的失败。质疑声、嘲笑声此起彼伏，如同潮水般涌来。然而当结果揭晓的那一刻，${ability}展现出的威力让全场鸦雀无声，所有的声音都在这一刻凝固。那是超出所有人认知的力量，是颠覆常理的存在，${char1}用实际行动证明了一切，让那些曾经嘲笑他的人无地自容，留下了永恒的传说。`
             };
 
-            return scenes[subType] || `${scenario}之中，${char1}面对${char2}的挑衅，不慌不忙，神态从容。关键时刻，${ability}展现，光芒万丈，局势瞬间逆转，震惊全场。那些曾经看轻他的人都低下了头，而那些支持他的人则欢呼雀跃。这一战，不仅证明了实力，更证明了坚持和信念的价值，${char1}的名字从此刻开始，将被无数人传颂。`;
+            return scenes[subType] || `${scenario}之中，${char1}面对${char2}的挑衅，不慌不忙，神态从容，眼中看不出丝毫慌乱。关键时刻，${ability}骤然展现，光芒万丈，气势如虹，局势瞬间逆转，震惊全场。那些曾经看轻他的人都低下了头，羞愧难当，而那些支持他的人则欢呼雀跃，为他的表现喝彩不已。这一战，不仅证明了实力，更证明了坚持和信念的价值，${char1}的名字从此刻开始，将被无数人传颂，成为激励后人的传奇佳话。`;
         }
 
         // 生成变体2
@@ -7538,7 +7538,7 @@
                 '全场震惊': `质疑的目光如芒刺在背，${char1}却神色如常，不为所动。当${scenario}的考验降临，所有人都等着看他的笑话，等着他出丑失败。然而当${ability}展现的那一刻，所有的嘲笑都凝固在脸上，取而代之的是难以置信的震惊。那惊艳的表现不仅震惊了全场，更证明了真正的实力无需言语，行动便是最好的回答，${char1}用实力赢得了所有人的尊重，书写了属于自己的传奇。`
             };
 
-            return scenes[subType] || `在${scenario}的紧要关头，${char1}凭借${ability}力挽狂澜，让${char2}和所有围观者都大吃一惊。那些曾经的质疑和嘲讽，在这一刻都化作了震惊和敬佩，人们开始用全新的眼光看待这个创造奇迹的人，而他的名字也将随着这场战斗被更多人记住。`;
+            return scenes[subType] || `在${scenario}的紧要关头，当所有人都以为大局已定时，${char1}凭借${ability}力挽狂澜，扭转乾坤，如天神下凡般震慑全场，让${char2}和所有围观者都大吃一惊，目瞪口呆。那些曾经的质疑和嘲讽，在这一刻都化作了震惊和敬佩，人们开始用全新的眼光看待这个创造奇迹的人，终于明白他绝非池中之物。而他的名字也将随着这场战斗被更多人记住，成为一段广为流传的传奇佳话，激励着无数后来者奋勇前行，追求属于自己的辉煌与荣耀，书写属于自己的精彩篇章。`;
         }
 
         // 生成变体3
@@ -7554,7 +7554,7 @@
                 '全场震惊': `当${char1}出现在${scenario}时，没有人看好他，质疑声此起彼伏，包括曾经的友人。但当${ability}展现的那一刻，天地变色，风云涌动，所有的质疑都烟消云散。那惊艳的表现不仅震惊了全场，更证明了真正的实力无需言语，行动便是最好的回答，他用自己的方式书写了传奇，让所有人记住了这个名字。`
             };
 
-            return scenes[subType] || `${scenario}中，不被看好的${char1}凭借${ability}创造了奇迹，让所有质疑者都闭上了嘴。那些曾经嘲笑他的人此刻只能目瞪口呆，而那些支持他的人则欢呼雀跃，这一战将成为他崛起之路上的重要里程碑。`;
+            return scenes[subType] || `${scenario}之中，不被看好的${char1}凭借${ability}创造了奇迹，让所有质疑者都闭上了嘴，再也无法说出任何嘲讽的话语。那些曾经嘲笑他的人此刻只能目瞪口呆，满脸难以置信，而那些支持他的人则欢呼雀跃，纷纷为他的表现喝彩，眼中满是敬佩与欣喜。这一战将成为他崛起之路上的重要里程碑，从此再无人敢轻视他的存在，他用实力证明了自己绝非池中之物，一个崭新的传奇正在徐徐展开，他的名字将被世人永远铭记，成为激励后人的不灭传说，流传千古。`;
         }
 
         // 切换参考例子折叠
@@ -7781,7 +7781,52 @@
         }
 
         // ==================== 角色管理页面 ====================
-        async function renderCharacters(container, filterRole = 'all') {
+        // 当前排序状态
+        let currentCharacterSort = 'default';
+
+        // 获取角色热度（基于收藏数和使用频率的模拟）
+        async function getCharacterHeat(charId) {
+            const isFav = await isFavorite('character', charId);
+            const history = await db.getAll('history');
+            const usageCount = history.filter(h => h.type === 'character' && h.data?.characterId === charId).length;
+            return (isFav ? 100 : 0) + usageCount * 10;
+        }
+
+        // 获取汉字拼音首字母
+        function getPinyinFirstChar(str) {
+            if (!str) return '#';
+            const firstChar = str.charAt(0);
+            // 简单拼音映射（常用汉字）
+            const pinyinMap = {
+                '阿': 'a', '安': 'a', '艾': 'a', '奥': 'a',
+                '白': 'b', '百': 'b', '北': 'b', '本': 'b', '边': 'b', '步': 'b',
+                '蔡': 'c', '曹': 'c', '陈': 'c', '程': 'c', '楚': 'c',
+                '达': 'd', '戴': 'd', '邓': 'd', '丁': 'd', '董': 'd', '杜': 'd',
+                '鄂': 'e', '恩': 'e',
+                '范': 'f', '方': 'f', '冯': 'f', '傅': 'f',
+                '甘': 'g', '高': 'g', '葛': 'g', '耿': 'g', '顾': 'g', '郭': 'g',
+                '韩': 'h', '何': 'h', '贺': 'h', '洪': 'h', '胡': 'h', '黄': 'h', '霍': 'h',
+                '姬': 'j', '纪': 'j', '季': 'j', '贾': 'j', '江': 'j', '姜': 'j', '蒋': 'j', '金': 'j',
+                '卡': 'k', '康': 'k', '柯': 'k', '孔': 'k',
+                '兰': 'l', '雷': 'l', '李': 'l', '梁': 'l', '林': 'l', '凌': 'l', '刘': 'l', '柳': 'l', '龙': 'l', '卢': 'l', '陆': 'l', '罗': 'l', '吕': 'l',
+                '马': 'm', '毛': 'm', '孟': 'm', '莫': 'm', '穆': 'm',
+                '倪': 'n', '宁': 'n',
+                '欧': 'o', '欧阳': 'o',
+                '潘': 'p', '庞': 'p', '裴': 'p', '彭': 'p',
+                '齐': 'q', '钱': 'q', '秦': 'q', '乔': 'q', '邱': 'q',
+                '任': 'r', '容': 'r',
+                '沙': 's', '单': 's', '商': 's', '邵': 's', '沈': 's', '施': 's', '石': 's', '史': 's', '宋': 's', '苏': 's', '孙': 's',
+                '塔': 't', '太': 't', '谭': 't', '汤': 't', '唐': 't', '陶': 't', '田': 't',
+                '万': 'w', '汪': 'w', '王': 'w', '韦': 'w', '魏': 'w', '卫': 'w', '温': 'w', '文': 'w', '吴': 'w', '武': 'w', '伍': 'w',
+                '西': 'x', '夏': 'x', '萧': 'x', '谢': 'x', '辛': 'x', '邢': 'x', '徐': 'x', '许': 'x', '薛': 'x',
+                '严': 'y', '颜': 'y', '杨': 'y', '叶': 'y', '易': 'y', '殷': 'y', '尹': 'y', '尤': 'y', '于': 'y', '余': 'y', '俞': 'y', '袁': 'y', '岳': 'y', '云': 'y',
+                '曾': 'z', '张': 'z', '章': 'z', '赵': 'z', '郑': 'z', '钟': 'z', '周': 'z', '朱': 'z', '庄': 'z', '卓': 'z', '邹': 'z'
+            };
+            return pinyinMap[firstChar] || firstChar.toLowerCase();
+        }
+
+        async function renderCharacters(container, filterRole = 'all', sortBy = currentCharacterSort) {
+            currentCharacterSort = sortBy;
             // 如果数据未加载且不在加载中，显示加载提示
             if (!dataLoadState.characters.loaded && !dataLoadState.characters.loading) {
                 container.innerHTML = `
@@ -7803,7 +7848,26 @@
 
             // 获取角色数据
             const characters = await db.getAll('characters');
-            const filtered = filterRole === 'all' ? characters : characters.filter(c => c.role === filterRole);
+            let filtered = filterRole === 'all' ? characters : characters.filter(c => c.role === filterRole);
+
+            // 排序逻辑
+            if (sortBy === 'heat') {
+                // 按热度排序（收藏+使用频率）
+                const heatMap = new Map();
+                await Promise.all(filtered.map(async (char) => {
+                    const heat = await getCharacterHeat(char.id);
+                    heatMap.set(char.id, heat);
+                }));
+                filtered.sort((a, b) => heatMap.get(b.id) - heatMap.get(a.id));
+            } else if (sortBy === 'pinyin') {
+                // 按拼音排序
+                filtered.sort((a, b) => {
+                    const pinyinA = getPinyinFirstChar(a.name);
+                    const pinyinB = getPinyinFirstChar(b.name);
+                    if (pinyinA !== pinyinB) return pinyinA.localeCompare(pinyinB);
+                    return a.name.localeCompare(b.name);
+                });
+            }
 
             // 统计各类型数量
             const counts = {
@@ -7836,7 +7900,7 @@
 
                 ${loadProgressHTML}
 
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
                     <div class="tabs">
                         <div class="tab ${filterRole === 'all' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), 'all')">全部 (${counts.all})</div>
                         <div class="tab ${filterRole === '主角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '主角')">主角 (${counts['主角']})</div>
@@ -7844,9 +7908,16 @@
                         <div class="tab ${filterRole === '反派' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '反派')">反派 (${counts['反派']})</div>
                         <div class="tab ${filterRole === '配角' ? 'active' : ''}" onclick="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '配角')">配角 (${counts['配角']})</div>
                     </div>
-                    <button class="btn btn-secondary" onclick="forceRefreshData()" title="强制刷新">
-                        🔄 刷新
-                    </button>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="charSortSelect" onchange="renderCharacters(document.getElementById('editorContent') || document.getElementById('mainContent'), '${filterRole}', this.value)" style="padding:8px 12px;border-radius:6px;background:#0f3460;color:#fff;border:1px solid #333;cursor:pointer;font-size:14px;">
+                            <option value="default" ${sortBy === 'default' ? 'selected' : ''}>默认排序</option>
+                            <option value="heat" ${sortBy === 'heat' ? 'selected' : ''}>🔥 热度排序</option>
+                            <option value="pinyin" ${sortBy === 'pinyin' ? 'selected' : ''}>🔤 拼音排序</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="forceRefreshData()" title="强制刷新">
+                            🔄 刷新
+                        </button>
+                    </div>
                 </div>
 
                 ${filtered.length === 0 && !dataLoadState.characters.loading ? `
@@ -17706,4 +17777,8 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
 <!-- KCS_SAFE_EDIT_ENABLED: true -->
 <!-- KCS_CHECKPOINT_DIR: sandbox/checkpoints -->
 <!-- KCS_LAST_UPDATED: 2026-04-11T14:37:00+08:00 -->
+
+T_UPDATED: 2026-04-11T14:37:00+08:00 -->
+
+:37:00+08:00 -->
 
