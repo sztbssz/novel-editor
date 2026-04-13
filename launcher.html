@@ -7991,9 +7991,14 @@
                     </div>
                 ` : `
                     <div class="card-grid">
-                        ${await Promise.all(filtered.map(async char => {
-                            const isFav = await isFavorite('character', char.id);
-                            return `
+                        ${await (async () => {
+                            // 批量获取所有角色的收藏状态 - 性能优化
+                            const charIds = filtered.map(c => c.id);
+                            const favStatus = await batchCheckFavorites('character', charIds);
+                            
+                            return filtered.map(char => {
+                                const isFav = favStatus[char.id] || false;
+                                return `
                             <div class="card" onclick="openCharacterDetail(${char.id})" style="cursor: pointer; position: relative;">
                                 <button class="favorite-btn card-favorite-btn ${isFav ? 'active' : ''}" id="charFav-${char.id}" onclick="toggleCharacterFavorite(${char.id}, event)" title="${isFav ? '取消收藏' : '收藏'}">
                                     ${isFav ? '★' : '☆'}
@@ -8015,7 +8020,8 @@
                                 </div>
                             </div>
                             `;
-                        })).then(results => results.join(''))}
+                            }).join('');
+                        })()}
                     </div>
                 `}
             `;
@@ -13768,15 +13774,52 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             }, duration);
         }
 
+        // 收藏缓存 - 避免重复查询
+        let favoritesCache = null;
+        let favoritesCacheTime = 0;
+        const FAVORITES_CACHE_TTL = 30000; // 30秒缓存
+
+        // 获取收藏列表（带缓存）
+        async function getFavoritesWithCache() {
+            const now = Date.now();
+            if (!favoritesCache || (now - favoritesCacheTime) > FAVORITES_CACHE_TTL) {
+                favoritesCache = await db.getAll('favorites');
+                favoritesCacheTime = now;
+            }
+            return favoritesCache;
+        }
+
+        // 清除收藏缓存
+        function clearFavoritesCache() {
+            favoritesCache = null;
+            favoritesCacheTime = 0;
+        }
+
         // 检查是否已收藏
         async function isFavorite(type, itemId) {
-            const favorites = await db.getAll('favorites');
+            const favorites = await getFavoritesWithCache();
             return favorites.some(f => f.type === type && String(f.itemId) === String(itemId));
+        }
+
+        // 批量检查收藏状态 - 用于渲染时一次性获取
+        async function batchCheckFavorites(type, itemIds) {
+            const favorites = await getFavoritesWithCache();
+            const favSet = new Set();
+            favorites.forEach(f => {
+                if (f.type === type) {
+                    favSet.add(String(f.itemId));
+                }
+            });
+            const result = {};
+            itemIds.forEach(id => {
+                result[id] = favSet.has(String(id));
+            });
+            return result;
         }
 
         // 获取收藏ID
         async function getFavoriteId(type, itemId) {
-            const favorites = await db.getAll('favorites');
+            const favorites = await getFavoritesWithCache();
             const fav = favorites.find(f => f.type === type && String(f.itemId) === String(itemId));
             return fav ? fav.id : null;
         }
@@ -13807,6 +13850,7 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             };
 
             await db.add('favorites', favorite);
+            clearFavoritesCache(); // 清除缓存
             showToast('已添加到收藏');
             return true;
         }
@@ -13814,6 +13858,7 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
         // 移除收藏
         async function removeFavorite(id) {
             await db.delete('favorites', id);
+            clearFavoritesCache(); // 清除缓存
             showToast('已取消收藏');
             return true;
         }
@@ -13826,10 +13871,12 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
             if (existingId) {
                 await removeFavorite(existingId);
                 updateFavoriteButton(elementId, false);
+                clearFavoritesCache(); // 清除缓存
                 return false;
             } else {
                 await addFavorite(type, item);
                 updateFavoriteButton(elementId, true);
+                clearFavoritesCache(); // 清除缓存
                 return true;
             }
         }
