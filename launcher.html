@@ -3887,6 +3887,7 @@
                 this.gistId = localStorage.getItem('github_gist_id');
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
                 this.fileVersions = JSON.parse(localStorage.getItem('github_file_versions') || '{}');
+                this.lastError = null;
             }
 
             isConfigured() { return !!this.token; }
@@ -3896,29 +3897,95 @@
                 localStorage.setItem('github_token', token);
             }
 
+            // 获取详细的错误信息
+            getLastError() {
+                return this.lastError;
+            }
+
             async verifyToken() {
-                if (!this.token) return false;
-                try {
-                    const response = await fetch('https://api.github.com/user', {
-                        headers: { 'Authorization': `token ${this.token}` }
-                    });
-                    return response.ok;
-                } catch (e) {
+                if (!this.token) {
+                    this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
                     return false;
                 }
+                try {
+                    const response = await fetch('https://api.github.com/user', {
+                        headers: { 'Authorization': `Bearer ${this.token}` }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('[GitHubSync] Token验证失败:', response.status, response.statusText, errorData);
+                        
+                        // Token无效，清除本地存储
+                        if (response.status === 401) {
+                            this.lastError = { 
+                                type: 'UNAUTHORIZED', 
+                                message: 'Token无效或已过期',
+                                details: errorData.message || '请检查Token是否正确，或重新创建Token'
+                            };
+                            this.clearConfig();
+                        } else if (response.status === 403) {
+                            this.lastError = { 
+                                type: 'FORBIDDEN', 
+                                message: 'API速率限制或权限不足',
+                                details: errorData.message || '请检查Token是否有 gist 权限'
+                            };
+                        } else {
+                            this.lastError = { 
+                                type: 'API_ERROR', 
+                                message: `GitHub API错误: ${response.status}`,
+                                details: errorData.message || response.statusText
+                            };
+                        }
+                        return false;
+                    }
+                    
+                    const userData = await response.json();
+                    console.log('[GitHubSync] Token验证成功，用户:', userData.login);
+                    this.lastError = null;
+                    return true;
+                } catch (e) {
+                    console.error('[GitHubSync] Token验证异常:', e);
+                    this.lastError = { 
+                        type: 'NETWORK_ERROR', 
+                        message: '网络错误，无法连接到GitHub',
+                        details: e.message
+                    };
+                    return false;
+                }
+            }
+
+            // 清除所有配置
+            clearConfig() {
+                console.log('[GitHubSync] 清除GitHub配置');
+                this.token = null;
+                this.gistId = null;
+                this.lastError = null;
+                localStorage.removeItem('github_token');
+                localStorage.removeItem('github_gist_id');
+                localStorage.removeItem('last_sync_time');
+                localStorage.removeItem('github_file_versions');
             }
 
             async getOrCreateGist() {
                 // 如果没有token，直接返回null
                 if (!this.token) {
                     console.log('[GitHubSync] 未配置Token，跳过Gist操作');
+                    this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
+                    return null;
+                }
+                
+                // 首先验证Token有效性
+                const tokenValid = await this.verifyToken();
+                if (!tokenValid) {
+                    console.error('[GitHubSync] Token验证失败，无法创建Gist');
                     return null;
                 }
                 
                 if (this.gistId) {
                     try {
                         const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                            headers: { 'Authorization': `token ${this.token}` }
+                            headers: { 'Authorization': `Bearer ${this.token}` }
                         });
                         if (response.ok) return this.gistId;
                         // 如果404，说明gist被删除了，继续创建新的
@@ -3926,19 +3993,26 @@
                             console.log('[GitHubSync] Gist不存在，创建新的');
                             this.gistId = null;
                             localStorage.removeItem('github_gist_id');
+                        } else if (response.status === 401) {
+                            this.lastError = { type: 'UNAUTHORIZED', message: 'Token无效，无法访问Gist' };
+                            this.clearConfig();
+                            return null;
                         }
                     } catch (e) {
                         console.error('Gist check failed:', e);
+                        this.lastError = { type: 'NETWORK_ERROR', message: '网络错误', details: e.message };
                     }
                 }
 
                 // 创建新的Gist
                 try {
+                    console.log('[GitHubSync] 正在创建新的Gist...');
                     const response = await fetch('https://api.github.com/gists', {
                         method: 'POST',
                         headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Content-Type': 'application/json'
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github+json'
                         },
                         body: JSON.stringify({
                             description: 'Novel Editor Data Storage',
@@ -3964,24 +4038,75 @@
                         const data = await response.json();
                         this.gistId = data.id;
                         localStorage.setItem('github_gist_id', this.gistId);
+                        console.log('[GitHubSync] Gist创建成功:', this.gistId);
+                        this.lastError = null;
                         return this.gistId;
                     } else {
-                        const error = await response.json();
-                        console.error('Create gist failed:', error);
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('Create gist failed:', response.status, errorData);
+                        
+                        // 详细的错误处理
+                        if (response.status === 404) {
+                            this.lastError = { 
+                                type: 'NOT_FOUND', 
+                                message: 'GitHub API返回404',
+                                details: errorData.message || '可能是Token权限不足，请确保Token有 gist 权限'
+                            };
+                        } else if (response.status === 401) {
+                            this.lastError = { 
+                                type: 'UNAUTHORIZED', 
+                                message: 'Token认证失败',
+                                details: errorData.message || 'Token可能已过期或无效'
+                            };
+                            this.clearConfig();
+                        } else if (response.status === 403) {
+                            this.lastError = { 
+                                type: 'FORBIDDEN', 
+                                message: '权限不足或API限制',
+                                details: errorData.message || '请检查Token是否有创建Gist的权限'
+                            };
+                        } else if (response.status === 422) {
+                            this.lastError = { 
+                                type: 'VALIDATION_ERROR', 
+                                message: '请求数据验证失败',
+                                details: errorData.message || '请检查数据格式'
+                            };
+                        } else {
+                            this.lastError = { 
+                                type: 'API_ERROR', 
+                                message: `GitHub API错误: ${response.status}`,
+                                details: errorData.message || response.statusText
+                            };
+                        }
+                        
+                        // 显示错误提示
+                        showNotification(`❌ Gist创建失败: ${this.lastError.message}`);
                         return null;
                     }
                 } catch (e) {
                     console.error('Create gist failed:', e);
+                    this.lastError = { 
+                        type: 'NETWORK_ERROR', 
+                        message: '网络错误，无法创建Gist',
+                        details: e.message
+                    };
+                    showNotification(`❌ 网络错误: ${e.message}`);
                     return null;
                 }
             }
 
             // 从Gist加载指定文件
             async loadFile(filename) {
-                if (!this.gistId || !this.token) return null;
+                if (!this.gistId || !this.token) {
+                    console.log(`[GitHubSync] 无法加载文件 ${filename}: 未配置Gist ID或Token`);
+                    return null;
+                }
                 try {
                     const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                        headers: { 'Authorization': `token ${this.token}` }
+                        headers: { 
+                            'Authorization': `Bearer ${this.token}`,
+                            'Accept': 'application/vnd.github+json'
+                        }
                     });
                     
                     if (response.ok) {
@@ -3995,28 +4120,62 @@
                             };
                             localStorage.setItem('github_file_versions', JSON.stringify(this.fileVersions));
                             return JSON.parse(file.content);
+                        } else {
+                            console.warn(`[GitHubSync] 文件 ${filename} 在Gist中不存在`);
                         }
+                    } else if (response.status === 404) {
+                        console.error(`[GitHubSync] Gist ${this.gistId} 不存在`);
+                        this.lastError = { type: 'GIST_NOT_FOUND', message: 'Gist不存在，可能已被删除' };
+                        this.gistId = null;
+                        localStorage.removeItem('github_gist_id');
+                    } else if (response.status === 401) {
+                        console.error('[GitHubSync] Token无效');
+                        this.lastError = { type: 'UNAUTHORIZED', message: 'Token无效' };
+                        this.clearConfig();
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error(`[GitHubSync] 加载文件失败: ${response.status}`, errorData);
+                        this.lastError = { 
+                            type: 'API_ERROR', 
+                            message: `加载失败: ${response.status}`,
+                            details: errorData.message
+                        };
                     }
                 } catch (e) {
-                    console.error(`Load ${filename} from gist failed:`, e);
+                    console.error(`[GitHubSync] 加载文件 ${filename} 失败:`, e);
+                    this.lastError = { type: 'NETWORK_ERROR', message: '网络错误', details: e.message };
                 }
                 return null;
             }
 
             // 保存指定文件到Gist
             async saveFile(filename, content) {
-                if (!this.token) return false;
+                if (!this.token) {
+                    console.log(`[GitHubSync] 无法保存文件 ${filename}: 未配置Token`);
+                    this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
+                    return false;
+                }
+                
+                // 首先验证Token
+                const tokenValid = await this.verifyToken();
+                if (!tokenValid) {
+                    console.error('[GitHubSync] Token验证失败，无法保存文件');
+                    return false;
+                }
+                
                 const gistId = await this.getOrCreateGist();
                 if (!gistId) {
                     console.log(`[GitHubSync] 无法获取Gist ID，跳过保存 ${filename}`);
                     return false;
                 }
+                
                 try {
                     const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                         method: 'PATCH',
                         headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Content-Type': 'application/json'
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github+json'
                         },
                         body: JSON.stringify({
                             files: {
@@ -4028,22 +4187,56 @@
                     if (response.ok) {
                         this.lastSyncTime = new Date().toISOString();
                         localStorage.setItem('last_sync_time', this.lastSyncTime);
+                        this.lastError = null;
                         return true;
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error(`[GitHubSync] 保存文件失败: ${response.status}`, errorData);
+                        
+                        if (response.status === 404) {
+                            this.lastError = { type: 'GIST_NOT_FOUND', message: 'Gist不存在' };
+                            this.gistId = null;
+                            localStorage.removeItem('github_gist_id');
+                        } else if (response.status === 401) {
+                            this.lastError = { type: 'UNAUTHORIZED', message: 'Token无效' };
+                            this.clearConfig();
+                        } else {
+                            this.lastError = { 
+                                type: 'API_ERROR', 
+                                message: `保存失败: ${response.status}`,
+                                details: errorData.message
+                            };
+                        }
+                        return false;
                     }
                 } catch (e) {
-                    console.error(`Save ${filename} to gist failed:`, e);
+                    console.error(`[GitHubSync] 保存文件 ${filename} 失败:`, e);
+                    this.lastError = { type: 'NETWORK_ERROR', message: '网络错误', details: e.message };
+                    return false;
                 }
-                return false;
             }
 
             // 批量保存多个文件
             async saveFiles(files) {
-                if (!this.token) return false;
+                if (!this.token) {
+                    console.log('[GitHubSync] 无法批量保存: 未配置Token');
+                    this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
+                    return false;
+                }
+                
+                // 首先验证Token
+                const tokenValid = await this.verifyToken();
+                if (!tokenValid) {
+                    console.error('[GitHubSync] Token验证失败，无法批量保存');
+                    return false;
+                }
+                
                 const gistId = await this.getOrCreateGist();
                 if (!gistId) {
                     console.log('[GitHubSync] 无法获取Gist ID，跳过批量保存');
                     return false;
                 }
+                
                 try {
                     const filesPayload = {};
                     for (const [filename, content] of Object.entries(files)) {
@@ -4053,8 +4246,9 @@
                     const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                         method: 'PATCH',
                         headers: {
-                            'Authorization': `token ${this.token}`,
-                            'Content-Type': 'application/json'
+                            'Authorization': `Bearer ${this.token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github+json'
                         },
                         body: JSON.stringify({ files: filesPayload })
                     });
@@ -4062,12 +4256,33 @@
                     if (response.ok) {
                         this.lastSyncTime = new Date().toISOString();
                         localStorage.setItem('last_sync_time', this.lastSyncTime);
+                        this.lastError = null;
                         return true;
+                    } else {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('[GitHubSync] 批量保存失败:', response.status, errorData);
+                        
+                        if (response.status === 404) {
+                            this.lastError = { type: 'GIST_NOT_FOUND', message: 'Gist不存在' };
+                            this.gistId = null;
+                            localStorage.removeItem('github_gist_id');
+                        } else if (response.status === 401) {
+                            this.lastError = { type: 'UNAUTHORIZED', message: 'Token无效' };
+                            this.clearConfig();
+                        } else {
+                            this.lastError = { 
+                                type: 'API_ERROR', 
+                                message: `批量保存失败: ${response.status}`,
+                                details: errorData.message
+                            };
+                        }
+                        return false;
                     }
                 } catch (e) {
-                    console.error('Save files to gist failed:', e);
+                    console.error('[GitHubSync] 批量保存失败:', e);
+                    this.lastError = { type: 'NETWORK_ERROR', message: '网络错误', details: e.message };
+                    return false;
                 }
-                return false;
             }
 
             // 获取所有文件列表
@@ -4075,15 +4290,26 @@
                 if (!this.gistId || !this.token) return null;
                 try {
                     const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                        headers: { 'Authorization': `token ${this.token}` }
+                        headers: { 
+                            'Authorization': `Bearer ${this.token}`,
+                            'Accept': 'application/vnd.github+json'
+                        }
                     });
                     
                     if (response.ok) {
                         const data = await response.json();
                         return Object.keys(data.files);
+                    } else if (response.status === 404) {
+                        this.lastError = { type: 'GIST_NOT_FOUND', message: 'Gist不存在' };
+                        this.gistId = null;
+                        localStorage.removeItem('github_gist_id');
+                    } else if (response.status === 401) {
+                        this.lastError = { type: 'UNAUTHORIZED', message: 'Token无效' };
+                        this.clearConfig();
                     }
                 } catch (e) {
-                    console.error('Get file list failed:', e);
+                    console.error('[GitHubSync] 获取文件列表失败:', e);
+                    this.lastError = { type: 'NETWORK_ERROR', message: '网络错误', details: e.message };
                 }
                 return null;
             }
@@ -4093,6 +4319,7 @@
                 this.gistId = null;
                 this.lastSyncTime = null;
                 this.fileVersions = {};
+                this.lastError = null;
                 localStorage.removeItem('github_token');
                 localStorage.removeItem('github_gist_id');
                 localStorage.removeItem('last_sync_time');
@@ -4601,6 +4828,30 @@
             // 初始化云端存储管理器
             async initCloudStorage() {
                 console.log('🌐 初始化云端存储管理器...');
+                
+                // 如果配置了Token，先验证其有效性
+                if (this.githubSync.isConfigured()) {
+                    console.log('[initCloudStorage] 检测到已配置GitHub Token，正在验证...');
+                    const tokenValid = await this.githubSync.verifyToken();
+                    if (!tokenValid) {
+                        const lastError = this.githubSync.getLastError();
+                        console.warn('[initCloudStorage] Token验证失败:', lastError);
+                        showNotification(`⚠️ GitHub Token无效: ${lastError?.message || '请重新配置'}`, 5000);
+                        // 显示设置弹窗让用户重新配置
+                        setTimeout(() => {
+                            showGitHubSetupModal();
+                        }, 1000);
+                        // 继续初始化本地存储
+                        this.cloudStorage = new CloudStorageFactory(this);
+                        this.cloudStorage.init();
+                        this._cloudReady = true;
+                        console.log('✅ 本地存储管理器初始化完成（云端同步未启用）');
+                        return;
+                    } else {
+                        console.log('[initCloudStorage] Token验证成功');
+                    }
+                }
+                
                 this.cloudStorage = new CloudStorageFactory(this);
                 this.cloudStorage.init();
                 
@@ -14202,6 +14453,13 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                 return;
             }
 
+            // 基本格式验证
+            if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
+                errorDiv.textContent = 'Token格式不正确。GitHub Personal Access Token 应该以 ghp_ 开头';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
             const btn = document.querySelector('#githubSetupModal .btn-primary');
             const originalText = btn.textContent;
             btn.innerHTML = '<span class="loading-spinner"></span> 验证中...';
@@ -14212,11 +14470,40 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                 const valid = await githubSync.verifyToken();
 
                 if (valid) {
-                    await githubSync.getOrCreateGist();
-                    hideGitHubSetupModal();
-                    showNotification('GitHub Token 已保存');
+                    showNotification('✅ Token验证成功，正在创建Gist...');
+                    const gistId = await githubSync.getOrCreateGist();
+                    if (gistId) {
+                        hideGitHubSetupModal();
+                        showNotification('✅ GitHub 同步配置成功！');
+                        // 触发一次数据同步
+                        setTimeout(() => {
+                            syncAllToCloud();
+                        }, 1000);
+                    } else {
+                        // 获取详细的错误信息
+                        const lastError = githubSync.getLastError();
+                        let errorMsg = 'Gist创建失败';
+                        if (lastError) {
+                            errorMsg = `${lastError.message}`;
+                            if (lastError.details) {
+                                errorMsg += `\n${lastError.details}`;
+                            }
+                        }
+                        errorDiv.innerHTML = errorMsg.replace(/\n/g, '<br>');
+                        errorDiv.style.display = 'block';
+                        // 保留Token，让用户可以尝试重新创建
+                    }
                 } else {
-                    errorDiv.textContent = 'Token 验证失败，请检查是否正确';
+                    // 获取详细的错误信息
+                    const lastError = githubSync.getLastError();
+                    let errorMsg = 'Token 验证失败';
+                    if (lastError) {
+                        errorMsg = `${lastError.message}`;
+                        if (lastError.details) {
+                            errorMsg += `\n${lastError.details}`;
+                        }
+                    }
+                    errorDiv.innerHTML = errorMsg.replace(/\n/g, '<br>');
                     errorDiv.style.display = 'block';
                     githubSync.clearConfig();
                 }
