@@ -18686,9 +18686,10 @@ ${_pick(GEN_MONSTER.behavior)}
                                     style="width: 100%; padding: 10px 12px; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 8px;">
                                 <div style="display: flex; gap: 8px; align-items: center;">
                                     <select id="aiKimiModel" style="flex: 1; background: #1a1a2e; border: 1px solid #0f3460; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 13px;">
-                                        <option value="kimi-k2-5">kimi-k2-5 (推荐)</option>
-                                        <option value="kimi-k2.5">kimi-k2.5</option>
-                                        <option value="kimi-latest">kimi-latest</option>
+                                        <option value="moonshot-v1-8k">moonshot-v1-8k (稳定版)</option>
+                                        <option value="moonshot-v1-32k">moonshot-v1-32k (长文版)</option>
+                                        <option value="moonshot-v1-128k">moonshot-v1-128k (超长版)</option>
+                                        <option value="kimi-latest">kimi-latest (最新版)</option>
                                     </select>
                                     <button id="aiSaveKeyBtn" type="button" style="padding: 8px 14px; background: #0f3460; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">保存Key</button>
                                 </div>
@@ -18750,9 +18751,13 @@ ${_pick(GEN_MONSTER.behavior)}
             if (savedKey) {
                 document.getElementById('aiKimiApiKey').value = savedKey;
             }
+            const validModels = ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'];
             const savedModel = localStorage.getItem('novel_editor_kimi_model');
-            if (savedModel) {
+            if (savedModel && validModels.includes(savedModel)) {
                 document.getElementById('aiKimiModel').value = savedModel;
+            } else if (savedModel) {
+                // 清除旧版无效模型名
+                localStorage.removeItem('novel_editor_kimi_model');
             }
             
             // 保存 API Key
@@ -18988,7 +18993,7 @@ ${_pick(GEN_MONSTER.behavior)}
             if (options.useAPI && options.apiKey) {
                 try {
                     let result = '';
-                    await streamKimiAPI(prompt, options.apiKey, options.model || 'kimi-k2-5', (chunk) => {
+                    await streamKimiAPI(prompt, options.apiKey, options.model || 'moonshot-v1-8k', (chunk) => {
                         result += chunk;
                         if (options.onChunk) options.onChunk(chunk);
                     }, options.signal);
@@ -19081,16 +19086,14 @@ ${_pick(GEN_MONSTER.behavior)}
             
             let content = paragraphs.filter(p => p && p.trim()).join('\n\n');
             
-            // 调整字数
+            // 调整字数（限制扩充段落数量，避免重复）
             const currentLength = content.length;
             if (currentLength < targetWords * 0.8) {
-                // 需要扩充内容
-                const expansionNeeded = Math.ceil((targetWords - currentLength) / 150);
+                const expansionNeeded = Math.min(5, Math.ceil((targetWords - currentLength) / 150));
                 for (let i = 0; i < expansionNeeded; i++) {
                     const tropeIndex = i % matchedTropes.length;
                     const expansion = generateExpansionParagraph(plotDescription, matchedTropes[tropeIndex].trope, i, style);
                     if (expansion) {
-                        // 在适当位置插入扩充内容
                         const insertIndex = Math.floor(paragraphs.length / 2);
                         paragraphs.splice(insertIndex, 0, expansion);
                     }
@@ -19098,10 +19101,9 @@ ${_pick(GEN_MONSTER.behavior)}
                 content = paragraphs.filter(p => p && p.trim()).join('\n\n');
             }
             
-            // 添加桥段使用说明（作为注释，不出现在正文中）
-            const tropeUsageNote = `<!-- 本章节使用了以下桥段素材：\n${matchedTropes.map((m, i) => `${i + 1}. ${m.trope.title} (${m.trope.category}) - 匹配度:${m.score}`).join('\n')}\n-->\n\n`;
-            
-            return tropeUsageNote + content;
+            // 本地模板提示（仅 fallback 时显示）
+            const fallbackNote = `【系统提示：当前为本地模板占位生成，API 调用失败时已自动降级。建议检查 API Key 与模型名称后重新生成以获得更佳效果。】\n\n`;
+            return fallbackNote + content;
         }
         
         // 获取风格化写作模板（支持外部JSON配置）
@@ -19168,11 +19170,26 @@ ${_pick(GEN_MONSTER.behavior)}
             return defaultTemplates;
         }
         
+        // 提取桥段摘要（避免注入大段元数据描述）
+        function extractTropeSnippet(text, maxLen = 50) {
+            if (!text) return '';
+            let t = text.replace(/【场景铺垫】|【情节发展】|【高潮转折】|【收尾呼应】/g, ' ')
+                        .replace(/代表作品《[^》]+》/g, '')
+                        .replace(/这一桥段常见于[^。]+。/g, '')
+                        .replace(/为后续情节发展奠定了重要基础。/g, '')
+                        .replace(/充分展现了[^。]+独特的创作风格与叙事才华。/g, '')
+                        .replace(/让读者在回味之余对整个故事有了更深的理解。/g, '')
+                        .replace(/是[^题材]+题材的经典叙事元素。/g, '')
+                        .trim();
+            if (t.length > maxLen) t = t.slice(0, maxLen) + '…';
+            return t;
+        }
+
         // 生成开篇段落（风格感知版）
         function generateSceneOpening(plotDescription, trope, parts, style) {
-            const desc = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/被众人/g, '').replace(/关键时刻/g, '电光火石之间');
+            const desc = extractTropeSnippet(parts.scene || plotDescription, 60).replace(/主角/g, '他');
             const tmpls = getStyleTemplates(style);
-            let opening = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, desc);
+            let opening = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, desc || '他站在原地，一时没有动弹');
             const hook = tmpls.hooks[Math.floor(Math.random() * tmpls.hooks.length)];
             opening += `\n\n${hook}`;
             return opening;
@@ -19180,18 +19197,18 @@ ${_pick(GEN_MONSTER.behavior)}
         
         // 生成发展段落（风格感知版）
         function generateDevelopment(plotDescription, trope, parts, style) {
-            const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/随着时间推移/g, '').replace(/局势开始发生变化/g, '');
+            const base = extractTropeSnippet(parts.development || plotDescription, 60).replace(/主角/g, '他');
             const tmpls = getStyleTemplates(style);
             const tmpl = tmpls.development[Math.floor(Math.random() * tmpls.development.length)];
-            return tmpl.replace(/\{base\}/g, base);
+            return tmpl.replace(/\{base\}/g, base || '他的处境变得更加棘手');
         }
         
         // 生成高潮段落（风格感知版）
         function generateClimax(plotDescription, trope, parts, style) {
-            const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/前所未有的压力/g, '太阳穴突突直跳').replace(/咬紧牙关/g, '腮帮绷成一道硬线');
+            const base = extractTropeSnippet(parts.climax || plotDescription, 60).replace(/主角/g, '他');
             const tmpls = getStyleTemplates(style);
             const tmpl = tmpls.climax[Math.floor(Math.random() * tmpls.climax.length)];
-            return tmpl.replace(/\{base\}/g, base);
+            return tmpl.replace(/\{base\}/g, base || '生死只在一线之间');
         }
         
         // 生成结尾段落（风格感知版）
@@ -19203,13 +19220,17 @@ ${_pick(GEN_MONSTER.behavior)}
         // 生成过渡段落（风格感知版）
         function generateTransitionParagraph(plotDescription, trope, index, style) {
             const tmpls = getStyleTemplates(style);
-            return tmpls.transitions[index % tmpls.transitions.length];
+            const pool = tmpls.transitions || [];
+            if (pool.length === 0) return '';
+            return pool[index % pool.length].replace(/\{plot\}/g, plotDescription.slice(0, 30) + '…');
         }
         
         // 生成扩充段落（风格感知版）
         function generateExpansionParagraph(plotDescription, trope, index, style) {
             const tmpls = getStyleTemplates(style);
-            return tmpls.expansions[index % tmpls.expansions.length];
+            const pool = tmpls.expansions || [];
+            if (pool.length === 0) return '';
+            return pool[index % pool.length].replace(/\{plot\}/g, plotDescription.slice(0, 30) + '…');
         }
         
         // 通用开篇（无桥段匹配时备用）
