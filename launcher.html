@@ -6653,7 +6653,7 @@
                 setTimeout(hideLoadingStatus, 2000);
 
                 if (currentPage === 'world') {
-                    renderWorld(document.getElementById('mainContent'));
+                    renderWorld(getMainContainer());
                 }
             } catch (error) {
                 console.error('加载世界观数据失败:', error);
@@ -8623,10 +8623,19 @@
             });
         }
 
+        // 获取当前实际显示的容器（双栏模式优先 editorContent，否则 mainContent）
+        function getMainContainer() {
+            const editorContent = document.getElementById('editorContent');
+            if (editorContent && editorContent.offsetParent !== null) {
+                return editorContent;
+            }
+            return document.getElementById('mainContent');
+        }
+
         // 切换世界观分类（同步包装器）
         function switchWorldCategory(category) {
             console.log('🔄 切换到分类:', category);
-            const container = document.getElementById('mainContent');
+            const container = getMainContainer();
             if (container) {
                 renderWorld(container, category).catch(err => {
                     console.error('渲染世界观页面失败:', err);
@@ -8777,7 +8786,7 @@
                 }
 
                 closeModal();
-                renderWorld(document.getElementById('mainContent'), data.category);
+                renderWorld(getMainContainer(), data.category);
             };
 
             document.getElementById('modal').classList.add('active');
@@ -8817,7 +8826,7 @@
         async function deleteWorldSetting(id, title) {
             if (confirm(`确定要删除设定「${title}」吗？`)) {
                 await db.delete('world_settings', id);
-                renderWorld(document.getElementById('mainContent'));
+                renderWorld(getMainContainer());
             }
         }
 
@@ -10049,7 +10058,7 @@
                                                     background: ${work.id === currentOutlineWorkId ? '#0f3460' : 'transparent'};
                                                     border-left: 3px solid ${work.id === currentOutlineWorkId ? '#e94560' : 'transparent'};
                                                     display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="font-size: 13px; color: ${work.id === currentOutlineWorkId ? '#fff' : '#ccc'}; overflow: hidden; text-overflow: ellipsis;">${work.title || '未命名作品'}</span>
+                                            <span style="font-size: 13px; color: ${work.id === currentOutlineWorkId ? '#fff' : '#ccc'}; overflow: hidden; text-overflow: ellipsis;">${work.name || work.title || '未命名作品'}</span>
                                             ${work.id === currentOutlineWorkId ? '<span style="font-size: 11px; color: #e94560;">●</span>' : ''}
                                         </div>
                                     `).join('')}
@@ -14472,7 +14481,7 @@ ${_pick(GEN_MONSTER.behavior)}
                 plots: workPlots
             };
             
-            const filename = `${work.title}_设定_${ExportUtils.getDateString()}.json`;
+            const filename = `${work.name || work.title || '未命名作品'}_设定_${ExportUtils.getDateString()}.json`;
             ExportUtils.exportJSON(exportData, filename);
             showNotification(`✅ 已导出 ${workSettings.length} 条设定，${workVolumes.length} 个卷，${workPlots.length} 条剧情`);
         }
