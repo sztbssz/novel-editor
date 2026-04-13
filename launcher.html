@@ -3901,7 +3901,11 @@
                 this.token = localStorage.getItem('github_token');
                 this.gistId = localStorage.getItem('github_gist_id');
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
-                this.fileVersions = JSON.parse(localStorage.getItem('github_file_versions') || '{}');
+                try {
+                    this.fileVersions = JSON.parse(localStorage.getItem('github_file_versions') || '{}');
+                } catch (e) {
+                    this.fileVersions = {};
+                }
                 this.lastError = null;
                 this.cloudSyncDisabled = localStorage.getItem('github_sync_disabled') === 'true';
                 this.createFailCount = 0;
@@ -4177,7 +4181,12 @@
                                 size: file.size
                             };
                             localStorage.setItem('github_file_versions', JSON.stringify(this.fileVersions));
-                            return JSON.parse(file.content);
+                            try {
+                                return JSON.parse(file.content);
+                            } catch (e) {
+                                console.error('[GitHubSync] 解析Gist文件内容失败:', e);
+                                return null;
+                            }
                         } else {
                             console.warn(`[GitHubSync] 文件 ${filename} 在Gist中不存在`);
                         }
@@ -4814,8 +4823,13 @@
                     request.onsuccess = async () => {
                         this.db = request.result;
                         
-                        // 初始化云端存储管理器
-                        await this.initCloudStorage();
+                        // 初始化云端存储管理器（失败不阻塞本地存储）
+                        try {
+                            await this.initCloudStorage();
+                        } catch (e) {
+                            console.error('[Database] 云端存储初始化失败:', e);
+                            this._cloudReady = false;
+                        }
                         
                         resolve();
                     };
@@ -4899,31 +4913,40 @@
             async initCloudStorage() {
                 console.log('🌐 初始化云端存储管理器...');
                 
+                // 默认优先使用本地存储，云端同步需要用户主动启用
+                const cloudDisabled = localStorage.getItem('github_sync_disabled') !== 'false';
+                if (cloudDisabled) {
+                    console.log('[initCloudStorage] 云端同步未启用，使用本地存储');
+                    this.cloudStorage = new CloudStorageFactory(this);
+                    this.cloudStorage.init();
+                    this._cloudReady = true;
+                    return;
+                }
+                
                 // 如果配置了Token，先验证其有效性
                 if (this.githubSync.isConfigured()) {
                     console.log('[initCloudStorage] 检测到已配置GitHub Token，正在验证...');
-                    const tokenValid = await this.githubSync.verifyToken();
-                    if (!tokenValid) {
-                        const lastError = this.githubSync.getLastError();
-                        console.warn('[initCloudStorage] Token验证失败:', lastError);
-                        showNotification(`⚠️ GitHub Token无效: ${lastError?.message || '请重新配置'}`, 5000);
-                        // 显示设置弹窗让用户重新配置
-                        setTimeout(() => {
-                            showGitHubSetupModal();
-                        }, 1000);
-                        // 继续初始化本地存储
-                        this.cloudStorage = new CloudStorageFactory(this);
-                        this.cloudStorage.init();
-                        this._cloudReady = true;
-                        console.log('✅ 本地存储管理器初始化完成（云端同步未启用）');
-                        return;
-                    } else {
-                        console.log('[initCloudStorage] Token验证成功');
+                    try {
+                        const tokenValid = await this.githubSync.verifyToken();
+                        if (!tokenValid) {
+                            const lastError = this.githubSync.getLastError();
+                            console.warn('[initCloudStorage] Token验证失败:', lastError);
+                            showNotification(`⚠️ GitHub Token无效: ${lastError?.message || '请重新配置'}`, 5000);
+                            localStorage.setItem('github_sync_disabled', 'true');
+                        } else {
+                            console.log('[initCloudStorage] Token验证成功');
+                        }
+                    } catch (e) {
+                        console.error('[initCloudStorage] Token验证异常:', e);
+                        localStorage.setItem('github_sync_disabled', 'true');
+                        showNotification('⚠️ 云端同步验证失败，已切换为本地存储', 5000);
                     }
                 }
                 
                 this.cloudStorage = new CloudStorageFactory(this);
                 this.cloudStorage.init();
+                this._cloudReady = true;
+                console.log('✅ 本地存储管理器初始化完成');
                 
                 // 监听同步状态
                 this.cloudStorage.onSyncStatus((event) => {
@@ -6163,21 +6186,26 @@
 
         // ==================== UI 控制函数 ====================
         function showLoadingBar() {
-            document.getElementById('loadingBar').classList.add('active');
+            const el = document.getElementById('loadingBar');
+            if (el) el.classList.add('active');
         }
 
         function hideLoadingBar() {
-            document.getElementById('loadingBar').classList.remove('active');
-            document.getElementById('loadingBarProgress').style.width = '0%';
+            const bar = document.getElementById('loadingBar');
+            const progress = document.getElementById('loadingBarProgress');
+            if (bar) bar.classList.remove('active');
+            if (progress) progress.style.width = '0%';
         }
 
         function updateLoadingBar(progress) {
-            document.getElementById('loadingBarProgress').style.width = `${progress}%`;
+            const el = document.getElementById('loadingBarProgress');
+            if (el) el.style.width = `${progress}%`;
         }
 
         function showLoadingStatus(text, type = 'normal') {
             const status = document.getElementById('loadingStatus');
             const statusText = document.getElementById('loadingStatusText');
+            if (!status || !statusText) return;
             status.className = 'loading-status active';
             if (type === 'error') status.classList.add('loading-status-error');
             if (type === 'success') status.classList.add('loading-status-success');
@@ -6185,29 +6213,40 @@
         }
 
         function hideLoadingStatus() {
-            document.getElementById('loadingStatus').classList.remove('active');
+            const el = document.getElementById('loadingStatus');
+            if (el) el.classList.remove('active');
         }
 
         function showDataLoadingOverlay(title, subtitle = '') {
-            document.getElementById('dataLoadingText').textContent = title;
-            document.getElementById('dataLoadingSubtext').textContent = subtitle;
-            document.getElementById('dataLoadingError').textContent = '';
-            document.getElementById('dataLoadingStats').textContent = '';
-            document.getElementById('dataLoadingActions').style.display = 'none';
-            document.getElementById('dataLoadingOverlay').classList.add('active');
+            const text = document.getElementById('dataLoadingText');
+            const sub = document.getElementById('dataLoadingSubtext');
+            const err = document.getElementById('dataLoadingError');
+            const stats = document.getElementById('dataLoadingStats');
+            const actions = document.getElementById('dataLoadingActions');
+            const overlay = document.getElementById('dataLoadingOverlay');
+            if (text) text.textContent = title;
+            if (sub) sub.textContent = subtitle;
+            if (err) err.textContent = '';
+            if (stats) stats.textContent = '';
+            if (actions) actions.style.display = 'none';
+            if (overlay) overlay.classList.add('active');
         }
 
         function updateDataLoadingStats(text) {
-            document.getElementById('dataLoadingStats').textContent = text;
+            const el = document.getElementById('dataLoadingStats');
+            if (el) el.textContent = text;
         }
 
         function hideDataLoadingOverlay() {
-            document.getElementById('dataLoadingOverlay').classList.remove('active');
+            const el = document.getElementById('dataLoadingOverlay');
+            if (el) el.classList.remove('active');
         }
 
         function showDataLoadingError(error, retryFn) {
-            document.getElementById('dataLoadingError').textContent = error;
-            document.getElementById('dataLoadingActions').style.display = 'flex';
+            const errEl = document.getElementById('dataLoadingError');
+            const actions = document.getElementById('dataLoadingActions');
+            if (errEl) errEl.textContent = error;
+            if (actions) actions.style.display = 'flex';
             currentLoadingRetry = retryFn;
         }
 
@@ -6386,7 +6425,7 @@
                 const url = source.base + filename;
                 try {
                     console.log(`🌐 尝试从 ${source.name} 加载: ${url}`);
-                    const response = await fetchWithRetry(url, { ...options, retries: 2 });
+                    const response = await fetchWithRetry(url, { ...options, retries: 2, timeout: options.timeout || 15000 });
                     if (response.ok) {
                         console.log(`✅ 从 ${source.name} 加载成功`);
                         return response;
@@ -14512,12 +14551,15 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                 tokenSection.style.display = isDisabled ? 'none' : 'block';
             }
             
-            document.getElementById('githubSetupModal').classList.add('active');
+            const modal = document.getElementById('githubSetupModal');
+            if (modal) modal.classList.add('active');
         }
 
         function hideGitHubSetupModal() {
-            document.getElementById('githubSetupModal').classList.remove('active');
-            document.getElementById('githubSetupError').style.display = 'none';
+            const modal = document.getElementById('githubSetupModal');
+            const errorDiv = document.getElementById('githubSetupError');
+            if (modal) modal.classList.remove('active');
+            if (errorDiv) errorDiv.style.display = 'none';
         }
 
         // 切换云同步开关
@@ -16406,9 +16448,11 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                 }, 2000);
             }
 
-            // 加载桥段数据（首页需要）
+            // 加载桥段数据（首页需要）- 改为非阻塞，优先显示首页
             console.log('🎭 [初始化] 加载桥段数据...');
-            await loadTropeData();
+            setTimeout(() => {
+                loadTropeData().catch(e => console.warn('桥段数据加载失败:', e));
+            }, 100);
 
             console.log('✅ [初始化] 全部完成，显示首页');
             loadPage('home');
@@ -17209,7 +17253,11 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
                     const data = e.dataTransfer.getData('data');
 
                     if (type && data) {
-                        this.insertToEditor(type, JSON.parse(data));
+                        try {
+                            this.insertToEditor(type, JSON.parse(data));
+                        } catch (e) {
+                            console.error('拖拽数据解析失败:', e);
+                        }
                     }
                 });
             },
