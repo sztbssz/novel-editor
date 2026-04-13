@@ -4545,11 +4545,22 @@
             // 保存到本地
             async saveToLocal(syncToCloud = true) {
                 try {
-                    // 清空并重新写入
-                    await this.db.clear(this.storeName);
+                    // 直接操作底层IndexedDB，避免通过Database.clear/add导致递归调用和数据丢失
+                    const tx = this.db.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    
+                    await new Promise((resolve, reject) => {
+                        const request = store.clear();
+                        request.onsuccess = () => resolve();
+                        request.onerror = () => reject(request.error);
+                    });
                     
                     for (const item of this.data) {
-                        await this.db.add(this.storeName, item);
+                        await new Promise((resolve, reject) => {
+                            const request = store.add(item);
+                            request.onsuccess = () => resolve();
+                            request.onerror = () => reject(request.error);
+                        });
                     }
                     
                     // 更新版本号
@@ -9350,18 +9361,26 @@
                 updatedAt: new Date().toISOString()
             };
 
-            const id = await db.add('works', work);
-            console.log('✅ 作品已创建，ID:', id);
-            
-            await loadWorksList();
-            currentWorkId = id;
-            
-            // 保存到 localStorage
-            localStorage.setItem('novel_editor_current_work_id', String(id));
-            console.log('💾 currentWorkId 已保存到 localStorage:', id);
-            
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
-            showNotification('✅ 作品创建成功');
+            try {
+                const id = await db.add('works', work);
+                console.log('✅ 作品已创建，ID:', id);
+                
+                await loadWorksList();
+                currentWorkId = id;
+                
+                // 保存到 localStorage
+                localStorage.setItem('novel_editor_current_work_id', String(id));
+                console.log('💾 currentWorkId 已保存到 localStorage:', id);
+                
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) {
+                    await renderPlot(container);
+                }
+                showNotification('✅ 作品创建成功');
+            } catch (e) {
+                console.error('❌ 添加作品失败:', e);
+                showNotification('❌ 添加作品失败: ' + (e.message || '未知错误'), 5000);
+            }
         }
 
         // 重命名作品
@@ -9369,13 +9388,19 @@
             const newName = prompt('请输入新名称：', currentName);
             if (!newName || newName === currentName) return;
 
-            const work = await db.get('works', id);
-            if (work) {
-                work.name = newName.trim();
-                await db.update('works', work);
-                await loadWorksList();
-                await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
-                showNotification('✅ 已重命名');
+            try {
+                const work = await db.get('works', id);
+                if (work) {
+                    work.name = newName.trim();
+                    await db.update('works', work);
+                    await loadWorksList();
+                    const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                    if (container) await renderPlot(container);
+                    showNotification('✅ 已重命名');
+                }
+            } catch (e) {
+                console.error('❌ 重命名作品失败:', e);
+                showNotification('❌ 重命名失败: ' + (e.message || '未知错误'), 5000);
             }
         }
 
@@ -9385,30 +9410,36 @@
             if (!confirm('确定要删除这个作品吗？所有相关的卷和章节都将被删除！')) return;
             if (!confirm('再次确认：此操作不可恢复！')) return;
 
-            // 删除相关卷和章节
-            const volumes = await db.getAll('volumes', 'workId', id);
-            console.log('📚 删除相关卷数:', volumes.length);
-            for (const vol of volumes) {
-                const chapters = await db.getAll('chapters', 'volumeId', vol.id);
-                console.log('  📝 删除卷', vol.id, '的章节数:', chapters.length);
-                for (const chap of chapters) {
-                    await db.delete('chapters', chap.id);
+            try {
+                // 删除相关卷和章节
+                const volumes = await db.getAll('volumes', 'workId', id);
+                console.log('📚 删除相关卷数:', volumes.length);
+                for (const vol of volumes) {
+                    const chapters = await db.getAll('chapters', 'volumeId', vol.id);
+                    console.log('  📝 删除卷', vol.id, '的章节数:', chapters.length);
+                    for (const chap of chapters) {
+                        await db.delete('chapters', chap.id);
+                    }
+                    await db.delete('volumes', vol.id);
                 }
-                await db.delete('volumes', vol.id);
+
+                await db.delete('works', id);
+                console.log('✅ 作品已删除');
+
+                if (currentWorkId === id) {
+                    currentWorkId = null;
+                    localStorage.removeItem('novel_editor_current_work_id');
+                    console.log('🗑️ currentWorkId 已从 localStorage 清除');
+                }
+
+                await loadWorksList();
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) await renderPlot(container);
+                showNotification('✅ 作品已删除');
+            } catch (e) {
+                console.error('❌ 删除作品失败:', e);
+                showNotification('❌ 删除失败: ' + (e.message || '未知错误'), 5000);
             }
-
-            await db.delete('works', id);
-            console.log('✅ 作品已删除');
-
-            if (currentWorkId === id) {
-                currentWorkId = null;
-                localStorage.removeItem('novel_editor_current_work_id');
-                console.log('🗑️ currentWorkId 已从 localStorage 清除');
-            }
-
-            await loadWorksList();
-            await renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
-            showNotification('✅ 作品已删除');
         }
 
         // 添加卷
