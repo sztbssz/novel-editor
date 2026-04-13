@@ -19019,89 +19019,71 @@ ${_pick(GEN_MONSTER.behavior)}
             return content;
         }
         
-        // 基于桥段素材生成正文内容
+        // 为模板填充剧情摘要，如果为空则提供默认短句
+        function fillTemplate(tmpl, plotDescription) {
+            const snippet = extractTropeSnippet(plotDescription, 35) || '事情远比看上去复杂';
+            return tmpl.replace(/\{base\}/g, snippet).replace(/\{plot\}/g, snippet);
+        }
+
+        // 基于桥段素材生成正文内容（fallback 本地模板）
         function generateContentFromTropes(plotDescription, targetWords, style, matchedTropes) {
-            if (!matchedTropes || matchedTropes.length === 0) {
-                return generateFallbackContent(plotDescription, targetWords, style);
-            }
-            
             const paragraphs = [];
-            const avgSentLen = (style && style.stats && style.stats.avg_sentence_len) || 25;
-            const wordsPerPara = Math.max(120, Math.round(avgSentLen * (5 + Math.random() * 3)));
-            const targetParagraphs = Math.ceil(targetWords / wordsPerPara);
+            const tmpls = getStyleTemplates(style);
+            const plotSnippet = extractTropeSnippet(plotDescription, 40) || '一切才刚刚开始';
             
-            // 按桥段结构组织内容
-            const structure = ['scene', 'development', 'climax', 'ending'];
+            // 开篇：用具体场景锚点 + 剧情核心
+            paragraphs.push(fillTemplate(tmpls.opening[0], plotDescription));
+            paragraphs.push(tmpls.hooks[Math.floor(Math.random() * tmpls.hooks.length)]);
             
-            // 开篇 - 基于桥段1的场景铺垫
-            if (matchedTropes[0]) {
-                const trope1 = matchedTropes[0].trope;
-                const parts1 = parseTropeDescription(trope1.description);
-                paragraphs.push(generateSceneOpening(plotDescription, trope1, parts1, style));
-            } else {
-                paragraphs.push(generateGenericOpening(plotDescription, style));
+            // 引入冲突
+            paragraphs.push(`"${plotSnippet}。"——这个念头在他脑海里闪过的瞬间，周围的空气仿佛都凝固了一瞬。`);
+            
+            // 发展：加入对话和动作
+            if (tmpls.development.length > 0) {
+                paragraphs.push(fillTemplate(tmpls.development[0], plotDescription));
+            }
+            if (tmpls.transitions.length > 0) {
+                paragraphs.push(tmpls.transitions[0]);
             }
             
-            // 发展 - 基于桥段1或桥段2的情节发展
-            if (matchedTropes.length >= 2) {
-                const trope2 = matchedTropes[1].trope;
-                const parts2 = parseTropeDescription(trope2.description);
-                paragraphs.push(generateDevelopment(plotDescription, trope2, parts2, style));
-            } else if (matchedTropes[0]) {
-                const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
-                if (parts1.development) {
-                    paragraphs.push(generateDevelopment(plotDescription, matchedTropes[0].trope, parts1, style));
+            // 细节扩充（观察类）
+            if (tmpls.expansions.length > 0) {
+                paragraphs.push(tmpls.expansions[0]);
+            }
+            
+            // 高潮：情绪爆发
+            if (tmpls.climax.length > 0) {
+                paragraphs.push(fillTemplate(tmpls.climax[0], plotDescription));
+            }
+            
+            // 更多过渡和细节，填充字数
+            const extraPool = [...tmpls.transitions, ...tmpls.expansions, ...tmpls.development.slice(1), ...tmpls.climax.slice(1)];
+            const neededChars = targetWords - 300;
+            let addedChars = 0;
+            let idx = 0;
+            while (addedChars < neededChars && idx < extraPool.length && idx < 12) {
+                const p = fillTemplate(extraPool[idx], plotDescription);
+                if (p && !paragraphs.includes(p)) {
+                    paragraphs.push(p);
+                    addedChars += p.length;
                 }
+                idx++;
             }
             
-            // 添加过渡段落填充内容
-            const remainingParagraphs = targetParagraphs - paragraphs.length - 2;
-            for (let i = 0; i < remainingParagraphs && i < 3; i++) {
-                const tropeIndex = Math.min(i + 1, matchedTropes.length - 1);
-                if (matchedTropes[tropeIndex]) {
-                    paragraphs.push(generateTransitionParagraph(plotDescription, matchedTropes[tropeIndex].trope, i, style));
-                }
-            }
-            
-            // 高潮 - 基于桥段的高潮转折
-            if (matchedTropes.length >= 3) {
-                const trope3 = matchedTropes[2].trope;
-                const parts3 = parseTropeDescription(trope3.description);
-                paragraphs.push(generateClimax(plotDescription, trope3, parts3, style));
-            } else if (matchedTropes.length >= 2) {
-                const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
-                if (parts2.climax) {
-                    paragraphs.push(generateClimax(plotDescription, matchedTropes[1].trope, parts2, style));
-                }
-            }
-            
-            // 结尾 - 基于最后一个桥段的收尾呼应
-            const lastTrope = matchedTropes[matchedTropes.length - 1];
-            if (lastTrope) {
-                const lastParts = parseTropeDescription(lastTrope.trope.description);
-                paragraphs.push(generateEnding(plotDescription, lastTrope.trope, lastParts, style));
-            } else {
-                paragraphs.push(generateGenericEnding(style));
-            }
+            // 结尾
+            paragraphs.push(tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)]);
             
             let content = paragraphs.filter(p => p && p.trim()).join('\n\n');
             
-            // 调整字数（限制扩充段落数量，避免重复）
-            const currentLength = content.length;
-            if (currentLength < targetWords * 0.8) {
-                const expansionNeeded = Math.min(5, Math.ceil((targetWords - currentLength) / 150));
-                for (let i = 0; i < expansionNeeded; i++) {
-                    const tropeIndex = i % matchedTropes.length;
-                    const expansion = generateExpansionParagraph(plotDescription, matchedTropes[tropeIndex].trope, i, style);
-                    if (expansion) {
-                        const insertIndex = Math.floor(paragraphs.length / 2);
-                        paragraphs.splice(insertIndex, 0, expansion);
-                    }
+            // 字数仍不够时，循环插入过渡和扩充段落
+            while (content.length < targetWords * 0.85 && extraPool.length > 0) {
+                const p = fillTemplate(extraPool[Math.floor(Math.random() * extraPool.length)], plotDescription);
+                if (p) {
+                    paragraphs.splice(paragraphs.length - 1, 0, p);
+                    content = paragraphs.filter(x => x && x.trim()).join('\n\n');
                 }
-                content = paragraphs.filter(p => p && p.trim()).join('\n\n');
             }
             
-            // 本地模板提示（仅 fallback 时显示）
             const fallbackNote = `【系统提示：当前为本地模板占位生成，API 调用失败时已自动降级。建议检查 API Key 与模型名称后重新生成以获得更佳效果。】\n\n`;
             return fallbackNote + content;
         }
@@ -19188,71 +19170,9 @@ ${_pick(GEN_MONSTER.behavior)}
             return t;
         }
 
-        // 生成开篇段落（风格感知版）
-        function generateSceneOpening(plotDescription, trope, parts, style) {
-            const desc = extractTropeSnippet(parts.scene || plotDescription, 60).replace(/主角/g, '他');
-            const tmpls = getStyleTemplates(style);
-            let opening = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, desc || '他站在原地，一时没有动弹');
-            const hook = tmpls.hooks[Math.floor(Math.random() * tmpls.hooks.length)];
-            opening += `\n\n${hook}`;
-            return opening;
-        }
-        
-        // 生成发展段落（风格感知版）
-        function generateDevelopment(plotDescription, trope, parts, style) {
-            const base = extractTropeSnippet(parts.development || plotDescription, 60).replace(/主角/g, '他');
-            const tmpls = getStyleTemplates(style);
-            const tmpl = tmpls.development[Math.floor(Math.random() * tmpls.development.length)];
-            return tmpl.replace(/\{base\}/g, base || '他的处境变得更加棘手');
-        }
-        
-        // 生成高潮段落（风格感知版）
-        function generateClimax(plotDescription, trope, parts, style) {
-            const base = extractTropeSnippet(parts.climax || plotDescription, 60).replace(/主角/g, '他');
-            const tmpls = getStyleTemplates(style);
-            const tmpl = tmpls.climax[Math.floor(Math.random() * tmpls.climax.length)];
-            return tmpl.replace(/\{base\}/g, base || '生死只在一线之间');
-        }
-        
-        // 生成结尾段落（风格感知版）
-        function generateEnding(plotDescription, trope, parts, style) {
-            const tmpls = getStyleTemplates(style);
-            return tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)];
-        }
-        
-        // 生成过渡段落（风格感知版）
-        function generateTransitionParagraph(plotDescription, trope, index, style) {
-            const tmpls = getStyleTemplates(style);
-            const pool = tmpls.transitions || [];
-            if (pool.length === 0) return '';
-            return pool[index % pool.length].replace(/\{plot\}/g, plotDescription.slice(0, 30) + '…');
-        }
-        
-        // 生成扩充段落（风格感知版）
-        function generateExpansionParagraph(plotDescription, trope, index, style) {
-            const tmpls = getStyleTemplates(style);
-            const pool = tmpls.expansions || [];
-            if (pool.length === 0) return '';
-            return pool[index % pool.length].replace(/\{plot\}/g, plotDescription.slice(0, 30) + '…');
-        }
-        
-        // 通用开篇（无桥段匹配时备用）
-        function generateGenericOpening(plotDescription, style) {
-            const tmpls = getStyleTemplates(style);
-            const seed = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, plotDescription.substring(0, 40));
-            return `${seed}\n\n${plotDescription.substring(0, 40)}——一切就从这里开始。`;
-        }
-        
-        // 通用结尾（无桥段匹配时备用）
-        function generateGenericEnding(style) {
-            const tmpls = getStyleTemplates(style);
-            return tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)];
-        }
-        
         // 备用内容生成（无桥段匹配时使用）
         function generateFallbackContent(plotDescription, targetWords, style) {
-            return generateGenericOpening(plotDescription, style) + '\n\n' + 
-                   generateGenericEnding(style);
+            return generateContentFromTropes(plotDescription, targetWords, style, []);
         }
 
         // ==================== 桥段匹配与写作提示构建 ====================
@@ -19473,61 +19393,77 @@ ${_pick(GEN_MONSTER.behavior)}
         
         // 构建写作提示词
         function buildWritingPrompt(plotDescription, targetWords, style, matchedTropes = []) {
-            let prompt = `你是一位专业的中文网络小说作家，正在创作可以直接在番茄小说、起点等平台连载的章节正文。`;
-            if (style && style.id !== 'default') {
-                prompt += `请严格模仿「${style.name}」(${style.author || '未知作者'})的写作风格。`;
+            const s = style && style.stats ? style.stats : null;
+            const avgSent = s ? s.avg_sentence_len : 25;
+            const shortPara = s ? Math.round(s.short_para_ratio * 100) : 30;
+            const dialogueRatio = s ? s.dialogue_ratio : 0.2;
+            
+            // 提取高频标记词和修辞词
+            let topMarkers = [];
+            let topRhetoric = [];
+            if (s) {
+                topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+                topRhetoric = Object.entries(s.rhetoric || {}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k);
             }
-            prompt += `\n\n`;
             
-            // 剧情描述
-            prompt += `【本章剧情】\n${plotDescription}\n\n`;
+            let prompt = `你现在不是AI，而是一位在网文界摸爬滚打十年的职业作家。你的任务：根据以下剧情，写出一章可以直接在起点/番茄上架的网文正文。要求读者看完后立刻想点下一章。\n\n`;
             
-            // 桥段素材指导（仅提取核心冲突，去除元数据套话）
+            prompt += `===== 本章剧情核 =====\n${plotDescription}\n\n`;
+            
             if (matchedTropes && matchedTropes.length > 0) {
-                prompt += `【情节参考 - 可从以下经典桥段中汲取核心冲突灵感，但不要照搬原文，更不要输出桥段分析或评论】\n`;
+                prompt += `===== 情绪节拍参考（只吸收冲突点，禁止复制原文）=====\n`;
                 matchedTropes.forEach((match, index) => {
                     const trope = match.trope;
                     const parts = parseTropeDescription(trope.description);
-                    prompt += `${index + 1}. ${trope.title}：${extractTropeSnippet(trope.usage || parts.scene || '', 40)}\n`;
+                    const snippet = extractTropeSnippet(trope.usage || parts.scene || '', 30);
+                    prompt += `节拍${index+1}：${trope.title} → 核心冲突是"${snippet}"\n`;
                 });
                 prompt += `\n`;
             }
             
-            // 文风要求
-            if (style && style.id !== 'default' && style.prompt) {
-                prompt += `【文风要求 - ${style.name}风格】\n`;
-                prompt += `${style.prompt}\n`;
-                if (style.traits && style.traits.length > 0) {
-                    prompt += `核心特征：${style.traits.join('、')}\n`;
+            if (style && style.id !== 'default') {
+                prompt += `===== 必须模仿的文风：${style.name} =====\n`;
+                prompt += `${style.prompt || ''}\n`;
+                prompt += `【硬性量化指标 - 必须达标，否则重写】\n`;
+                prompt += `- 平均句长严格控制在 ${avgSent} 字左右。句子要短促有力，禁止出现超过40字的长句。\n`;
+                prompt += `- 短段落（1-3句）占比必须达到 ${shortPara}% 以上。多用换行制造呼吸感。\n`;
+                if (dialogueRatio > 0.25) {
+                    prompt += `- 对话占比必须超过 25%。剧情主要靠人物对话推进， narration 要少。对话必须带刺、有潜台词、有冲突，禁止"你好/谢谢/再见"式白开水对白。\n`;
+                } else if (dialogueRatio < 0.1) {
+                    prompt += `- 对话占比低（<10%）。以动作、环境压迫感和主角内心推演为主，少对白。\n`;
                 }
-                if (style.stats) {
-                    const s = style.stats;
-                    prompt += `\n【风格数据参考】\n`;
-                    prompt += `- 平均句长约${s.avg_sentence_len}字\n`;
-                    prompt += `- 段落节奏：短段落占${(s.short_para_ratio*100).toFixed(1)}%，长段落占${(s.long_para_ratio*100).toFixed(1)}%\n`;
-                    if (s.dialogue_ratio > 0.3) {
-                        prompt += `- 对话占比高（${(s.dialogue_ratio*100).toFixed(1)}%），请多用直接引语推进剧情\n`;
-                    } else if (s.dialogue_ratio < 0.1) {
-                        prompt += `- 对话占比低，以叙述和心理活动为主\n`;
-                    }
-                    const topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,5);
-                    if (topMarkers.length > 0) {
-                        prompt += `- 高频表达（每10万字）：${topMarkers.map(([k,v])=>k+v).join('、')}\n`;
-                    }
+                if (topMarkers.length > 0) {
+                    prompt += `- 标志性高频词必须有意识点缀（但不要堆砌）：${topMarkers.join('、')}\n`;
+                }
+                if (topRhetoric.length > 0) {
+                    prompt += `- 修辞习惯参考：${topRhetoric.join('、')}\n`;
                 }
                 prompt += `\n`;
             }
             
-            // 核心写作要求
-            prompt += `【核心要求 - 必须严格遵守】\n`;
-            prompt += `1. **输出格式**：直接输出连续流畅的小说正文，严禁出现【开篇】【发展】【高潮】【结尾】等分段标签。\n`;
-            prompt += `2. **字数要求**：本章必须写到 ${targetWords} 字左右，只多不少。如果写不够，请继续扩展细节描写、对话、动作和心理活动，直到满足字数。严禁只写大纲、梗概或短片段。\n`;
-            prompt += `3. **内容质量**：必须是完整章节正文，有具体场景、人物对话、动作细节和心理描写，能直接让读者沉浸其中。\n`;
-            prompt += `4. **禁止套话**：严禁出现"这一桥段不仅成功推动了主线剧情的发展"、"让读者在回味之余对整个故事有了更深的理解"、"为后续情节发展奠定了重要基础"等评论性、总结性、元数据式语言。你写的是小说正文，不是书评或教材。\n`;
-            prompt += `5. **禁止水字数**：每一段都必须推进剧情，禁止无意义的景物堆砌、重复内心独白和空洞抒情。\n`;
-            prompt += `6. **节奏**：保持网文快节奏，开篇立即入戏，中间矛盾升级，结尾留悬念或钩子。\n\n`;
+            prompt += `===== 去AI味十条戒律（违反任何一条都是废品）=====\n`;
+            prompt += `1. 【绝对禁止的情绪标签】禁止写"他很害怕/愤怒/悲伤/惊讶"。必须换成生理反应和动作：手心出汗、喉结滚动、后退半步撞翻椅子、瞳孔收缩、呼吸变急、指节发白。\n`;
+            prompt += `2. 【绝对禁止的AI套话】严禁出现：他明白了、众所周知、不可否认的是、事实上、不得不说、从某种意义上说、这一切都在预示着。\n`;
+            prompt += `3. 【绝对禁止的镜头语言】严禁：只见、视线里、画面中、目光所及之处。直接写事物本身。\n`;
+            prompt += `4. 【绝对禁止的总结句】严禁在段落结尾写"最终他做出了选择/这一切才刚刚开始/他知道自己的命运已经改变"。结尾必须是具体的物象、声音或动作，把判断权交给读者。\n`;
+            prompt += `5. 【绝对禁止的桥段元数据】严禁输出"这一桥段常见于《XXX》、为后续情节发展奠定了重要基础、深化了XXX的核心内涵"。你写的是小说，不是百度百科。\n`;
+            prompt += `6. 【五感优先原则】每个新场景或新危机，必须同时调动至少两种感官：视觉+听觉，或嗅觉+触觉。不要只写"天黑了"，要写"路灯突然闪了两下，滋滋的电流声像某种东西在磨牙"。\n`;
+            prompt += `7. 【对话必须带刺】每个人说话都要有目的：试探、威胁、掩饰、嘲讽、讨价还价。禁止两个人和和气气地交换信息。\n`;
+            prompt += `8. 【信息增量原则】每一句话都必须给读者新信息。禁止"水字数"式的重复心理描写和空洞环境堆砌。\n`;
+            prompt += `9. 【动作即心理原则】禁止大段独白。主角的心理活动不得超过三句，必须通过动作、神态和对话流露出来。\n`;
+            prompt += `10. 【具体锚点原则】段落开头必须有一个具体的物象锚点：一个动作、一个声音、一个气味、一个触感。禁止以抽象概念开头（时间、情绪、总结）。\n\n`;
             
-            prompt += `请直接开始写正文：`;
+            prompt += `===== 字数与结构死命令 =====\n`;
+            prompt += `- 目标字数：${targetWords} 字。必须写满，只多不少。\n`;
+            prompt += `- 如果写到一半发现字数不够，不允许草草收尾。必须继续扩展：加入更多对话回合、细化动作分解（比如一拳打出，要写出手臂肌肉绷紧、风声、对方表情变化、打击感、反作用力）、增加环境细节和旁观者反应。\n`;
+            prompt += `- 章节结构必须是：\n`;
+            prompt += `  ① 开头50字内必须出现第一个冲突或悬念（不要铺垫世界观）。\n`;
+            prompt += `  ② 中间必须有至少3次剧情推进（危机升级/对话交锋/新信息揭露）。\n`;
+            prompt += `  ③ 结尾必须卡在具体动作或对话上，留下钩子，让读者必须点下一章。\n\n`;
+            
+            prompt += `===== 输出格式死命令 =====\n`;
+            prompt += `直接输出小说正文。禁止出现任何标签、分点、总结、作者点评。禁止写"第一章：XXX"这种标题。从正文第一个字开始写。\n\n`;
+            prompt += `开始写：`;
             
             return prompt;
         }
