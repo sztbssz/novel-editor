@@ -18393,16 +18393,19 @@ ${_pick(GEN_MONSTER.behavior)}
                 align-items: center; justify-content: center;
             `;
             
-            const styleOptions = styles.styles.map((style, index) => `
-                <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #1a1a2e; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;" 
+            const styleOptions = styles.styles.map((style, index) => {
+                const traitsHtml = (style.traits || []).map(t => `<span style="display: inline-block; padding: 2px 8px; background: rgba(102,126,234,0.15); color: #a0a8e0; border-radius: 4px; font-size: 11px; margin-right: 4px;">${t}</span>`).join('');
+                return `
+                <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #1a1a2e; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent;" 
                        onmouseover="this.style.borderColor='#667eea'" onmouseout="this.style.borderColor='transparent'">
-                    <input type="radio" name="writingStyle" value="${style.id}" ${index === 0 ? 'checked' : ''} style="accent-color: #667eea;">
-                    <div style="flex: 1;">
-                        <div style="color: #fff; font-weight: 500;">${style.name}</div>
-                        ${style.author ? `<div style="color: #888; font-size: 12px;">${style.author} · ${style.category}</div>` : ''}
+                    <input type="radio" name="writingStyle" value="${style.id}" ${index === 0 ? 'checked' : ''} style="accent-color: #667eea; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="color: #fff; font-weight: 500; margin-bottom: 2px;">${style.name}</div>
+                        ${style.author ? `<div style="color: #888; font-size: 12px; margin-bottom: 4px;">${style.author} · ${style.category}</div>` : ''}
+                        <div style="line-height: 1.4;">${traitsHtml}</div>
                     </div>
                 </label>
-            `).join('');
+            `}).join('');
             
             dialog.innerHTML = `
                 <div style="background: #16213e; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
@@ -18676,107 +18679,125 @@ ${_pick(GEN_MONSTER.behavior)}
             return tropeUsageNote + content;
         }
         
-        // 生成开篇段落（去AI味版：具体场景+感官细节）
+        // 获取风格化写作模板（支持外部JSON配置）
+        function getStyleTemplates(style) {
+            const defaultTemplates = {
+                opening: [
+                    '雨珠砸在青石板上，溅起细碎的水花。{base}。',
+                    '烛火噼啪一声爆了个灯花，映照出室内几道紧绷的侧脸。{base}。',
+                    '黄昏的光线斜斜切进窗棂，把地上那道裂痕照得格外刺眼。{base}。',
+                    '酒楼二楼最偏的角落，茶壶里的水已经凉透。{base}。',
+                    '马蹄声由远及近，在巷口骤然停住。{base}。'
+                ],
+                hooks: [
+                    '他没说话，手指在桌沿轻轻叩了三下。',
+                    '门外有人咳嗽了一声，屋内气氛陡然收紧。',
+                    '一只乌鸦从屋檐上扑棱棱飞起，留下一串嘶哑的叫声。',
+                    '对面的人放下茶杯，瓷底与木桌碰撞出清脆的响。'
+                ],
+                development: [
+                    '他往前迈了半步，靴底碾碎了一根枯枝。"{base}"——这句话没人说出口，但每个人都听见了。',
+                    '有人笑了一声，笑声干涩得像砂纸摩擦。{base}。旁边的茶杯晃了晃，水洒出一道细线。',
+                    '门被推开，风卷着尘土灌进来。{base}。他眯起眼，右手不自觉地摸向腰侧。',
+                    '沉默持续了太久，久到能听见门外虫鸣。终于，{base}。'
+                ],
+                climax: [
+                    '{base}。他的指节发白，血液冲上耳廓，周遭的嘈杂一瞬间被抽成真空。',
+                    '就在{base}的刹那，一道寒光掠过他眼底。他向后仰身，脊背撞上冰冷的墙面。',
+                    '"住手！"——喊声被淹没在轰鸣里。{base}。他感到喉头涌上一股腥甜。',
+                    '{base}。两人的目光在半空中撞出一声脆响，像瓷器碎裂。'
+                ],
+                ending: [
+                    '地上只剩半盏残茶，水渍正在慢慢收干。他低头看了眼掌心，那里多了一道红痕。',
+                    '天边泛起蟹壳青，一夜未眠。他推开窗，晨风带着潮气扑进来，却吹不散屋里那股铁锈味。',
+                    '门外传来三长两短的叩门声。他没有动，只是将那枚令牌缓缓收进袖口。',
+                    '烛火终于燃尽，黑暗吞没了最后一寸光亮。他坐在原地，听见自己的心跳声格外清晰。',
+                    '马蹄声再次响起，这次渐行渐远。他低头看着地上那道裂痕，知道有些东西再也拼不回去了。'
+                ],
+                transitions: [
+                    '街角的茶摊换了第三壶水，说书人的惊堂木还没落下。',
+                    '一只黑猫从墙头跃过，尾巴扫落了一片瓦。',
+                    '更夫敲过三更，声音在空荡荡的巷道里撞出回响。',
+                    '药铺的学徒打着哈欠卸下门板，浓郁的药香漫过整条街。',
+                    '远处传来马蹄和车轮碾压碎石的声音，越来越近，又拐了个弯，消失了。'
+                ],
+                expansions: [
+                    '他注意到对方右手小指缺了一截，断口平整，是旧伤。这个发现让他后背微微一紧。',
+                    '桌上摆着三只茶杯，两只满了，一只底朝天。没人动过那第三只。',
+                    '风从门缝钻进来，吹得烛焰东倒西歪。墙上的影子也跟着晃，像一群无声的看客。',
+                    '门外传来压低嗓子的交谈，断断续续，只能捕捉到"今晚"、"码头"、"一个人"几个词。',
+                    '他的靴底粘着一片枯叶，叶脉的形状很特别，只有城北那片老林子才有。'
+                ]
+            };
+            if (style && style.templates) {
+                return {
+                    opening: style.templates.opening || defaultTemplates.opening,
+                    hooks: style.templates.hooks || defaultTemplates.hooks,
+                    development: style.templates.development || defaultTemplates.development,
+                    climax: style.templates.climax || defaultTemplates.climax,
+                    ending: style.templates.ending || defaultTemplates.ending,
+                    transitions: style.templates.transitions || defaultTemplates.transitions,
+                    expansions: style.templates.expansions || defaultTemplates.expansions
+                };
+            }
+            return defaultTemplates;
+        }
+        
+        // 生成开篇段落（风格感知版）
         function generateSceneOpening(plotDescription, trope, parts, style) {
             const desc = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/被众人/g, '').replace(/关键时刻/g, '电光火石之间');
-            const seeds = [
-                `雨珠砸在青石板上，溅起细碎的水花。${desc}。`,
-                `烛火噼啪一声爆了个灯花，映照出室内几道紧绷的侧脸。${desc}。`,
-                `黄昏的光线斜斜切进窗棂，把地上那道裂痕照得格外刺眼。${desc}。`,
-                `酒楼二楼最偏的角落，茶壶里的水已经凉透。${desc}。`,
-                `马蹄声由远及近，在巷口骤然停住。${desc}。`
-            ];
-            let opening = seeds[Math.floor(Math.random() * seeds.length)];
-            // 追加剧情钩子，避免抽象总结
-            const hooks = [
-                `他没说话，手指在桌沿轻轻叩了三下。`,
-                `门外有人咳嗽了一声，屋内气氛陡然收紧。`,
-                `一只乌鸦从屋檐上扑棱棱飞起，留下一串嘶哑的叫声。`,
-                `对面的人放下茶杯，瓷底与木桌碰撞出清脆的响。`
-            ];
-            opening += `\n\n${hooks[Math.floor(Math.random() * hooks.length)]}`;
+            const tmpls = getStyleTemplates(style);
+            let opening = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, desc);
+            const hook = tmpls.hooks[Math.floor(Math.random() * tmpls.hooks.length)];
+            opening += `\n\n${hook}`;
             return opening;
         }
         
-        // 生成发展段落（去AI味版：动作推进+对话感）
+        // 生成发展段落（风格感知版）
         function generateDevelopment(plotDescription, trope, parts, style) {
             const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/随着时间推移/g, '').replace(/局势开始发生变化/g, '');
-            const actions = [
-                `他往前迈了半步，靴底碾碎了一根枯枝。"${base}"——这句话没人说出口，但每个人都听见了。`,
-                `有人笑了一声，笑声干涩得像砂纸摩擦。${base}。旁边的茶杯晃了晃，水洒出一道细线。`,
-                `门被推开，风卷着尘土灌进来。${base}。他眯起眼，右手不自觉地摸向腰侧。`,
-                `沉默持续了太久，久到能听见门外虫鸣。终于，${base}。`
-            ];
-            return actions[Math.floor(Math.random() * actions.length)];
+            const tmpls = getStyleTemplates(style);
+            const tmpl = tmpls.development[Math.floor(Math.random() * tmpls.development.length)];
+            return tmpl.replace(/\{base\}/g, base);
         }
         
-        // 生成高潮段落（去AI味版：尖锐冲突+生理反应）
+        // 生成高潮段落（风格感知版）
         function generateClimax(plotDescription, trope, parts, style) {
             const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/前所未有的压力/g, '太阳穴突突直跳').replace(/咬紧牙关/g, '腮帮绷成一道硬线');
-            const clashes = [
-                `${base}。他的指节发白，血液冲上耳廓，周遭的嘈杂一瞬间被抽成真空。`,
-                `就在${base}的刹那，一道寒光掠过他眼底。他向后仰身，脊背撞上冰冷的墙面。`,
-                `"住手！"——喊声被淹没在轰鸣里。${base}。他感到喉头涌上一股腥甜。`,
-                `${base}。两人的目光在半空中撞出一声脆响，像瓷器碎裂。`
-            ];
-            return clashes[Math.floor(Math.random() * clashes.length)];
+            const tmpls = getStyleTemplates(style);
+            const tmpl = tmpls.climax[Math.floor(Math.random() * tmpls.climax.length)];
+            return tmpl.replace(/\{base\}/g, base);
         }
         
-        // 生成结尾段落（去AI味版：意象收尾+悬念钩子）
+        // 生成结尾段落（风格感知版）
         function generateEnding(plotDescription, trope, parts, style) {
-            const endings = [
-                `地上只剩半盏残茶，水渍正在慢慢收干。他低头看了眼掌心，那里多了一道红痕。`,
-                `天边泛起蟹壳青，一夜未眠。他推开窗，晨风带着潮气扑进来，却吹不散屋里那股铁锈味。`,
-                `门外传来三长两短的叩门声。他没有动，只是将那枚令牌缓缓收进袖口。`,
-                `烛火终于燃尽，黑暗吞没了最后一寸光亮。他坐在原地，听见自己的心跳声格外清晰。`,
-                `马蹄声再次响起，这次渐行渐远。他低头看着地上那道裂痕，知道有些东西再也拼不回去了。`
-            ];
-            return endings[Math.floor(Math.random() * endings.length)];
+            const tmpls = getStyleTemplates(style);
+            return tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)];
         }
         
-        // 生成过渡段落（去AI味版：侧面描写+环境变化）
+        // 生成过渡段落（风格感知版）
         function generateTransitionParagraph(plotDescription, trope, index, style) {
-            const transitions = [
-                `街角的茶摊换了第三壶水，说书人的惊堂木还没落下。`,
-                `一只黑猫从墙头跃过，尾巴扫落了一片瓦。`,
-                `更夫敲过三更，声音在空荡荡的巷道里撞出回响。`,
-                `药铺的学徒打着哈欠卸下门板，浓郁的药香漫过整条街。`,
-                `远处传来马蹄和车轮碾压碎石的声音，越来越近，又拐了个弯，消失了。`
-            ];
-            return transitions[index % transitions.length];
+            const tmpls = getStyleTemplates(style);
+            return tmpls.transitions[index % tmpls.transitions.length];
         }
         
-        // 生成扩充段落（去AI味版：细节特写填充）
+        // 生成扩充段落（风格感知版）
         function generateExpansionParagraph(plotDescription, trope, index, style) {
-            const expansions = [
-                `他注意到对方右手小指缺了一截，断口平整，是旧伤。这个发现让他后背微微一紧。`,
-                `桌上摆着三只茶杯，两只满了，一只底朝天。没人动过那第三只。`,
-                `风从门缝钻进来，吹得烛焰东倒西歪。墙上的影子也跟着晃，像一群无声的看客。`,
-                `门外传来压低嗓子的交谈，断断续续，只能捕捉到"今晚"、"码头"、"一个人"几个词。`,
-                `他的靴底粘着一片枯叶，叶脉的形状很特别，只有城北那片老林子才有。`
-            ];
-            return expansions[index % expansions.length];
+            const tmpls = getStyleTemplates(style);
+            return tmpls.expansions[index % tmpls.expansions.length];
         }
         
         // 通用开篇（无桥段匹配时备用）
         function generateGenericOpening(plotDescription, style) {
-            const seeds = [
-                `屋檐上的雨水连成线，砸在阶前发出规律的声响。`,
-                `酒楼的喧嚣被门板隔在外面，屋内只剩一壶已经凉透的茶。`,
-                `暮色从窗缝一寸一寸挤进来，吞没了地上的最后一方光亮。`
-            ];
-            const seed = seeds[Math.floor(Math.random() * seeds.length)];
+            const tmpls = getStyleTemplates(style);
+            const seed = tmpls.opening[Math.floor(Math.random() * tmpls.opening.length)].replace(/\{base\}/g, plotDescription.substring(0, 40));
             return `${seed}\n\n${plotDescription.substring(0, 40)}——一切就从这里开始。`;
         }
         
         // 通用结尾（无桥段匹配时备用）
         function generateGenericEnding(style) {
-            const endings = [
-                `窗外传来第一声鸡鸣，他站起身，拍了拍衣摆上并不存在的灰。`,
-                `烛芯最后跳了一下，灭了。黑暗里，他听见自己的呼吸声格外重。`,
-                `门轴发出一声干涩的呻吟，冷风灌进来，卷走了桌上那张纸条。`
-            ];
-            return endings[Math.floor(Math.random() * endings.length)];
+            const tmpls = getStyleTemplates(style);
+            return tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)];
         }
         
         // 备用内容生成（无桥段匹配时使用）
@@ -19003,7 +19024,11 @@ ${_pick(GEN_MONSTER.behavior)}
         
         // 构建写作提示词
         function buildWritingPrompt(plotDescription, targetWords, style, matchedTropes = []) {
-            let prompt = `你是一位专业的网络小说作家，请根据以下要求创作一章小说正文。\n\n`;
+            let prompt = `你是一位专业的网络小说作家`;
+            if (style && style.id !== 'default') {
+                prompt += `，请严格模仿「${style.name}」(${style.author || '未知作者'})的写作风格`;
+            }
+            prompt += `，根据以下要求创作一章小说正文。\n\n`;
             
             // 剧情描述
             prompt += `【本章剧情】\n${plotDescription}\n\n`;
@@ -19122,23 +19147,11 @@ ${_pick(GEN_MONSTER.behavior)}
             prompt += `- 保持快节奏，不要拖沓\n\n`;
             
             // 文风要求
-            if (style && style.id !== 'default' && style.features) {
+            if (style && style.id !== 'default' && style.prompt) {
                 prompt += `【文风要求 - ${style.name}风格】\n`;
-                
-                if (style.features.sentencePattern) {
-                    prompt += `- 句式特点：${style.features.sentencePattern.description}\n`;
-                }
-                if (style.features.vocabulary) {
-                    prompt += `- 用词风格：${style.features.vocabulary.description}\n`;
-                }
-                if (style.features.pacing) {
-                    prompt += `- 节奏感：${style.features.pacing.description}\n`;
-                }
-                if (style.features.description) {
-                    prompt += `- 描写手法：${style.features.description.description}\n`;
-                }
-                if (style.features.dialogue) {
-                    prompt += `- 对话风格：${style.features.dialogue.description}\n`;
+                prompt += `${style.prompt}\n`;
+                if (style.traits && style.traits.length > 0) {
+                    prompt += `核心特征：${style.traits.join('、')}\n`;
                 }
                 prompt += `\n`;
             }
