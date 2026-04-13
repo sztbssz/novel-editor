@@ -4590,6 +4590,9 @@
             }
 
             async add(item) {
+                if (!this.data) {
+                    await this.loadFromLocal();
+                }
                 item.id = item.id || Date.now();
                 item.created_at = new Date().toISOString();
                 item.updated_at = new Date().toISOString();
@@ -4600,6 +4603,9 @@
             }
 
             async update(id, updates) {
+                if (!this.data) {
+                    await this.loadFromLocal();
+                }
                 const index = this.data.findIndex(item => item.id === id);
                 if (index === -1) return null;
                 
@@ -4609,6 +4615,9 @@
             }
 
             async delete(id) {
+                if (!this.data) {
+                    await this.loadFromLocal();
+                }
                 const index = this.data.findIndex(item => item.id === id);
                 if (index === -1) return false;
                 
@@ -4756,7 +4765,7 @@
                 this.syncStatusListeners = [];
             }
 
-            init() {
+            async init() {
                 this.managers = {
                     works: new WorksManager(this.db),
                     volumes: new VolumesManager(this.db),
@@ -4772,8 +4781,9 @@
                     templates: new TemplatesManager(this.db)
                 };
 
-                // 为每个管理器添加同步状态监听
+                // 初始化每个管理器（加载本地数据）
                 for (const [name, manager] of Object.entries(this.managers)) {
+                    await manager.init();
                     manager.onSync((event) => {
                         this.notifySyncStatus(event);
                     });
@@ -4929,7 +4939,7 @@
                 if (cloudDisabled) {
                     console.log('[initCloudStorage] 云端同步未启用，使用本地存储');
                     this.cloudStorage = new CloudStorageFactory(this);
-                    this.cloudStorage.init();
+                    await this.cloudStorage.init();
                     this._cloudReady = true;
                     return;
                 }
@@ -4955,7 +4965,7 @@
                 }
                 
                 this.cloudStorage = new CloudStorageFactory(this);
-                this.cloudStorage.init();
+                await this.cloudStorage.init();
                 this._cloudReady = true;
                 console.log('✅ 本地存储管理器初始化完成');
                 
@@ -4964,9 +4974,11 @@
                     console.log(`[云端同步] ${event.storeName}: ${event.status}${event.message ? ' - ' + event.message : ''}`);
                 });
                 
-                // 初始化各个管理器
-                for (const [name, manager] of Object.entries(this.cloudStorage.getAll())) {
-                    await manager.init();
+                // 如果配置了GitHub，尝试从云端同步
+                if (this.githubSync.isConfigured()) {
+                    for (const [name, manager] of Object.entries(this.cloudStorage.getAll())) {
+                        await manager.syncFromCloud();
+                    }
                 }
                 
                 this._cloudReady = true;
