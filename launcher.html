@@ -4081,6 +4081,15 @@
                         
                         // 显示错误提示
                         showNotification(`❌ Gist创建失败: ${this.lastError.message}`);
+                        
+                        // 连续失败超过3次，禁用云端同步
+                        this.createFailCount = (this.createFailCount || 0) + 1;
+                        if (this.createFailCount >= 3) {
+                            console.error('[GitHubSync] 多次创建Gist失败，禁用云端同步');
+                            showNotification('⚠️ GitHub同步失败多次，已切换为本地存储模式');
+                            this.cloudSyncDisabled = true;
+                        }
+                        
                         return null;
                     }
                 } catch (e) {
