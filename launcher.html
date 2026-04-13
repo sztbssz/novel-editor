@@ -19180,6 +19180,9 @@ ${_pick(GEN_MONSTER.behavior)}
                         .replace(/充分展现了[^。]+独特的创作风格与叙事才华。/g, '')
                         .replace(/让读者在回味之余对整个故事有了更深的理解。/g, '')
                         .replace(/是[^题材]+题材的经典叙事元素。/g, '')
+                        .replace(/这一桥段不仅成功推动了主线剧情的发展[^。]*。/g, '')
+                        .replace(/更深化了[^。]+的核心内涵[^。]*。/g, '')
+                        .replace(/这种紧张刺激的叙事节奏让读者始终保持高度的阅读热情。/g, '')
                         .trim();
             if (t.length > maxLen) t = t.slice(0, maxLen) + '…';
             return t;
@@ -19470,127 +19473,25 @@ ${_pick(GEN_MONSTER.behavior)}
         
         // 构建写作提示词
         function buildWritingPrompt(plotDescription, targetWords, style, matchedTropes = []) {
-            let prompt = `你是一位专业的网络小说作家`;
+            let prompt = `你是一位专业的中文网络小说作家，正在创作可以直接在番茄小说、起点等平台连载的章节正文。`;
             if (style && style.id !== 'default') {
-                prompt += `，请严格模仿「${style.name}」(${style.author || '未知作者'})的写作风格`;
+                prompt += `请严格模仿「${style.name}」(${style.author || '未知作者'})的写作风格。`;
             }
-            prompt += `，根据以下要求创作一章小说正文。\n\n`;
+            prompt += `\n\n`;
             
             // 剧情描述
             prompt += `【本章剧情】\n${plotDescription}\n\n`;
             
-            // 桥段素材指导（核心修改）
+            // 桥段素材指导（仅提取核心冲突，去除元数据套话）
             if (matchedTropes && matchedTropes.length > 0) {
-                prompt += `【桥段素材指导 - 必须参考以下桥段结构创作】\n\n`;
-                
+                prompt += `【情节参考 - 可从以下经典桥段中汲取核心冲突灵感，但不要照搬原文，更不要输出桥段分析或评论】\n`;
                 matchedTropes.forEach((match, index) => {
                     const trope = match.trope;
                     const parts = parseTropeDescription(trope.description);
-                    
-                    prompt += `桥段${index + 1}：${trope.title}\n`;
-                    prompt += `类别：${trope.category || '通用'}\n`;
-                    if (match.reasons.length > 0) {
-                        prompt += `匹配原因：${match.reasons.join('、')}\n`;
-                    }
-                    
-                    prompt += `核心冲突：${trope.usage || '参考描述'}\n`;
-                    
-                    // 四个结构部分
-                    if (parts.scene) {
-                        prompt += `- 场景铺垫：${parts.scene.substring(0, 100)}${parts.scene.length > 100 ? '...' : ''}\n`;
-                    }
-                    if (parts.development) {
-                        prompt += `- 情节发展：${parts.development.substring(0, 100)}${parts.development.length > 100 ? '...' : ''}\n`;
-                    }
-                    if (parts.climax) {
-                        prompt += `- 高潮转折：${parts.climax.substring(0, 100)}${parts.climax.length > 100 ? '...' : ''}\n`;
-                    }
-                    if (parts.ending) {
-                        prompt += `- 收尾呼应：${parts.ending.substring(0, 100)}${parts.ending.length > 100 ? '...' : ''}\n`;
-                    }
-                    
-                    // 示例参考
-                    if (trope.examples && trope.examples.length > 0) {
-                        prompt += `参考示例：${trope.examples[0].substring(0, 80)}${trope.examples[0].length > 80 ? '...' : ''}\n`;
-                    }
-                    
-                    prompt += `\n`;
+                    prompt += `${index + 1}. ${trope.title}：${extractTropeSnippet(trope.usage || parts.scene || '', 40)}\n`;
                 });
-                
-                // 写作结构要求
-                prompt += `【写作结构要求】\n`;
-                prompt += `你必须按照以下四段式结构创作本章：\n\n`;
-                
-                if (matchedTropes.length >= 1) {
-                    const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
-                    prompt += `1. 【开篇】（约${Math.round(targetWords * 0.2)}字）\n`;
-                    prompt += `   - 基于桥段1的【场景铺垫】\n`;
-                    prompt += `   - 设置场景氛围，引入核心冲突\n`;
-                    if (parts1.scene) {
-                        prompt += `   - 参考：${parts1.scene.substring(0, 60)}...\n`;
-                    }
-                    prompt += `\n`;
-                }
-                
-                if (matchedTropes.length >= 2) {
-                    const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
-                    prompt += `2. 【发展】（约${Math.round(targetWords * 0.3)}字）\n`;
-                    prompt += `   - 基于桥段2的【情节发展】\n`;
-                    prompt += `   - 推进情节，人物互动，矛盾升级\n`;
-                    if (parts2.development) {
-                        prompt += `   - 参考：${parts2.development.substring(0, 60)}...\n`;
-                    }
-                    prompt += `\n`;
-                } else if (matchedTropes.length >= 1) {
-                    const parts1 = parseTropeDescription(matchedTropes[0].trope.description);
-                    prompt += `2. 【发展】（约${Math.round(targetWords * 0.3)}字）\n`;
-                    prompt += `   - 基于桥段1的【情节发展】\n`;
-                    prompt += `   - 推进情节，人物互动，矛盾升级\n`;
-                    if (parts1.development) {
-                        prompt += `   - 参考：${parts1.development.substring(0, 60)}...\n`;
-                    }
-                    prompt += `\n`;
-                }
-                
-                if (matchedTropes.length >= 3) {
-                    const parts3 = parseTropeDescription(matchedTropes[2].trope.description);
-                    prompt += `3. 【高潮】（约${Math.round(targetWords * 0.3)}字）\n`;
-                    prompt += `   - 基于桥段3的【高潮转折】\n`;
-                    prompt += `   - 冲突爆发，重大转折，决定性时刻\n`;
-                    if (parts3.climax) {
-                        prompt += `   - 参考：${parts3.climax.substring(0, 60)}...\n`;
-                    }
-                    prompt += `\n`;
-                } else if (matchedTropes.length >= 2) {
-                    const parts2 = parseTropeDescription(matchedTropes[1].trope.description);
-                    prompt += `3. 【高潮】（约${Math.round(targetWords * 0.3)}字）\n`;
-                    prompt += `   - 基于桥段2的【高潮转折】\n`;
-                    prompt += `   - 冲突爆发，重大转折，决定性时刻\n`;
-                    if (parts2.climax) {
-                        prompt += `   - 参考：${parts2.climax.substring(0, 60)}...\n`;
-                    }
-                    prompt += `\n`;
-                }
-                
-                const lastTrope = matchedTropes[matchedTropes.length - 1];
-                const lastParts = parseTropeDescription(lastTrope.trope.description);
-                prompt += `4. 【结尾】（约${Math.round(targetWords * 0.2)}字）\n`;
-                prompt += `   - 基于最后一个桥段的【收尾呼应】\n`;
-                prompt += `   - 留下悬念或过渡，引发读者继续阅读的欲望\n`;
-                if (lastParts.ending) {
-                    prompt += `   - 参考：${lastParts.ending.substring(0, 60)}...\n`;
-                }
                 prompt += `\n`;
             }
-            
-            // 基础写作要求
-            prompt += `【写作要求】\n`;
-            prompt += `- 目标字数：${targetWords}字左右（请严格控制字数）\n`;
-            prompt += `- 情节必须有实质性内容，禁止空洞描写和过度抒情\n`;
-            prompt += `- 每个段落都要有推动剧情发展的作用\n`;
-            prompt += `- 对话要自然，符合人物性格\n`;
-            prompt += `- 场景描写要服务于情节，不要无意义的景物堆砌\n`;
-            prompt += `- 保持快节奏，不要拖沓\n\n`;
             
             // 文风要求
             if (style && style.id !== 'default' && style.prompt) {
@@ -19601,30 +19502,32 @@ ${_pick(GEN_MONSTER.behavior)}
                 }
                 if (style.stats) {
                     const s = style.stats;
-                    prompt += `\n【风格数据参考 - 请严格遵循以下量化指标】\n`;
-                    prompt += `- 平均句长：约${s.avg_sentence_len}字/句（控制每句长度）\n`;
-                    prompt += `- 段落节奏：短段落(${s.short_para_ratio*100}%) + 中等段落 + 长段落(${s.long_para_ratio*100}%)\n`;
-                    prompt += `- 标点密度：逗号${s.comma_rate}% | 句号${s.period_rate}% | 感叹号${s.exclaim_rate}% | 问号${s.question_rate}%\n`;
+                    prompt += `\n【风格数据参考】\n`;
+                    prompt += `- 平均句长约${s.avg_sentence_len}字\n`;
+                    prompt += `- 段落节奏：短段落占${(s.short_para_ratio*100).toFixed(1)}%，长段落占${(s.long_para_ratio*100).toFixed(1)}%\n`;
                     if (s.dialogue_ratio > 0.3) {
-                        prompt += `- 对话占比极高（${(s.dialogue_ratio*100).toFixed(1)}%），请以大量直接引语推进剧情\n`;
+                        prompt += `- 对话占比高（${(s.dialogue_ratio*100).toFixed(1)}%），请多用直接引语推进剧情\n`;
                     } else if (s.dialogue_ratio < 0.1) {
-                        prompt += `- 对话占比低，请减少直接对话，以叙述和心理活动为主\n`;
+                        prompt += `- 对话占比低，以叙述和心理活动为主\n`;
                     }
                     const topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,5);
                     if (topMarkers.length > 0) {
-                        prompt += `- 标志性表达密度(每10万字)：${topMarkers.map(([k,v])=>k+v).join('、')}\n`;
+                        prompt += `- 高频表达（每10万字）：${topMarkers.map(([k,v])=>k+v).join('、')}\n`;
                     }
                 }
                 prompt += `\n`;
             }
             
-            // 重要提醒
-            prompt += `【重要提醒】\n`;
-            prompt += `1. 必须基于提供的桥段素材进行创作，不要自由发挥偏离桥段核心\n`;
-            prompt += `2. 桥段的核心冲突、转折点、高潮必须体现在正文中\n`;
-            prompt += `3. 禁止"水字数"式的空洞描述和无意义的内心独白\n`;
-            prompt += `4. 每一部分都要紧扣桥段素材的结构要求\n`;
-            prompt += `5. 确保生成内容有实际剧情，读者看完后能清楚知道发生了什么\n\n`;
+            // 核心写作要求
+            prompt += `【核心要求 - 必须严格遵守】\n`;
+            prompt += `1. **输出格式**：直接输出连续流畅的小说正文，严禁出现【开篇】【发展】【高潮】【结尾】等分段标签。\n`;
+            prompt += `2. **字数要求**：本章必须写到 ${targetWords} 字左右，只多不少。如果写不够，请继续扩展细节描写、对话、动作和心理活动，直到满足字数。严禁只写大纲、梗概或短片段。\n`;
+            prompt += `3. **内容质量**：必须是完整章节正文，有具体场景、人物对话、动作细节和心理描写，能直接让读者沉浸其中。\n`;
+            prompt += `4. **禁止套话**：严禁出现"这一桥段不仅成功推动了主线剧情的发展"、"让读者在回味之余对整个故事有了更深的理解"、"为后续情节发展奠定了重要基础"等评论性、总结性、元数据式语言。你写的是小说正文，不是书评或教材。\n`;
+            prompt += `5. **禁止水字数**：每一段都必须推进剧情，禁止无意义的景物堆砌、重复内心独白和空洞抒情。\n`;
+            prompt += `6. **节奏**：保持网文快节奏，开篇立即入戏，中间矛盾升级，结尾留悬念或钩子。\n\n`;
+            
+            prompt += `请直接开始写正文：`;
             
             return prompt;
         }
