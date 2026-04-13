@@ -8817,7 +8817,8 @@
         async function loadWorksList() {
             console.log('📚 loadWorksList 被调用');
             worksData = await db.getAll('works');
-            worksData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+            // 修复字段名：使用 updatedAt 而不是 updated_at
+            worksData.sort((a, b) => new Date(b.updatedAt || b.updated_at || 0) - new Date(a.updatedAt || a.updated_at || 0));
             console.log('📊 作品列表加载完成，作品数量:', worksData.length);
             if (worksData.length > 0) {
                 console.log('📋 作品列表:', worksData.map(w => ({ id: w.id, name: w.name })));
