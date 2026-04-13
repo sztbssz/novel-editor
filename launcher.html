@@ -18686,10 +18686,10 @@ ${_pick(GEN_MONSTER.behavior)}
                                     style="width: 100%; padding: 10px 12px; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 8px;">
                                 <div style="display: flex; gap: 8px; align-items: center;">
                                     <select id="aiKimiModel" style="flex: 1; background: #1a1a2e; border: 1px solid #0f3460; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 13px;">
-                                        <option value="kimi-latest">kimi-latest (最新版/推荐)</option>
+                                        <option value="moonshot-v1-32k">moonshot-v1-32k (推荐/长文版)</option>
                                         <option value="moonshot-v1-8k">moonshot-v1-8k (稳定版)</option>
-                                        <option value="moonshot-v1-32k">moonshot-v1-32k (长文版)</option>
                                         <option value="moonshot-v1-128k">moonshot-v1-128k (超长版)</option>
+                                        <option value="kimi-latest">kimi-latest (最新版/部分Key无权限)</option>
                                     </select>
                                     <button id="aiSaveKeyBtn" type="button" style="padding: 8px 14px; background: #0f3460; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">保存Key</button>
                                 </div>
@@ -18754,10 +18754,10 @@ ${_pick(GEN_MONSTER.behavior)}
             const validModels = ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'];
             const savedModel = localStorage.getItem('novel_editor_kimi_model');
             if (savedModel && validModels.includes(savedModel)) {
-                // 强制升级：旧版默认的 moonshot-v1-8k 写作质量太差，自动切到 kimi-latest
-                if (savedModel === 'moonshot-v1-8k') {
-                    document.getElementById('aiKimiModel').value = 'kimi-latest';
-                    localStorage.setItem('novel_editor_kimi_model', 'kimi-latest');
+                // 强制降级：kimi-latest 部分 Key 无权限，8k 写作质量差，统一切到 32k
+                if (savedModel === 'moonshot-v1-8k' || savedModel === 'kimi-latest') {
+                    document.getElementById('aiKimiModel').value = 'moonshot-v1-32k';
+                    localStorage.setItem('novel_editor_kimi_model', 'moonshot-v1-32k');
                 } else {
                     document.getElementById('aiKimiModel').value = savedModel;
                 }
@@ -19001,7 +19001,7 @@ ${_pick(GEN_MONSTER.behavior)}
             if (options.useAPI && options.apiKey) {
                 try {
                     let result = '';
-                    await streamKimiAPI(prompt, options.apiKey, options.model || 'kimi-latest', (chunk) => {
+                    await streamKimiAPI(prompt, options.apiKey, options.model || 'moonshot-v1-32k', (chunk) => {
                         result += chunk;
                         if (options.onChunk) options.onChunk(chunk);
                     }, options.signal);
@@ -19009,7 +19009,11 @@ ${_pick(GEN_MONSTER.behavior)}
                 } catch (apiErr) {
                     if (apiErr.name === 'AbortError') throw apiErr;
                     console.warn('⚠️ API 生成失败，自动降级到本地模板:', apiErr.message);
-                    showNotification('⚠️ API 调用失败，已自动切换到本地模板生成');
+                    if (apiErr.message && (apiErr.message.includes('404') || apiErr.message.includes('Not found the model'))) {
+                        showNotification('⚠️ 当前模型不可用（404），已降级到本地模板。建议切换为 moonshot-v1-32k 后重试。');
+                    } else {
+                        showNotification('⚠️ API 调用失败，已自动切换到本地模板生成');
+                    }
                     // 继续执行下方的本地模板逻辑
                 }
             }
@@ -19035,63 +19039,83 @@ ${_pick(GEN_MONSTER.behavior)}
 
         // 基于桥段素材生成正文内容（fallback 本地模板）
         function generateContentFromTropes(plotDescription, targetWords, style, matchedTropes) {
+            // 通用模板库（无人名、无固定剧情引用，避免风格JSON污染）
+            const openings = [
+                '雨珠砸在青石板上，溅起细碎的水花。远处的天色沉得像一块浸了墨的布。',
+                '烛火噼啪一声爆了个灯花，映照出室内几道紧绷的侧脸。空气里弥漫着潮湿的霉味。',
+                '黄昏的光线斜斜切进窗棂，把地上那道裂痕照得格外刺眼。风从门缝钻进来，带着一股腥甜。',
+                '路灯突然闪了两下，滋滋的电流声像某种东西在磨牙。',
+                '马蹄声由远及近，在巷口骤然停住。片刻后，脚步声朝着这个方向逼近。'
+            ];
+            const actions = [
+                '他没说话，手指在桌沿轻轻叩了三下。',
+                '门外有人咳嗽了一声，屋内气氛陡然收紧。',
+                '一只乌鸦从屋檐上扑棱棱飞起，留下一串嘶哑的叫声。',
+                '对面的人放下茶杯，瓷底与木桌碰撞出清脆的响。',
+                '靴底碾碎了一根枯枝，声音在寂静中被放大了数倍。',
+                '冷风卷着沙砾打在窗棂上，发出细碎的响动。',
+                '他往前迈了半步，右手不自觉地摸向腰侧。'
+            ];
+            const details = [
+                '他注意到墙角的阴影里有什么东西动了一下，快得像错觉。',
+                '桌上摆着三只茶杯，两只满了，一只底朝天。没人动过那第三只。',
+                '风从门缝钻进来，吹得烛焰东倒西歪。墙上的影子也跟着晃。',
+                '门外传来压低嗓子的交谈，断断续续，只能捕捉到几个模糊的音节。',
+                '他的指节发白，血液冲上耳廓，周遭的嘈杂一瞬间被抽成真空。',
+                '镜子里的自己正在笑，但他明明没有笑。',
+                '袖口中滑出一把匕首，刀柄上缠着褪色的红绸。'
+            ];
+            const endings = [
+                '地上只剩半盏残茶，水渍正在慢慢收干。他低头看了眼掌心，那里多了一道红痕。',
+                '天边泛起蟹壳青，一夜未眠。他推开窗，晨风带着潮气扑进来，却吹不散屋里那股铁锈味。',
+                '门外传来三长两短的叩门声。他没有动，只是将那枚令牌缓缓收进袖口。',
+                '烛火终于燃尽，黑暗吞没了最后一寸光亮。他坐在原地，听见自己的心跳声格外清晰。',
+                '马蹄声再次响起，这次渐行渐远。他低头看着地上那道裂痕，知道有些东西再也拼不回去了。'
+            ];
+
+            const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+            // 把剧情描述拆成场景句，作为叙述骨架
+            const rawSentences = plotDescription.split(/[。！？\n]/).map(s => s.trim()).filter(s => s.length > 3);
+            const scenes = rawSentences.length > 0 ? rawSentences : ['一切才刚刚开始'];
+
             const paragraphs = [];
-            const tmpls = getStyleTemplates(style);
-            const plotSnippet = extractTropeSnippet(plotDescription, 40) || '一切才刚刚开始';
-            
-            // 开篇：用具体场景锚点 + 剧情核心
-            paragraphs.push(fillTemplate(tmpls.opening[0], plotDescription));
-            paragraphs.push(tmpls.hooks[Math.floor(Math.random() * tmpls.hooks.length)]);
-            
-            // 引入冲突
-            paragraphs.push(`"${plotSnippet}。"——这个念头在他脑海里闪过的瞬间，周围的空气仿佛都凝固了一瞬。`);
-            
-            // 发展：加入对话和动作
-            if (tmpls.development.length > 0) {
-                paragraphs.push(fillTemplate(tmpls.development[0], plotDescription));
-            }
-            if (tmpls.transitions.length > 0) {
-                paragraphs.push(tmpls.transitions[0]);
-            }
-            
-            // 细节扩充（观察类）
-            if (tmpls.expansions.length > 0) {
-                paragraphs.push(tmpls.expansions[0]);
-            }
-            
-            // 高潮：情绪爆发
-            if (tmpls.climax.length > 0) {
-                paragraphs.push(fillTemplate(tmpls.climax[0], plotDescription));
-            }
-            
-            // 更多过渡和细节，填充字数
-            const extraPool = [...tmpls.transitions, ...tmpls.expansions, ...tmpls.development.slice(1), ...tmpls.climax.slice(1)];
-            const neededChars = targetWords - 300;
-            let addedChars = 0;
-            let idx = 0;
-            while (addedChars < neededChars && idx < extraPool.length && idx < 12) {
-                const p = fillTemplate(extraPool[idx], plotDescription);
-                if (p && !paragraphs.includes(p)) {
-                    paragraphs.push(p);
-                    addedChars += p.length;
+            paragraphs.push(rand(openings));
+            paragraphs.push(rand(actions));
+
+            // 将剧情句子自然地铺陈成段落，避免直接引用或复读
+            for (let i = 0; i < scenes.length; i++) {
+                const s = scenes[i];
+                if (i === 0) {
+                    paragraphs.push(`${s}。`);
+                } else if (i === 1) {
+                    paragraphs.push(`${s}。周遭的空气仿佛凝固了一瞬。`);
+                } else if (i === 2) {
+                    paragraphs.push(rand(details));
+                    paragraphs.push(`${s}。`);
+                } else if (i === 3) {
+                    paragraphs.push(`${s}。远处的低吼声在提醒着危险尚未散去。`);
+                } else {
+                    paragraphs.push(`${s}。`);
                 }
-                idx++;
             }
-            
-            // 结尾
-            paragraphs.push(tmpls.ending[Math.floor(Math.random() * tmpls.ending.length)]);
-            
-            let content = paragraphs.filter(p => p && p.trim()).join('\n\n');
-            
-            // 字数仍不够时，循环插入过渡和扩充段落
-            while (content.length < targetWords * 0.85 && extraPool.length > 0) {
-                const p = fillTemplate(extraPool[Math.floor(Math.random() * extraPool.length)], plotDescription);
-                if (p) {
+
+            // 用细节和动作补充字数
+            const fillerPool = [...actions, ...details];
+            let content = paragraphs.join('\n\n');
+            let safety = 0;
+            while (content.length < targetWords * 0.8 && safety < 20) {
+                const p = rand(fillerPool);
+                if (!paragraphs.includes(p)) {
                     paragraphs.splice(paragraphs.length - 1, 0, p);
-                    content = paragraphs.filter(x => x && x.trim()).join('\n\n');
                 }
+                content = paragraphs.join('\n\n');
+                safety++;
             }
-            
+
+            paragraphs.push(rand(endings));
+            content = paragraphs.filter(p => p && p.trim()).join('\n\n');
+
             const fallbackNote = `【系统提示：当前为本地模板占位生成，API 调用失败时已自动降级。建议检查 API Key 与模型名称后重新生成以获得更佳效果。】\n\n`;
             return fallbackNote + content;
         }
