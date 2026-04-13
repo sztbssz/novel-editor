@@ -3907,7 +3907,10 @@
                 this.createFailCount = 0;
             }
 
-            isConfigured() { return !!this.token && !this.cloudSyncDisabled; }
+            isConfigured() {
+                const disabled = localStorage.getItem('github_sync_disabled') === 'true';
+                return !!this.token && !disabled;
+            }
             
             disableCloudSync() {
                 this.cloudSyncDisabled = true;
@@ -4003,7 +4006,7 @@
 
             async getOrCreateGist() {
                 // 如果禁用了云同步，直接返回null
-                if (this.cloudSyncDisabled) {
+                if (localStorage.getItem('github_sync_disabled') === 'true') {
                     console.log('[GitHubSync] 云同步已禁用，跳过Gist操作');
                     return null;
                 }
@@ -4146,6 +4149,12 @@
 
             // 从Gist加载指定文件
             async loadFile(filename) {
+                // 如果禁用了云同步，直接返回null
+                if (localStorage.getItem('github_sync_disabled') === 'true') {
+                    console.log(`[GitHubSync] 云同步已禁用，跳过加载 ${filename}`);
+                    return null;
+                }
+                
                 if (!this.gistId || !this.token) {
                     console.log(`[GitHubSync] 无法加载文件 ${filename}: 未配置Gist ID或Token`);
                     return null;
@@ -4199,6 +4208,12 @@
 
             // 保存指定文件到Gist
             async saveFile(filename, content) {
+                // 如果禁用了云同步，直接返回false
+                if (localStorage.getItem('github_sync_disabled') === 'true') {
+                    console.log(`[GitHubSync] 云同步已禁用，跳过保存 ${filename}`);
+                    return false;
+                }
+                
                 if (!this.token) {
                     console.log(`[GitHubSync] 无法保存文件 ${filename}: 未配置Token`);
                     this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
@@ -4267,6 +4282,12 @@
 
             // 批量保存多个文件
             async saveFiles(files) {
+                // 如果禁用了云同步，直接返回false
+                if (localStorage.getItem('github_sync_disabled') === 'true') {
+                    console.log('[GitHubSync] 云同步已禁用，跳过批量保存');
+                    return false;
+                }
+                
                 if (!this.token) {
                     console.log('[GitHubSync] 无法批量保存: 未配置Token');
                     this.lastError = { type: 'NO_TOKEN', message: '未配置GitHub Token' };
