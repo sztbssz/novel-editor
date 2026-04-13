@@ -18686,10 +18686,10 @@ ${_pick(GEN_MONSTER.behavior)}
                                     style="width: 100%; padding: 10px 12px; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px; color: #fff; font-size: 13px; margin-bottom: 8px;">
                                 <div style="display: flex; gap: 8px; align-items: center;">
                                     <select id="aiKimiModel" style="flex: 1; background: #1a1a2e; border: 1px solid #0f3460; color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 13px;">
+                                        <option value="kimi-latest">kimi-latest (最新版/推荐)</option>
                                         <option value="moonshot-v1-8k">moonshot-v1-8k (稳定版)</option>
                                         <option value="moonshot-v1-32k">moonshot-v1-32k (长文版)</option>
                                         <option value="moonshot-v1-128k">moonshot-v1-128k (超长版)</option>
-                                        <option value="kimi-latest">kimi-latest (最新版)</option>
                                     </select>
                                     <button id="aiSaveKeyBtn" type="button" style="padding: 8px 14px; background: #0f3460; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">保存Key</button>
                                 </div>
@@ -18925,8 +18925,10 @@ ${_pick(GEN_MONSTER.behavior)}
                             { role: 'system', content: '你是一位顶尖的中文网络小说作家，擅长模仿各种知名小说的写作风格。请严格遵循用户的文风数据要求和结构要求创作。' },
                             { role: 'user', content: prompt }
                         ],
-                        temperature: 0.75,
+                        temperature: 0.72,
                         max_completion_tokens: 8192,
+                        frequency_penalty: 0.5,
+                        presence_penalty: 0.3,
                         stream: true
                     }),
                     signal: controller.signal
@@ -18993,7 +18995,7 @@ ${_pick(GEN_MONSTER.behavior)}
             if (options.useAPI && options.apiKey) {
                 try {
                     let result = '';
-                    await streamKimiAPI(prompt, options.apiKey, options.model || 'moonshot-v1-8k', (chunk) => {
+                    await streamKimiAPI(prompt, options.apiKey, options.model || 'kimi-latest', (chunk) => {
                         result += chunk;
                         if (options.onChunk) options.onChunk(chunk);
                     }, options.signal);
@@ -19397,74 +19399,59 @@ ${_pick(GEN_MONSTER.behavior)}
             const avgSent = s ? s.avg_sentence_len : 25;
             const shortPara = s ? Math.round(s.short_para_ratio * 100) : 30;
             const dialogueRatio = s ? s.dialogue_ratio : 0.2;
-            
-            // 提取高频标记词和修辞词
+
             let topMarkers = [];
             let topRhetoric = [];
             if (s) {
-                topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+                topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k])=>k);
                 topRhetoric = Object.entries(s.rhetoric || {}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k);
             }
-            
-            let prompt = `你现在不是AI，而是一位在网文界摸爬滚打十年的职业作家。你的任务：根据以下剧情，写出一章可以直接在起点/番茄上架的网文正文。要求读者看完后立刻想点下一章。\n\n`;
-            
-            prompt += `===== 本章剧情核 =====\n${plotDescription}\n\n`;
-            
+
+            let prompt = `【核心禁令 - 违反即废品】\n`;
+            prompt += `- 严禁重复：同一段动作、神态或对话严禁复制粘贴式重复出现。每次描写必须用不同动词、不同角度、不同结果。\n`;
+            prompt += `- 严禁情绪标签：禁止"他很害怕/愤怒/悲伤"，必须换成生理反应（手心出汗、喉结滚动、指节发白）。\n`;
+            prompt += `- 严禁AI套话：禁止"他明白了、众所周知、不可否认的是、这一切都在预示着"。\n`;
+            prompt += `- 严禁镜头语言：禁止"只见、视线里、目光所及之处"。直接写事物。\n`;
+            prompt += `- 严禁总结句：禁止"他知道命运已改变/这只是开始"，结尾必须是具体动作、声音或物件。\n`;
+            prompt += `- 严禁元数据：禁止"这一桥段常见于《XXX》、深化了核心内涵"等评论语言。\n`;
+            prompt += `- 对话带刺：禁止白开水寒暄，每句话都要包含试探、威胁、嘲讽或潜台词。\n`;
+            prompt += `- 五感优先：每个场景必须调动至少两种感官（视觉+听觉/嗅觉+触觉）。\n`;
+            prompt += `- 信息增量：禁止为凑字数重复相同情节，每次推进必须出现新危机、新对话或新细节。\n\n`;
+
+            if (style && style.id !== 'default') {
+                prompt += `【文风：${style.name}】\n`;
+                prompt += `- 平均句长约 ${avgSent} 字，禁止超过40字长句。\n`;
+                prompt += `- 短段落（1-3句）占比 ${shortPara}% 以上。\n`;
+                if (dialogueRatio > 0.25) prompt += `- 对话占比高，剧情靠对话推进，narration要少。\n`;
+                else if (dialogueRatio < 0.1) prompt += `- 对话占比低，以动作和环境压迫感为主。\n`;
+                if (topMarkers.length > 0) prompt += `- 标志性高频词有意识点缀：${topMarkers.join('、')}\n`;
+                if (topRhetoric.length > 0) prompt += `- 修辞习惯参考：${topRhetoric.join('、')}\n`;
+                prompt += `\n`;
+            }
+
+            prompt += `【剧情】\n${plotDescription}\n\n`;
+
             if (matchedTropes && matchedTropes.length > 0) {
-                prompt += `===== 情绪节拍参考（只吸收冲突点，禁止复制原文）=====\n`;
+                prompt += `【情节参考 - 只吸收冲突点，禁止复制原文】\n`;
                 matchedTropes.forEach((match, index) => {
                     const trope = match.trope;
                     const parts = parseTropeDescription(trope.description);
                     const snippet = extractTropeSnippet(trope.usage || parts.scene || '', 30);
-                    prompt += `节拍${index+1}：${trope.title} → 核心冲突是"${snippet}"\n`;
+                    prompt += `${index + 1}. ${trope.title}：${snippet}\n`;
                 });
                 prompt += `\n`;
             }
-            
-            if (style && style.id !== 'default') {
-                prompt += `===== 必须模仿的文风：${style.name} =====\n`;
-                prompt += `${style.prompt || ''}\n`;
-                prompt += `【硬性量化指标 - 必须达标，否则重写】\n`;
-                prompt += `- 平均句长严格控制在 ${avgSent} 字左右。句子要短促有力，禁止出现超过40字的长句。\n`;
-                prompt += `- 短段落（1-3句）占比必须达到 ${shortPara}% 以上。多用换行制造呼吸感。\n`;
-                if (dialogueRatio > 0.25) {
-                    prompt += `- 对话占比必须超过 25%。剧情主要靠人物对话推进， narration 要少。对话必须带刺、有潜台词、有冲突，禁止"你好/谢谢/再见"式白开水对白。\n`;
-                } else if (dialogueRatio < 0.1) {
-                    prompt += `- 对话占比低（<10%）。以动作、环境压迫感和主角内心推演为主，少对白。\n`;
-                }
-                if (topMarkers.length > 0) {
-                    prompt += `- 标志性高频词必须有意识点缀（但不要堆砌）：${topMarkers.join('、')}\n`;
-                }
-                if (topRhetoric.length > 0) {
-                    prompt += `- 修辞习惯参考：${topRhetoric.join('、')}\n`;
-                }
-                prompt += `\n`;
-            }
-            
-            prompt += `===== 去AI味十条戒律（违反任何一条都是废品）=====\n`;
-            prompt += `1. 【绝对禁止的情绪标签】禁止写"他很害怕/愤怒/悲伤/惊讶"。必须换成生理反应和动作：手心出汗、喉结滚动、后退半步撞翻椅子、瞳孔收缩、呼吸变急、指节发白。\n`;
-            prompt += `2. 【绝对禁止的AI套话】严禁出现：他明白了、众所周知、不可否认的是、事实上、不得不说、从某种意义上说、这一切都在预示着。\n`;
-            prompt += `3. 【绝对禁止的镜头语言】严禁：只见、视线里、画面中、目光所及之处。直接写事物本身。\n`;
-            prompt += `4. 【绝对禁止的总结句】严禁在段落结尾写"最终他做出了选择/这一切才刚刚开始/他知道自己的命运已经改变"。结尾必须是具体的物象、声音或动作，把判断权交给读者。\n`;
-            prompt += `5. 【绝对禁止的桥段元数据】严禁输出"这一桥段常见于《XXX》、为后续情节发展奠定了重要基础、深化了XXX的核心内涵"。你写的是小说，不是百度百科。\n`;
-            prompt += `6. 【五感优先原则】每个新场景或新危机，必须同时调动至少两种感官：视觉+听觉，或嗅觉+触觉。不要只写"天黑了"，要写"路灯突然闪了两下，滋滋的电流声像某种东西在磨牙"。\n`;
-            prompt += `7. 【对话必须带刺】每个人说话都要有目的：试探、威胁、掩饰、嘲讽、讨价还价。禁止两个人和和气气地交换信息。\n`;
-            prompt += `8. 【信息增量原则】每一句话都必须给读者新信息。禁止"水字数"式的重复心理描写和空洞环境堆砌。\n`;
-            prompt += `9. 【动作即心理原则】禁止大段独白。主角的心理活动不得超过三句，必须通过动作、神态和对话流露出来。\n`;
-            prompt += `10. 【具体锚点原则】段落开头必须有一个具体的物象锚点：一个动作、一个声音、一个气味、一个触感。禁止以抽象概念开头（时间、情绪、总结）。\n\n`;
-            
-            prompt += `===== 字数与结构死命令 =====\n`;
-            prompt += `- 目标字数：${targetWords} 字。必须写满，只多不少。\n`;
-            prompt += `- 如果写到一半发现字数不够，不允许草草收尾。必须继续扩展：加入更多对话回合、细化动作分解（比如一拳打出，要写出手臂肌肉绷紧、风声、对方表情变化、打击感、反作用力）、增加环境细节和旁观者反应。\n`;
-            prompt += `- 章节结构必须是：\n`;
-            prompt += `  ① 开头50字内必须出现第一个冲突或悬念（不要铺垫世界观）。\n`;
-            prompt += `  ② 中间必须有至少3次剧情推进（危机升级/对话交锋/新信息揭露）。\n`;
-            prompt += `  ③ 结尾必须卡在具体动作或对话上，留下钩子，让读者必须点下一章。\n\n`;
-            
-            prompt += `===== 输出格式死命令 =====\n`;
-            prompt += `直接输出小说正文。禁止出现任何标签、分点、总结、作者点评。禁止写"第一章：XXX"这种标题。从正文第一个字开始写。\n\n`;
-            prompt += `开始写：`;
-            
+
+            prompt += `【字数要求】\n`;
+            prompt += `目标约 ${targetWords} 字。内容要饱满，但严禁为凑字数而重复相同情节或复制粘贴段落。如果写到末尾发现字数不足，请用新的对话回合、新的环境细节或新的动作分解来补充，而不是重复已有内容。\n\n`;
+
+            prompt += `【结构要求】\n`;
+            prompt += `1. 开头50字内必须出现冲突或悬念，不要铺垫世界观。\n`;
+            prompt += `2. 中间至少3次剧情推进（危机升级/对话交锋/新信息揭露），每次推进必须与前一次不同。\n`;
+            prompt += `3. 结尾卡在具体动作或对话上，留下钩子。\n\n`;
+
+            prompt += `直接输出正文，不要标题、不要标签、不要分点、不要作者点评：\n`;
+
             return prompt;
         }
 
