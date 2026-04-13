@@ -4467,13 +4467,21 @@
                         console.log(`[${this.storeName}] 云端数据: ${cloudRecords.length} 条 (v${cloudVersion})`);
                         
                         // 合并策略：以云端为准，但保留本地独有的记录
-                        const mergedData = this.mergeData(this.data, cloudRecords);
+                        let mergedData = this.mergeData(this.data, cloudRecords);
+                        
+                        // 业务去重：针对卷和章节按业务键去重
+                        if (this.storeName === 'volumes' || this.storeName === 'novel_editor_volumes') {
+                            mergedData = this.deduplicateVolumes(mergedData);
+                        } else if (this.storeName === 'chapters' || this.storeName === 'novel_editor_chapters') {
+                            mergedData = this.deduplicateChapters(mergedData);
+                        }
+                        
                         this.data = mergedData;
                         
                         // 保存合并后的数据到本地
                         await this.saveToLocal(false);
                         
-                        // 如果本地有更新，同步回云端
+                        // 如果本地有更新或去重后数量变化，同步回云端
                         if (this.data.length !== cloudRecords.length || cloudVersion !== localVersion) {
                             await this.syncToCloud();
                         }
@@ -4527,13 +4535,63 @@
                 return false;
             }
 
-            // 合并本地和云端数据（以云端为准，保留本地独有的）
+            // 合并本地和云端数据（以云端为准，保留本地独有的，同时按 id 去重）
             mergeData(localData, cloudData) {
-                const cloudIds = new Set(cloudData.map(item => item.id));
-                const localOnly = localData.filter(item => !cloudIds.has(item.id));
-                
-                // 云端数据 + 本地独有的数据
-                return [...cloudData, ...localOnly];
+                const seen = new Set();
+                const merged = [];
+                // 先放云端数据，并去重
+                for (const item of cloudData) {
+                    if (item && item.id !== undefined && !seen.has(item.id)) {
+                        seen.add(item.id);
+                        merged.push(item);
+                    }
+                }
+                // 再放本地独有的数据
+                for (const item of localData) {
+                    if (item && item.id !== undefined && !seen.has(item.id)) {
+                        seen.add(item.id);
+                        merged.push(item);
+                    }
+                }
+                return merged;
+            }
+
+            // 业务去重：同一作品下 volumeNumber + title 相同的卷
+            deduplicateVolumes(data) {
+                const groups = new Map();
+                for (const v of data) {
+                    const key = `${Number(v.workId)}|${v.volumeNumber}|${(v.title || '').trim()}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(v);
+                }
+                const result = [];
+                for (const list of groups.values()) {
+                    list.sort((a, b) => a.id - b.id);
+                    result.push(list[0]);
+                    if (list.length > 1) {
+                        console.warn(`[${this.storeName}] 云端合并去重：删除 ${list.length - 1} 个重复卷`, list[0].title);
+                    }
+                }
+                return result;
+            }
+
+            // 业务去重：同一卷下 chapterNumber + title 相同的章节
+            deduplicateChapters(data) {
+                const groups = new Map();
+                for (const ch of data) {
+                    const key = `${Number(ch.volumeId)}|${ch.chapterNumber}|${(ch.title || '').trim()}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(ch);
+                }
+                const result = [];
+                for (const list of groups.values()) {
+                    list.sort((a, b) => a.id - b.id);
+                    result.push(list[0]);
+                    if (list.length > 1) {
+                        console.warn(`[${this.storeName}] 云端合并去重：删除 ${list.length - 1} 个重复章节`, list[0].title);
+                    }
+                }
+                return result;
             }
 
             // 获取本地版本号
@@ -8853,10 +8911,102 @@
         let chaptersData = [];
         let expandedVolumes = new Set();
         let draggedChapter = null;
+        let isAddingChapter = false;
+        let isAddingVolume = false;
+        let isApplyingTemplate = false;
+
+        // 自动修复重复卷（同一作品下 volumeNumber + title 相同）
+        async function fixDuplicateVolumes() {
+            try {
+                const allVolumes = await db.getAll('volumes');
+                const groups = new Map();
+                for (const v of allVolumes) {
+                    const key = `${Number(v.workId)}|${v.volumeNumber}|${(v.title || '').trim()}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(v);
+                }
+                let removed = 0;
+                for (const [key, list] of groups) {
+                    if (list.length > 1) {
+                        list.sort((a, b) => a.id - b.id);
+                        for (let i = 1; i < list.length; i++) {
+                            await db.delete('volumes', list[i].id);
+                            removed++;
+                            console.warn('🧹 删除重复卷:', list[i].id, list[i].title, 'key=', key);
+                        }
+                    }
+                }
+                if (removed > 0) {
+                    console.log('✅ 自动清理 volumes 重复完成，删除', removed, '条');
+                }
+            } catch (e) {
+                console.error('清理 volumes 重复卷失败:', e);
+            }
+            
+            // 同样清理 outline_volumes
+            try {
+                const allOutlineVolumes = await db.getAll('outline_volumes');
+                const groups = new Map();
+                for (const v of allOutlineVolumes) {
+                    const key = `${Number(v.workId)}|${v.volumeNumber || 0}|${(v.title || '').trim()}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(v);
+                }
+                let removed = 0;
+                for (const [key, list] of groups) {
+                    if (list.length > 1) {
+                        list.sort((a, b) => a.id - b.id);
+                        for (let i = 1; i < list.length; i++) {
+                            await db.delete('outline_volumes', list[i].id);
+                            removed++;
+                            console.warn('🧹 删除重复 outline_volume:', list[i].id, list[i].title, 'key=', key);
+                        }
+                    }
+                }
+                if (removed > 0) {
+                    console.log('✅ 自动清理 outline_volumes 重复完成，删除', removed, '条');
+                }
+            } catch (e) {
+                console.error('清理 outline_volumes 重复卷失败:', e);
+            }
+        }
+
+        // 自动修复重复章节（同一卷内 chapterNumber + title 相同）
+        async function fixDuplicateChapters() {
+            try {
+                const allChapters = await db.getAll('chapters');
+                const groups = new Map();
+                for (const ch of allChapters) {
+                    const key = `${Number(ch.volumeId)}|${ch.chapterNumber}|${(ch.title || '').trim()}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(ch);
+                }
+                let removed = 0;
+                for (const [key, list] of groups) {
+                    if (list.length > 1) {
+                        list.sort((a, b) => a.id - b.id);
+                        for (let i = 1; i < list.length; i++) {
+                            await db.delete('chapters', list[i].id);
+                            removed++;
+                            console.warn('🧹 删除重复章节:', list[i].id, list[i].title, 'key=', key);
+                        }
+                    }
+                }
+                if (removed > 0) {
+                    console.log('✅ 自动清理重复章节完成，删除', removed, '条');
+                }
+            } catch (e) {
+                console.error('清理重复章节失败:', e);
+            }
+        }
 
         // 初始化情节大纲数据
         async function initPlotData() {
             console.log('🚀 initPlotData 被调用');
+            
+            // 自动修复数据库中的重复卷和重复章节
+            await fixDuplicateVolumes();
+            await fixDuplicateChapters();
             
             // 从 localStorage 读取保存的 currentWorkId
             const savedWorkId = localStorage.getItem('novel_editor_current_work_id');
@@ -8958,24 +9108,28 @@
                     console.warn('加载剧情大纲卷数据失败:', e);
                 }
                 
-                // 合并两个来源的卷数据（去重）
+                // 合并两个来源的卷数据（按业务键去重：workId + volumeNumber + title）
                 const volumeMap = new Map();
                 
                 // 先添加正文创作的卷
                 volumes.forEach(v => {
-                    volumeMap.set(v.id, v);
+                    const key = `${Number(v.workId)}|${v.volumeNumber || 0}|${(v.title || '').trim()}`;
+                    volumeMap.set(key, v);
                 });
                 
-                // 再添加剧情大纲中的卷（如果没有重复id）
+                // 再添加剧情大纲中的卷（如果业务键不重复）
                 outlineVolumes.forEach((v, index) => {
-                    if (!volumeMap.has(v.id)) {
-                        // 转换outline_volume格式为volume格式
-                        volumeMap.set(v.id, {
-                            ...v,
-                            volumeNumber: v.volumeNumber || (volumes.length + index + 1),
-                            workId: currentWorkId,
-                            isFromOutline: true  // 标记来自剧情大纲
-                        });
+                    const normalized = {
+                        ...v,
+                        volumeNumber: v.volumeNumber || (volumes.length + index + 1),
+                        workId: currentWorkId,
+                        isFromOutline: true  // 标记来自剧情大纲
+                    };
+                    const key = `${Number(normalized.workId)}|${normalized.volumeNumber}|${(normalized.title || '').trim()}`;
+                    if (!volumeMap.has(key)) {
+                        volumeMap.set(key, normalized);
+                    } else {
+                        console.warn('⚠️ renderPlot 跳过重复的 outline_volume:', v.title, 'id=', v.id);
                     }
                 });
                 
@@ -9214,67 +9368,77 @@
 
         // 应用大纲模板
         async function applyOutlineTemplate(template) {
-            const content = template.content;
+            if (isApplyingTemplate) {
+                showNotification('⏳ 正在创建作品，请稍候');
+                return;
+            }
+            isApplyingTemplate = true;
             
-            // 创建新作品
-            const workName = prompt('使用模板创建新作品\n\n作品名称：', `${template.name}_${new Date().toLocaleDateString()}`);
-            if (!workName) return;
+            try {
+                const content = template.content;
+                
+                // 创建新作品
+                const workName = prompt('使用模板创建新作品\n\n作品名称：', `${template.name}_${new Date().toLocaleDateString()}`);
+                if (!workName) return;
 
-            const work = await db.add('works', { name: workName });
-            currentWorkId = work;
+                const work = await db.add('works', { name: workName });
+                currentWorkId = work;
 
-            // 根据模板创建卷
-            if (content.act1) {
-                const vol1 = await db.add('volumes', {
-                    workId: work,
-                    volumeNumber: 1,
-                    title: content.act1.title || '第一卷',
-                    summary: content.act1.purpose || ''
-                });
+                // 根据模板创建卷
+                if (content.act1) {
+                    const vol1 = await db.add('volumes', {
+                        workId: work,
+                        volumeNumber: 1,
+                        title: content.act1.title || '第一卷',
+                        summary: content.act1.purpose || ''
+                    });
 
-                // 创建章节
-                if (content.act1.keyEvents) {
-                    for (let i = 0; i < content.act1.keyEvents.length; i++) {
-                        await db.add('chapters', {
-                            volumeId: vol1,
-                            chapterNumber: i + 1,
-                            title: `第${i + 1}章：${content.act1.keyEvents[i].substring(0, 20)}...`,
-                            content: content.act1.keyEvents[i],
-                            wordCount: 0
-                        });
+                    // 创建章节
+                    if (content.act1.keyEvents) {
+                        for (let i = 0; i < content.act1.keyEvents.length; i++) {
+                            await db.add('chapters', {
+                                volumeId: vol1,
+                                chapterNumber: i + 1,
+                                title: `第${i + 1}章：${content.act1.keyEvents[i].substring(0, 20)}...`,
+                                content: content.act1.keyEvents[i],
+                                wordCount: 0
+                            });
+                        }
                     }
                 }
-            }
 
-            if (content.act2) {
-                const vol2 = await db.add('volumes', {
-                    workId: work,
-                    volumeNumber: 2,
-                    title: content.act2.title || '第二卷',
-                    summary: content.act2.purpose || ''
-                });
+                if (content.act2) {
+                    const vol2 = await db.add('volumes', {
+                        workId: work,
+                        volumeNumber: 2,
+                        title: content.act2.title || '第二卷',
+                        summary: content.act2.purpose || ''
+                    });
 
-                // 创建关键章节
-                if (content.act2.keyEvents || content.act2.arcs) {
-                    const events = content.act2.keyEvents || 
-                        (content.act2.arcs ? content.act2.arcs.flatMap(a => a.events || []) : []);
-                    
-                    for (let i = 0; i < Math.min(events.length, 5); i++) {
-                        await db.add('chapters', {
-                            volumeId: vol2,
-                            chapterNumber: i + 1,
-                            title: `第${i + 1}章`,
-                            content: typeof events[i] === 'string' ? events[i] : events[i].name || '',
-                            wordCount: 0
-                        });
+                    // 创建关键章节
+                    if (content.act2.keyEvents || content.act2.arcs) {
+                        const events = content.act2.keyEvents || 
+                            (content.act2.arcs ? content.act2.arcs.flatMap(a => a.events || []) : []);
+                        
+                        for (let i = 0; i < Math.min(events.length, 5); i++) {
+                            await db.add('chapters', {
+                                volumeId: vol2,
+                                chapterNumber: i + 1,
+                                title: `第${i + 1}章`,
+                                content: typeof events[i] === 'string' ? events[i] : events[i].name || '',
+                                wordCount: 0
+                            });
+                        }
                     }
                 }
-            }
 
-            await db.incrementTemplateUsage(template.id);
-            await initPlotData();
-            renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
-            showNotification(`✅ 已使用模板 "${template.name}" 创建作品`);
+                await db.incrementTemplateUsage(template.id);
+                await initPlotData();
+                renderPlot(document.getElementById('editorContent') || document.getElementById('mainContent'));
+                showNotification(`✅ 已使用模板 "${template.name}" 创建作品`);
+            } finally {
+                isApplyingTemplate = false;
+            }
         }
 
         // 同卷内重排序
@@ -9465,39 +9629,56 @@
 
         // 添加卷
         async function addVolume() {
-            if (!currentWorkId) {
-                showNotification('请先选择一个作品');
+            if (isAddingVolume) {
+                showNotification('⏳ 正在添加卷，请稍候');
                 return;
             }
-
-            const volumes = await db.getAll('volumes', 'workId', currentWorkId);
-            const nextNumber = volumes.length + 1;
-
-            const title = prompt(`请输入第${nextNumber}卷标题：`);
-            if (!title) return;
-
-            const summary = prompt('请输入本卷简介（可选）：') || '';
-
-            const volume = {
-                workId: currentWorkId,
-                volumeNumber: nextNumber,
-                title: title.trim(),
-                summary: summary.trim(),
-                outline: ''  // 卷大纲，支持几千字
-            };
-
-            const volumeId = await db.add('volumes', volume);
-            console.log('✅ 卷已添加，ID:', volumeId);
-            await new Promise(resolve => setTimeout(resolve, 100));
+            isAddingVolume = true;
             
-            expandedVolumes.add(Number(volumeId));
-            await refreshChaptersData();
-            
-            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
-            if (container) {
-                await renderPlot(container);
+            try {
+                if (!currentWorkId) {
+                    showNotification('请先选择一个作品');
+                    return;
+                }
+
+                const volumes = await db.getAll('volumes', 'workId', currentWorkId);
+                const nextNumber = volumes.length + 1;
+
+                const title = prompt(`请输入第${nextNumber}卷标题：`);
+                if (!title) return;
+
+                const summary = prompt('请输入本卷简介（可选）：') || '';
+                
+                // 二次查重
+                const duplicate = volumes.find(v => v.volumeNumber === nextNumber && v.title === title.trim());
+                if (duplicate) {
+                    showNotification('⚠️ 该卷已存在，请勿重复添加');
+                    return;
+                }
+
+                const volume = {
+                    workId: currentWorkId,
+                    volumeNumber: nextNumber,
+                    title: title.trim(),
+                    summary: summary.trim(),
+                    outline: ''  // 卷大纲，支持几千字
+                };
+
+                const volumeId = await db.add('volumes', volume);
+                console.log('✅ 卷已添加，ID:', volumeId);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                expandedVolumes.add(Number(volumeId));
+                await refreshChaptersData();
+                
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) {
+                    await renderPlot(container);
+                }
+                showNotification('✅ 卷添加成功');
+            } finally {
+                isAddingVolume = false;
             }
-            showNotification('✅ 卷添加成功');
         }
 
         // 编辑卷
@@ -9662,59 +9843,76 @@
 
         // 添加章节
         async function addChapter(volumeId) {
-            console.log('📝 addChapter 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
+            if (isAddingChapter) {
+                showNotification('⏳ 正在添加章节，请稍候');
+                return;
+            }
+            isAddingChapter = true;
             
-            const chapters = await db.getAll('chapters', 'volumeId', volumeId);
-            console.log('📚 当前卷已有章节数:', chapters.length);
-            
-            const nextNumber = chapters.length + 1;
-
-            const title = prompt(`请输入第${nextNumber}章标题：`);
-            if (!title) return;
-
-            const chapter = {
-                volumeId: Number(volumeId),
-                chapterNumber: nextNumber,
-                title: title.trim(),
-                content: '',
-                wordCount: 0
-            };
-            console.log('📝 准备添加章节:', chapter);
-
-            // 添加章节并等待完成
-            const chapterId = await db.add('chapters', chapter);
-            console.log('✅ 章节已添加，ID:', chapterId);
-            
-            // 确保数据已写入
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            expandedVolumes.add(Number(volumeId));
-            console.log('📂 expandedVolumes:', Array.from(expandedVolumes));
-            
-            // 记录写作统计
             try {
-                await recordWritingStats('chapter_save', {
-                    chaptersAdded: 1,
-                    wordCount: 0,
-                    minutesActive: 1
-                });
-            } catch (e) {
-                console.warn('记录统计失败:', e);
+                console.log('📝 addChapter 被调用，volumeId:', volumeId, '类型:', typeof volumeId);
+                
+                const chapters = await db.getAll('chapters', 'volumeId', volumeId);
+                console.log('📚 当前卷已有章节数:', chapters.length);
+                
+                const nextNumber = chapters.length + 1;
+
+                const title = prompt(`请输入第${nextNumber}章标题：`);
+                if (!title) return;
+
+                const chapter = {
+                    volumeId: Number(volumeId),
+                    chapterNumber: nextNumber,
+                    title: title.trim(),
+                    content: '',
+                    wordCount: 0
+                };
+                console.log('📝 准备添加章节:', chapter);
+
+                // 再次检查是否已有完全相同标题的章节（防止重复点击）
+                const duplicate = chapters.find(c => c.chapterNumber === nextNumber && c.title === chapter.title);
+                if (duplicate) {
+                    showNotification('⚠️ 该章节已存在，请勿重复添加');
+                    return;
+                }
+
+                // 添加章节并等待完成
+                const chapterId = await db.add('chapters', chapter);
+                console.log('✅ 章节已添加，ID:', chapterId);
+                
+                // 确保数据已写入
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                expandedVolumes.add(Number(volumeId));
+                console.log('📂 expandedVolumes:', Array.from(expandedVolumes));
+                
+                // 记录写作统计
+                try {
+                    await recordWritingStats('chapter_save', {
+                        chaptersAdded: 1,
+                        wordCount: 0,
+                        minutesActive: 1
+                    });
+                } catch (e) {
+                    console.warn('记录统计失败:', e);
+                }
+                
+                // 重新加载章节数据
+                await refreshChaptersData();
+                console.log('📊 章节数据已刷新，当前章节数:', chaptersData.length);
+                console.log('📋 章节列表:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId, type: typeof c.volumeId})));
+                
+                // 重新渲染
+                const container = document.getElementById('editorContent') || document.getElementById('mainContent');
+                if (container) {
+                    await renderPlot(container);
+                    console.log('🎨 界面已重新渲染');
+                }
+                
+                showNotification('✅ 章节添加成功');
+            } finally {
+                isAddingChapter = false;
             }
-            
-            // 重新加载章节数据
-            await refreshChaptersData();
-            console.log('📊 章节数据已刷新，当前章节数:', chaptersData.length);
-            console.log('📋 章节列表:', chaptersData.map(c => ({id: c.id, title: c.title, volumeId: c.volumeId, type: typeof c.volumeId})));
-            
-            // 重新渲染
-            const container = document.getElementById('editorContent') || document.getElementById('mainContent');
-            if (container) {
-                await renderPlot(container);
-                console.log('🎨 界面已重新渲染');
-            }
-            
-            showNotification('✅ 章节添加成功');
         }
 
         // 编辑章节
@@ -18552,7 +18750,7 @@ ${_pick(GEN_MONSTER.behavior)}
                 const plotDescription = document.getElementById('aiPlotDescription').value.trim();
                 const targetWords = parseInt(document.getElementById('aiTargetWords').value) || 5000;
                 const selectedStyle = document.querySelector('input[name="writingStyle"]:checked')?.value || 'default';
-                const mode = document.getElementById('aiGenerateMode').value;
+                let mode = document.getElementById('aiGenerateMode').value;
                 const apiKey = document.getElementById('aiKimiApiKey').value.trim();
                 const model = document.getElementById('aiKimiModel').value;
                 
@@ -18562,10 +18760,13 @@ ${_pick(GEN_MONSTER.behavior)}
                     return;
                 }
                 
+                let useAPI = mode === 'kimi' && !!apiKey;
                 if (mode === 'kimi' && !apiKey) {
-                    showNotification('⚠️ 请先输入 Kimi API Key，或切换到本地模板生成');
-                    document.getElementById('aiKimiApiKey').focus();
-                    return;
+                    showNotification('⚠️ 未检测到 API Key，已自动切换到本地模板生成');
+                    document.getElementById('aiGenerateMode').value = 'local';
+                    document.getElementById('kimiApiConfig').style.display = 'none';
+                    mode = 'local';
+                    useAPI = false;
                 }
                 
                 // UI 状态
@@ -18597,7 +18798,6 @@ ${_pick(GEN_MONSTER.behavior)}
                 };
                 
                 try {
-                    const useAPI = mode === 'kimi' && apiKey;
                     abortController = new AbortController();
                     generatedContent = await generateAIContent(plotDescription, targetWords, selectedStyle, styles, {
                         useAPI, apiKey, model, onChunk, signal: abortController.signal
@@ -18666,55 +18866,80 @@ ${_pick(GEN_MONSTER.behavior)}
             if (signal) {
                 signal.addEventListener('abort', () => controller.abort());
             }
-            const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [
-                        { role: 'system', content: '你是一位顶尖的中文网络小说作家，擅长模仿各种知名小说的写作风格。请严格遵循用户的文风数据要求和结构要求创作。' },
-                        { role: 'user', content: prompt }
-                    ],
-                    temperature: 0.75,
-                    max_completion_tokens: 8192,
-                    stream: true
-                }),
-                signal: controller.signal
-            });
             
-            if (!response.ok) {
-                const errText = await response.text().catch(() => '');
-                throw new Error(`API 请求失败 (${response.status}): ${errText}`);
-            }
+            // 设置 25 秒超时
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+            }, 25000);
             
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let buffer = '';
-            
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
+            try {
+                console.log('🚀 [Kimi API] 开始请求，模型:', model);
+                const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: 'system', content: '你是一位顶尖的中文网络小说作家，擅长模仿各种知名小说的写作风格。请严格遵循用户的文风数据要求和结构要求创作。' },
+                            { role: 'user', content: prompt }
+                        ],
+                        temperature: 0.75,
+                        max_completion_tokens: 8192,
+                        stream: true
+                    }),
+                    signal: controller.signal
+                });
                 
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
+                clearTimeout(timeoutId);
                 
-                for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || trimmed === 'data: [DONE]') continue;
-                    if (trimmed.startsWith('data: ')) {
-                        try {
-                            const json = JSON.parse(trimmed.slice(6));
-                            const delta = json.choices?.[0]?.delta?.content;
-                            if (delta) onChunk(delta);
-                        } catch (e) {
-                            // ignore malformed json
+                if (!response.ok) {
+                    const errText = await response.text().catch(() => '');
+                    console.error('❌ [Kimi API] 请求失败:', response.status, errText);
+                    throw new Error(`API 请求失败 (${response.status}): ${errText}`);
+                }
+                
+                if (!response.body) {
+                    throw new Error('API 返回了空的响应体');
+                }
+                
+                console.log('✅ [Kimi API] 连接成功，开始接收流...');
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+                let chunkCount = 0;
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || trimmed === 'data: [DONE]') continue;
+                        if (trimmed.startsWith('data: ')) {
+                            try {
+                                const json = JSON.parse(trimmed.slice(6));
+                                const delta = json.choices?.[0]?.delta?.content;
+                                if (delta) {
+                                    onChunk(delta);
+                                    chunkCount++;
+                                }
+                            } catch (e) {
+                                // ignore malformed json
+                            }
                         }
                     }
                 }
+                console.log('✅ [Kimi API] 流接收完成，共', chunkCount, '个 chunk');
+            } catch (err) {
+                clearTimeout(timeoutId);
+                throw err;
             }
         }
         
@@ -18727,12 +18952,19 @@ ${_pick(GEN_MONSTER.behavior)}
             const prompt = buildWritingPrompt(plotDescription, targetWords, style, matchedTropes);
             
             if (options.useAPI && options.apiKey) {
-                let result = '';
-                await streamKimiAPI(prompt, options.apiKey, options.model || 'kimi-k2-5', (chunk) => {
-                    result += chunk;
-                    if (options.onChunk) options.onChunk(chunk);
-                }, options.signal);
-                return result;
+                try {
+                    let result = '';
+                    await streamKimiAPI(prompt, options.apiKey, options.model || 'kimi-k2-5', (chunk) => {
+                        result += chunk;
+                        if (options.onChunk) options.onChunk(chunk);
+                    }, options.signal);
+                    return result;
+                } catch (apiErr) {
+                    if (apiErr.name === 'AbortError') throw apiErr;
+                    console.warn('⚠️ API 生成失败，自动降级到本地模板:', apiErr.message);
+                    showNotification('⚠️ API 调用失败，已自动切换到本地模板生成');
+                    // 继续执行下方的本地模板逻辑
+                }
             }
             
             // 本地模板生成（fallback）
