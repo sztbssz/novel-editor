@@ -8913,15 +8913,16 @@
         let draggedChapter = null;
         let isAddingChapter = false;
         let isAddingVolume = false;
+        let isAddingOutlineVolume = false;
         let isApplyingTemplate = false;
 
-        // 自动修复重复卷（同一作品下 volumeNumber + title 相同）
+        // 自动修复重复卷（同一作品下 volumeNumber 相同即视为重复，保留最早的）
         async function fixDuplicateVolumes() {
             try {
                 const allVolumes = await db.getAll('volumes');
                 const groups = new Map();
                 for (const v of allVolumes) {
-                    const key = `${Number(v.workId)}|${v.volumeNumber}|${(v.title || '').trim()}`;
+                    const key = `${Number(v.workId)}|${v.volumeNumber}`;
                     if (!groups.has(key)) groups.set(key, []);
                     groups.get(key).push(v);
                 }
@@ -8978,13 +8979,13 @@
             }
         }
 
-        // 自动修复重复章节（同一卷内 chapterNumber + title 相同）
+        // 自动修复重复章节（同一卷内 chapterNumber 相同即视为重复，保留最早的）
         async function fixDuplicateChapters() {
             try {
                 const allChapters = await db.getAll('chapters');
                 const groups = new Map();
                 for (const ch of allChapters) {
-                    const key = `${Number(ch.volumeId)}|${ch.chapterNumber}|${(ch.title || '').trim()}`;
+                    const key = `${Number(ch.volumeId)}|${ch.chapterNumber}`;
                     if (!groups.has(key)) groups.set(key, []);
                     groups.get(key).push(ch);
                 }
@@ -9656,10 +9657,10 @@
 
                 const summary = prompt('请输入本卷简介（可选）：') || '';
                 
-                // 二次查重
-                const duplicate = volumes.find(v => v.volumeNumber === nextNumber && v.title === title.trim());
+                // 二次查重：同一作品下不允许有相同 volumeNumber 的卷
+                const duplicate = volumes.find(v => v.volumeNumber === nextNumber);
                 if (duplicate) {
-                    showNotification('⚠️ 该卷已存在，请勿重复添加');
+                    showNotification('⚠️ 该卷号已存在，请勿重复添加');
                     return;
                 }
 
@@ -9876,10 +9877,10 @@
                 };
                 console.log('📝 准备添加章节:', chapter);
 
-                // 再次检查是否已有完全相同标题的章节（防止重复点击）
-                const duplicate = chapters.find(c => c.chapterNumber === nextNumber && c.title === chapter.title);
+                // 再次检查是否已有相同 chapterNumber 的章节（防止重复点击）
+                const duplicate = chapters.find(c => c.chapterNumber === nextNumber);
                 if (duplicate) {
-                    showNotification('⚠️ 该章节已存在，请勿重复添加');
+                    showNotification('⚠️ 该章节号已存在，请勿重复添加');
                     return;
                 }
 
@@ -11619,46 +11620,74 @@ ${_pick(GEN_MONSTER.behavior)}
         
         // 添加卷
         async function addOutlineVolume() {
-            if (!currentOutlineWorkId) {
-                showNotification('❌ 请先选择一个作品');
+            if (isAddingOutlineVolume) {
+                showNotification('⏳ 正在添加卷，请稍候');
                 return;
             }
+            isAddingOutlineVolume = true;
             
-            const volumes = await db.getAll('outline_volumes');
-            const workVolumes = volumes.filter(v => v.workId === currentOutlineWorkId);
-            const nextNumber = workVolumes.length + 1;
-            
-            const title = prompt(`请输入第${nextNumber}卷标题：`);
-            if (!title) return;
-            
-            const volume = {
-                workId: currentOutlineWorkId,
-                volumeNumber: nextNumber,
-                title: title.trim(),
-                createdAt: new Date().toISOString()
-            };
-            
-            const volumeId = await db.add('outline_volumes', volume);
-            
-            // 同时创建正文创作的卷记录，实现关联
             try {
-                await db.add('volumes', {
+                if (!currentOutlineWorkId) {
+                    showNotification('❌ 请先选择一个作品');
+                    return;
+                }
+                
+                const volumes = await db.getAll('outline_volumes');
+                const workVolumes = volumes.filter(v => v.workId === currentOutlineWorkId);
+                const nextNumber = workVolumes.length + 1;
+                
+                const title = prompt(`请输入第${nextNumber}卷标题：`);
+                if (!title) return;
+                
+                // 查重：outline_volumes 中是否已有相同编号+标题
+                const dupOutline = workVolumes.find(v => v.volumeNumber === nextNumber && v.title === title.trim());
+                if (dupOutline) {
+                    showNotification('⚠️ 该卷已存在，请勿重复添加');
+                    return;
+                }
+                
+                const volume = {
                     workId: currentOutlineWorkId,
                     volumeNumber: nextNumber,
                     title: title.trim(),
-                    summary: '',
-                    outline: '',
-                    isFromOutline: true,  // 标记来自剧情大纲
-                    outlineVolumeId: volumeId  // 关联到剧情大纲的卷ID
-                });
-                console.log('✅ 已同步创建正文创作卷');
-            } catch (e) {
-                console.warn('同步创建正文创作卷失败:', e);
+                    createdAt: new Date().toISOString()
+                };
+                
+                const volumeId = await db.add('outline_volumes', volume);
+                
+                // 同步到正文创作的卷记录：先检查是否已存在相同 workId + volumeNumber
+                try {
+                    const allVolumes = await db.getAll('volumes');
+                    const existingVolume = allVolumes.find(v => v.workId === currentOutlineWorkId && v.volumeNumber === nextNumber);
+                    if (existingVolume) {
+                        // 更新现有卷，关联到大纲
+                        existingVolume.isFromOutline = true;
+                        existingVolume.outlineVolumeId = volumeId;
+                        if (!existingVolume.title) existingVolume.title = title.trim();
+                        await db.update('volumes', existingVolume);
+                        console.log('✅ 已更新现有正文创作卷并关联到大纲');
+                    } else {
+                        await db.add('volumes', {
+                            workId: currentOutlineWorkId,
+                            volumeNumber: nextNumber,
+                            title: title.trim(),
+                            summary: '',
+                            outline: '',
+                            isFromOutline: true,
+                            outlineVolumeId: volumeId
+                        });
+                        console.log('✅ 已同步创建正文创作卷');
+                    }
+                } catch (e) {
+                    console.warn('同步创建正文创作卷失败:', e);
+                }
+                
+                expandedOutlineVolumes.add(volumeId);
+                showNotification('✅ 卷添加成功');
+                await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
+            } finally {
+                isAddingOutlineVolume = false;
             }
-            
-            expandedOutlineVolumes.add(volumeId);
-            showNotification('✅ 卷添加成功');
-            await renderOutline(document.getElementById('editorContent') || document.getElementById('mainContent'));
         }
         
         // 删除卷
@@ -18767,13 +18796,11 @@ ${_pick(GEN_MONSTER.behavior)}
                     return;
                 }
                 
-                let useAPI = mode === 'kimi' && !!apiKey;
+                const useAPI = mode === 'kimi' && !!apiKey;
                 if (mode === 'kimi' && !apiKey) {
                     showNotification('⚠️ 未检测到 API Key，已自动切换到本地模板生成');
                     document.getElementById('aiGenerateMode').value = 'local';
                     document.getElementById('kimiApiConfig').style.display = 'none';
-                    mode = 'local';
-                    useAPI = false;
                 }
                 
                 // UI 状态
