@@ -3218,15 +3218,30 @@
         <div class="github-setup-content">
             <h2>🔐 GitHub 同步设置</h2>
             <p>为了实现跨设备数据同步，请输入你的 GitHub Personal Access Token。<br>数据将安全存储在你的私有 Gist 中。</p>
-            <div class="form-group">
-                <label>GitHub Token</label>
-                <input type="password" id="githubTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                <div class="help-text">
-                    没有 Token？<a href="https://github.com/settings/tokens/new?description=NovelEditor&scopes=gist" target="_blank">点击这里创建</a>（只需勾选 gist 权限）
+            
+            <!-- 云同步开关 -->
+            <div class="form-group" style="background: #1a1a2e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <span>☁️ 启用云端同步</span>
+                    <input type="checkbox" id="cloudSyncToggle" checked onchange="toggleCloudSync()" style="width: 20px; height: 20px; cursor: pointer;">
+                </label>
+                <div class="help-text" style="margin-top: 8px;">
+                    关闭后将仅使用本地存储，适合在公司网络受限环境使用
                 </div>
             </div>
-            <div id="githubSetupError" style="color: #dc3545; margin-bottom: 15px; font-size: 14px; display: none;"></div>
-            <button class="btn btn-primary" onclick="saveGitHubToken()" style="width: 100%;">保存并验证</button>
+            
+            <div id="githubTokenSection">
+                <div class="form-group">
+                    <label>GitHub Token</label>
+                    <input type="password" id="githubTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                    <div class="help-text">
+                        没有 Token？<a href="https://github.com/settings/tokens/new?description=NovelEditor&scopes=gist" target="_blank">点击这里创建</a>（只需勾选 gist 权限）
+                    </div>
+                </div>
+                <div id="githubSetupError" style="color: #dc3545; margin-bottom: 15px; font-size: 14px; display: none;"></div>
+                <button class="btn btn-primary" onclick="saveGitHubToken()" style="width: 100%;">保存并验证</button>
+            </div>
+            
             <button class="btn btn-secondary" onclick="skipGitHubSetup()" style="width: 100%; margin-top: 10px; background: transparent;">稍后再说</button>
         </div>
     </div>
@@ -3888,9 +3903,28 @@
                 this.lastSyncTime = localStorage.getItem('last_sync_time');
                 this.fileVersions = JSON.parse(localStorage.getItem('github_file_versions') || '{}');
                 this.lastError = null;
+                this.cloudSyncDisabled = localStorage.getItem('github_sync_disabled') === 'true';
+                this.createFailCount = 0;
             }
 
-            isConfigured() { return !!this.token; }
+            isConfigured() { return !!this.token && !this.cloudSyncDisabled; }
+            
+            disableCloudSync() {
+                this.cloudSyncDisabled = true;
+                localStorage.setItem('github_sync_disabled', 'true');
+                console.log('[GitHubSync] 用户禁用了云端同步');
+            }
+            
+            enableCloudSync() {
+                this.cloudSyncDisabled = false;
+                localStorage.removeItem('github_sync_disabled');
+                this.createFailCount = 0;
+                console.log('[GitHubSync] 用户启用了云端同步');
+            }
+
+            isCloudSyncDisabled() {
+                return this.cloudSyncDisabled;
+            }
 
             saveToken(token) {
                 this.token = token;
@@ -3968,6 +4002,12 @@
             }
 
             async getOrCreateGist() {
+                // 如果禁用了云同步，直接返回null
+                if (this.cloudSyncDisabled) {
+                    console.log('[GitHubSync] 云同步已禁用，跳过Gist操作');
+                    return null;
+                }
+                
                 // 如果没有token，直接返回null
                 if (!this.token) {
                     console.log('[GitHubSync] 未配置Token，跳过Gist操作');
@@ -4086,8 +4126,8 @@
                         this.createFailCount = (this.createFailCount || 0) + 1;
                         if (this.createFailCount >= 3) {
                             console.error('[GitHubSync] 多次创建Gist失败，禁用云端同步');
-                            showNotification('⚠️ GitHub同步失败多次，已切换为本地存储模式');
-                            this.cloudSyncDisabled = true;
+                            this.disableCloudSync();
+                            showNotification('⚠️ Token缺少gist权限，已切换为本地存储模式');
                         }
                         
                         return null;
@@ -14440,12 +14480,40 @@ ${type === '修真' ? '注重根基积累和心境修为' : type === '魔法' ? 
 
         // ==================== GitHub 设置 ====================
         function showGitHubSetupModal() {
+            // 初始化云同步开关状态
+            const toggle = document.getElementById('cloudSyncToggle');
+            const tokenSection = document.getElementById('githubTokenSection');
+            
+            if (toggle && tokenSection) {
+                const isDisabled = localStorage.getItem('github_sync_disabled') === 'true';
+                toggle.checked = !isDisabled;
+                tokenSection.style.display = isDisabled ? 'none' : 'block';
+            }
+            
             document.getElementById('githubSetupModal').classList.add('active');
         }
 
         function hideGitHubSetupModal() {
             document.getElementById('githubSetupModal').classList.remove('active');
             document.getElementById('githubSetupError').style.display = 'none';
+        }
+
+        // 切换云同步开关
+        function toggleCloudSync() {
+            const toggle = document.getElementById('cloudSyncToggle');
+            const tokenSection = document.getElementById('githubTokenSection');
+            
+            if (toggle.checked) {
+                // 启用云同步
+                githubSync.enableCloudSync();
+                tokenSection.style.display = 'block';
+                showNotification('☁️ 已启用云端同步');
+            } else {
+                // 禁用云同步
+                githubSync.disableCloudSync();
+                tokenSection.style.display = 'none';
+                showNotification('💻 已切换为本地存储模式');
+            }
         }
 
         function skipGitHubSetup() {
