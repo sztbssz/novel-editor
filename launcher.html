@@ -18754,7 +18754,13 @@ ${_pick(GEN_MONSTER.behavior)}
             const validModels = ['moonshot-v1-8k','moonshot-v1-32k','moonshot-v1-128k','kimi-latest'];
             const savedModel = localStorage.getItem('novel_editor_kimi_model');
             if (savedModel && validModels.includes(savedModel)) {
-                document.getElementById('aiKimiModel').value = savedModel;
+                // 强制升级：旧版默认的 moonshot-v1-8k 写作质量太差，自动切到 kimi-latest
+                if (savedModel === 'moonshot-v1-8k') {
+                    document.getElementById('aiKimiModel').value = 'kimi-latest';
+                    localStorage.setItem('novel_editor_kimi_model', 'kimi-latest');
+                } else {
+                    document.getElementById('aiKimiModel').value = savedModel;
+                }
             } else if (savedModel) {
                 // 清除旧版无效模型名
                 localStorage.removeItem('novel_editor_kimi_model');
