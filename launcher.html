@@ -18598,7 +18598,9 @@ ${_pick(GEN_MONSTER.behavior)}
             }
             
             const paragraphs = [];
-            const targetParagraphs = Math.ceil(targetWords / 150);
+            const avgSentLen = (style && style.stats && style.stats.avg_sentence_len) || 25;
+            const wordsPerPara = Math.max(120, Math.round(avgSentLen * (5 + Math.random() * 3)));
+            const targetParagraphs = Math.ceil(targetWords / wordsPerPara);
             
             // 按桥段结构组织内容
             const structure = ['scene', 'development', 'climax', 'ending'];
@@ -19152,6 +19154,22 @@ ${_pick(GEN_MONSTER.behavior)}
                 prompt += `${style.prompt}\n`;
                 if (style.traits && style.traits.length > 0) {
                     prompt += `核心特征：${style.traits.join('、')}\n`;
+                }
+                if (style.stats) {
+                    const s = style.stats;
+                    prompt += `\n【风格数据参考 - 请严格遵循以下量化指标】\n`;
+                    prompt += `- 平均句长：约${s.avg_sentence_len}字/句（控制每句长度）\n`;
+                    prompt += `- 段落节奏：短段落(${s.short_para_ratio*100}%) + 中等段落 + 长段落(${s.long_para_ratio*100}%)\n`;
+                    prompt += `- 标点密度：逗号${s.comma_rate}% | 句号${s.period_rate}% | 感叹号${s.exclaim_rate}% | 问号${s.question_rate}%\n`;
+                    if (s.dialogue_ratio > 0.3) {
+                        prompt += `- 对话占比极高（${(s.dialogue_ratio*100).toFixed(1)}%），请以大量直接引语推进剧情\n`;
+                    } else if (s.dialogue_ratio < 0.1) {
+                        prompt += `- 对话占比低，请减少直接对话，以叙述和心理活动为主\n`;
+                    }
+                    const topMarkers = Object.entries(s.markers || {}).sort((a,b)=>b[1]-a[1]).slice(0,5);
+                    if (topMarkers.length > 0) {
+                        prompt += `- 标志性表达密度(每10万字)：${topMarkers.map(([k,v])=>k+v).join('、')}\n`;
+                    }
                 }
                 prompt += `\n`;
             }
