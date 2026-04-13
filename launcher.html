@@ -11581,14 +11581,50 @@ ${_pick(GEN_MONSTER.behavior)}
 
         // 为新增弹窗的临时 plot 生成梗概
         async function aiGeneratePlotSummaryForTemp(tempPlot) {
+            const summary = await _buildPlotSummary(tempPlot.workId, tempPlot.title);
+            const textarea = document.getElementById('addPlotContent');
+            if (textarea) {
+                textarea.value = summary;
+                showNotification('✅ 剧情梗概生成完成');
+            }
+        }
+
+        // AI生成剧情梗概（基于桥段库和作品设定）
+        async function aiGeneratePlotSummary(plotId) {
+            const plot = await db.get('outline_plots', plotId);
+            if (!plot) return;
+
+            const summary = await _buildPlotSummary(plot.workId, plot.title);
+            const textarea = document.getElementById('editPlotContent');
+            if (textarea) {
+                textarea.value = summary;
+                showNotification('✅ 剧情梗概生成完成');
+            }
+        }
+
+        // 剧情梗概生成核心（去AI味版）
+        async function _buildPlotSummary(workId, plotTitle) {
             showNotification('🔄 正在生成剧情梗概...');
 
             const settings = await db.getAll('outline_settings');
-            const workSettings = settings.filter(s => s.workId === tempPlot.workId);
+            const workSettings = settings.filter(s => s.workId === workId);
             const characters = workSettings.filter(s => s.type === 'character').slice(0, 3);
             const worldview = workSettings.find(s => s.type === 'worldview');
             const factions = workSettings.filter(s => s.type === 'faction').slice(0, 2);
 
+            // 角色分配
+            const protagonist = characters[0]?.name || '主角';
+            const rival = characters[1]?.name || (characters[0]?.name ? '对头' : '某个不速之客');
+            const ally = characters[2]?.name || '旧识';
+
+            // 场景与氛围
+            const scenes = [
+                '雨夜的巷子里，路灯忽明忽暗', '午后的茶楼，人声嘈杂', '黄昏的城墙上，风声猎猎',
+                '深夜的书房，烛火摇曳', '破晓前的密林，雾气弥漫', '闹市街角，马车匆匆'
+            ];
+            const scene = scenes[Math.floor(Math.random() * scenes.length)];
+
+            // 抽取桥段
             let selectedTropes = [];
             if (tropesData && tropesData.tropes && tropesData.tropes.length > 0) {
                 const shuffled = [...tropesData.tropes].sort(() => 0.5 - Math.random());
@@ -11600,27 +11636,94 @@ ${_pick(GEN_MONSTER.behavior)}
                 ];
             }
 
-            const charNames = characters.map(c => c.name).join('、') || '主角';
-            const worldDesc = worldview ? `在${worldview.name || '这个世界'}中，` : '';
-            const tropeParts = selectedTropes.map((t, i) => {
-                return `${i === 0 ? '首先' : '紧接着'}，${t.description}。这一桥段被称为「${t.title}」，将推动情节向高潮发展。`;
-            });
-            const factionPart = factions.length > 0
-                ? `与此同时，${factions.map(f => f.name).join('、')}等势力的暗中角逐也逐渐浮出水面。`
+            const trope1 = selectedTropes[0];
+            const trope2 = selectedTropes[1];
+
+            // 世界观前缀（简短）
+            const worldPrefix = worldview ? `${worldview.name || '这个世界'}，` : '';
+
+            // 势力纠葛（简短）
+            const factionText = factions.length > 0
+                ? `${factions[0].name}的人也在暗中盯着这一幕。`
                 : '';
 
-            const summaries = [
-                `${worldDesc}${charNames}面临着前所未有的挑战。${tropeParts[0] || ''}${factionPart}最终，在一系列阴差阳错之下，事态发展超出了所有人的预料，为后续的剧情埋下了深深的伏笔。`,
-                `故事迎来重要转折点。${tropeParts[0] || ''}${tropeParts[1] || ''}${factionPart}${charNames}必须在这一节点做出抉择，而这个选择将彻底改变故事的走向。`,
-                `${worldDesc}一场精心谋划的对局悄然展开。${tropeParts[0] || ''}${factionPart}随着真相一点点浮出水面，${charNames}逐渐意识到，自己所面对的局势远比想象中更加复杂。`
+            // 桥段动态映射：根据桥段标题选择不同的叙事切片
+            const tropeActionMap = {
+                '装逼打脸': [
+                    `${protagonist}还没开口，旁边已经有人嗤笑出声。下一秒，笑声戛然而止。`,
+                    `有人当众揭短，话还没落，${protagonist}已经用行动把话塞了回去。`
+                ],
+                '扮猪吃老虎': [
+                    `${protagonist}装作什么都没察觉，直到对方露出獠牙的那一刻——猎人和猎物的位置突然对调。`,
+                    `所有人都以为${protagonist}黔驴技穷，没人注意到他袖口下压着的底牌。`
+                ],
+                '绝境翻盘': [
+                    `退路被封死，${protagonist}的后背抵上冰冷的石墙。就在所有人以为大局已定时，变故陡生。`,
+                    `形势一边倒，${protagonist}几乎被压得喘不过气。可就在最危急的刹那，一线生机撕开黑暗。`
+                ],
+                '英雄救美': [
+                    `呼救声被嘈杂淹没，${protagonist}却猛地停下脚步，眼神一沉。`,
+                    `刀锋距离咽喉只剩一寸，${protagonist}从斜刺里撞了进来。`
+                ],
+                '废物逆袭': [
+                    `往日被踩在脚下的人，今日站得比谁都直。`,
+                    `嘲笑声犹在耳畔，${protagonist}已经用实际行动把所有讥讽碾碎。`
+                ],
+                '身份揭晓': [
+                    `那枚令牌被高高举起，原本喧闹的厅堂瞬间死寂。`,
+                    `一句轻描淡写的话，却像惊雷劈进每个人耳朵里。`
+                ],
+                '重生复仇': [
+                    `${protagonist}看着那张熟悉又憎恶的脸，指甲陷进掌心。这一世，不会再输。`,
+                    `同样的场景重演，${protagonist}嘴角却勾起一丝冷笑。猎杀，开始了。`
+                ],
+                '金手指解锁': [
+                    `脑海中那道冰冷的提示音突然响起，${protagonist}瞳孔一缩。`,
+                    `尘封的枷锁碎裂，一股陌生的力量从四肢百骸涌上来。`
+                ],
+                '商战博弈': [
+                    `合同被推过来的瞬间，${protagonist}看穿了最后一行小字里埋着的陷阱。`,
+                    `股价跳水的警报声中，${protagonist}的手指悬在发送键上，只差一厘米。`
+                ],
+                '规则怪谈破解': [
+                    `第三条规则被划掉了，墨迹还没干透。${protagonist}死死盯着那行篡改过的字迹。`,
+                    `钟声敲响十二下，${protagonist}终于明白规则里藏着的那条生路。`
+                ]
+            };
+
+            const getTropeAction = (trope) => {
+                const key = Object.keys(tropeActionMap).find(k => (trope.title || trope.usage || '').includes(k));
+                if (key) {
+                    const pool = tropeActionMap[key];
+                    return pool[Math.floor(Math.random() * pool.length)];
+                }
+                // fallback：把 description 改写成动作感
+                const desc = trope.description || `${trope.title}发生`;
+                return desc.replace(/主角/g, protagonist).replace(/被众人|被所有人/g, '').replace(/关键时刻/g, '电光火石之间').replace(/展现出/g, '亮出').replace(/让所有人震惊/g, '四下一片死寂');
+            };
+
+            const action1 = getTropeAction(trope1);
+            const action2 = trope2 ? getTropeAction(trope2) : '';
+
+            // 组合模板（去AI味：少用连接词，多用动作和场景推进）
+            const templates = [
+                `${worldPrefix}${scene}。${protagonist}刚踏进门槛，${action1} ${factionText}${action2 ? action2 + ' ' : ''}等${protagonist}回过神，四周已经换了天地。`,
+                `${scene}。${protagonist}本不想多管闲事，直到${action1} ${factionText}${action2 ? '紧接着，' + action2 + ' ' : ''}这一夜，注定无眠。`,
+                `${worldPrefix}${protagonist}和${ally}约在老地方碰头，没料到${rival}也在。${action1} ${factionText}${action2 ? action2 + ' ' : ''}脱身时，天边已经泛起鱼肚白。`,
+                `${protagonist}独自坐在角落里，手中茶杯还没放下，${action1} ${factionText}${action2 ? '片刻后，' + action2 + ' ' : ''}窗外传来第一声鸟鸣，像是某种暗示。`
             ];
 
-            const summary = summaries[Math.floor(Math.random() * summaries.length)];
-            const textarea = document.getElementById('addPlotContent');
-            if (textarea) {
-                textarea.value = summary;
-                showNotification('✅ 剧情梗概生成完成');
+            let summary = templates[Math.floor(Math.random() * templates.length)];
+
+            // 后处理：去掉多余空格，增加一些细节填充让字数够
+            summary = summary.replace(/\s+/g, ' ').trim();
+
+            // 如果字数太少，追加一个收束钩子
+            if (summary.length < 80) {
+                summary += ` ${protagonist}低头看了眼掌心的痕迹，知道自己已经被卷入了一场没法回头的局。`;
             }
+
+            return summary;
         }
         
         // 删除剧情梗概
@@ -11708,60 +11811,6 @@ ${_pick(GEN_MONSTER.behavior)}
         }
 
         // AI生成剧情梗概（基于桥段库和作品设定）
-        async function aiGeneratePlotSummary(plotId) {
-            const plot = await db.get('outline_plots', plotId);
-            if (!plot) return;
-
-            showNotification('🔄 正在生成剧情梗概...');
-
-            // 获取作品相关设定
-            const settings = await db.getAll('outline_settings');
-            const workSettings = settings.filter(s => s.workId === plot.workId);
-            const characters = workSettings.filter(s => s.type === 'character').slice(0, 3);
-            const worldview = workSettings.find(s => s.type === 'worldview');
-            const factions = workSettings.filter(s => s.type === 'faction').slice(0, 2);
-
-            // 从桥段库中随机选取桥段
-            let selectedTropes = [];
-            if (tropesData && tropesData.tropes && tropesData.tropes.length > 0) {
-                const shuffled = [...tropesData.tropes].sort(() => 0.5 - Math.random());
-                selectedTropes = shuffled.slice(0, 2);
-            } else {
-                // fallback 默认桥段
-                selectedTropes = [
-                    { title: '关键转折', description: '主角在关键时刻做出出人意料的选择，扭转了局势。' },
-                    { title: '强敌降临', description: '一个强大的对手突然出现，给主角带来巨大压力。' }
-                ];
-            }
-
-            // 构建生成上下文
-            const charNames = characters.map(c => c.name).join('、') || '主角';
-            const worldDesc = worldview ? `在${worldview.name || '这个世界'}中，` : '';
-
-            // 生成剧情梗概
-            const tropeParts = selectedTropes.map((t, i) => {
-                return `${i === 0 ? '首先' : '紧接着'}，${t.description}。这一桥段被称为「${t.title}」，将推动情节向高潮发展。`;
-            });
-
-            const factionPart = factions.length > 0
-                ? `与此同时，${factions.map(f => f.name).join('、')}等势力的暗中角逐也逐渐浮出水面。`
-                : '';
-
-            const summaries = [
-                `${worldDesc}${charNames}面临着前所未有的挑战。${tropeParts[0] || ''}${factionPart}最终，在一系列阴差阳错之下，事态发展超出了所有人的预料，为后续的剧情埋下了深深的伏笔。`,
-                `故事迎来重要转折点。${tropeParts[0] || ''}${tropeParts[1] || ''}${factionPart}${charNames}必须在这一节点做出抉择，而这个选择将彻底改变故事的走向。`,
-                `${worldDesc}一场精心谋划的对局悄然展开。${tropeParts[0] || ''}${factionPart}随着真相一点点浮出水面，${charNames}逐渐意识到，自己所面对的局势远比想象中更加复杂。`
-            ];
-
-            const summary = summaries[Math.floor(Math.random() * summaries.length)];
-
-            const textarea = document.getElementById('editPlotContent');
-            if (textarea) {
-                textarea.value = summary;
-                showNotification('✅ 剧情梗概生成完成');
-            }
-        }
-
         function toggleTropePanel() {
             showTropePanel = !showTropePanel;
             const panel = document.getElementById('tropePanel');
@@ -14473,7 +14522,7 @@ ${_pick(GEN_MONSTER.behavior)}
                 exportType: 'settings',
                 exportDate: new Date().toISOString(),
                 work: {
-                    title: work.title,
+                    title: work.name || work.title || '未命名作品',
                     description: work.description || ''
                 },
                 settings: workSettings,
@@ -14800,11 +14849,8 @@ ${_pick(GEN_MONSTER.behavior)}
             // 导入设定
             if (data.settings && Array.isArray(data.settings)) {
                 for (const setting of data.settings) {
-                    const newSetting = {
-                        ...setting,
-                        workId: currentOutlineWorkId,
-                        id: undefined // 让数据库生成新ID
-                    };
+                    const newSetting = { ...setting, workId: currentOutlineWorkId };
+                    delete newSetting.id; // 让数据库生成新ID
                     await db.add('outline_settings', newSetting);
                     settingCount++;
                 }
@@ -14814,11 +14860,8 @@ ${_pick(GEN_MONSTER.behavior)}
             if (data.volumes && Array.isArray(data.volumes)) {
                 for (const vol of data.volumes) {
                     const oldId = vol.id;
-                    const newVol = {
-                        ...vol,
-                        workId: currentOutlineWorkId,
-                        id: undefined
-                    };
+                    const newVol = { ...vol, workId: currentOutlineWorkId };
+                    delete newVol.id;
                     const newId = await db.add('outline_volumes', newVol);
                     volumeIdMap[oldId] = newId;
                     volumeCount++;
@@ -14831,9 +14874,9 @@ ${_pick(GEN_MONSTER.behavior)}
                     const newPlot = {
                         ...plot,
                         workId: currentOutlineWorkId,
-                        volumeId: volumeIdMap[plot.volumeId] || plot.volumeId,
-                        id: undefined
+                        volumeId: volumeIdMap[plot.volumeId] || plot.volumeId
                     };
+                    delete newPlot.id;
                     await db.add('outline_plots', newPlot);
                     plotCount++;
                 }
@@ -18633,84 +18676,107 @@ ${_pick(GEN_MONSTER.behavior)}
             return tropeUsageNote + content;
         }
         
-        // 生成开篇段落
+        // 生成开篇段落（去AI味版：具体场景+感官细节）
         function generateSceneOpening(plotDescription, trope, parts, style) {
-            const sceneBase = parts.scene || trope.usage || '';
-            
-            // 根据桥段标题和场景生成开篇
-            const openings = [
-                `${sceneBase}。`,
-                `这是一个${trope.title}的时刻。${sceneBase}`,
-                `当${plotDescription.substring(0, 20)}时，没有人想到接下来会发生什么。${sceneBase}`
+            const desc = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/被众人/g, '').replace(/关键时刻/g, '电光火石之间');
+            const seeds = [
+                `雨珠砸在青石板上，溅起细碎的水花。${desc}。`,
+                `烛火噼啪一声爆了个灯花，映照出室内几道紧绷的侧脸。${desc}。`,
+                `黄昏的光线斜斜切进窗棂，把地上那道裂痕照得格外刺眼。${desc}。`,
+                `酒楼二楼最偏的角落，茶壶里的水已经凉透。${desc}。`,
+                `马蹄声由远及近，在巷口骤然停住。${desc}。`
             ];
-            
-            let opening = openings[Math.floor(Math.random() * openings.length)];
-            
-            // 添加剧情引入
-            opening += `\n\n${plotDescription.substring(0, 50)}...故事就从这里开始。主角站在命运的十字路口，即将面临人生中最重要的抉择。`;
-            
+            let opening = seeds[Math.floor(Math.random() * seeds.length)];
+            // 追加剧情钩子，避免抽象总结
+            const hooks = [
+                `他没说话，手指在桌沿轻轻叩了三下。`,
+                `门外有人咳嗽了一声，屋内气氛陡然收紧。`,
+                `一只乌鸦从屋檐上扑棱棱飞起，留下一串嘶哑的叫声。`,
+                `对面的人放下茶杯，瓷底与木桌碰撞出清脆的响。`
+            ];
+            opening += `\n\n${hooks[Math.floor(Math.random() * hooks.length)]}`;
             return opening;
         }
         
-        // 生成发展段落
+        // 生成发展段落（去AI味版：动作推进+对话感）
         function generateDevelopment(plotDescription, trope, parts, style) {
-            const devBase = parts.development || trope.usage || '';
-            
-            return `随着时间推移，局势开始发生变化。${devBase}\n\n主角深知，此刻的每一个决定都将影响未来的走向。他深吸一口气，做出了自己的选择。周围的空气仿佛凝固了，每一秒都变得无比漫长。`;
+            const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/随着时间推移/g, '').replace(/局势开始发生变化/g, '');
+            const actions = [
+                `他往前迈了半步，靴底碾碎了一根枯枝。"${base}"——这句话没人说出口，但每个人都听见了。`,
+                `有人笑了一声，笑声干涩得像砂纸摩擦。${base}。旁边的茶杯晃了晃，水洒出一道细线。`,
+                `门被推开，风卷着尘土灌进来。${base}。他眯起眼，右手不自觉地摸向腰侧。`,
+                `沉默持续了太久，久到能听见门外虫鸣。终于，${base}。`
+            ];
+            return actions[Math.floor(Math.random() * actions.length)];
         }
         
-        // 生成高潮段落
+        // 生成高潮段落（去AI味版：尖锐冲突+生理反应）
         function generateClimax(plotDescription, trope, parts, style) {
-            const climaxBase = parts.climax || trope.usage || '';
-            
-            return `就在这一刻，${climaxBase}\n\n主角感受到前所未有的压力，但他知道，这是无法回避的。他咬紧牙关，准备迎接最终的挑战。所有的铺垫，所有的努力，都将在这一刻得到检验。`;
+            const base = (trope.description || trope.usage || '').replace(/主角/g, '他').replace(/前所未有的压力/g, '太阳穴突突直跳').replace(/咬紧牙关/g, '腮帮绷成一道硬线');
+            const clashes = [
+                `${base}。他的指节发白，血液冲上耳廓，周遭的嘈杂一瞬间被抽成真空。`,
+                `就在${base}的刹那，一道寒光掠过他眼底。他向后仰身，脊背撞上冰冷的墙面。`,
+                `"住手！"——喊声被淹没在轰鸣里。${base}。他感到喉头涌上一股腥甜。`,
+                `${base}。两人的目光在半空中撞出一声脆响，像瓷器碎裂。`
+            ];
+            return clashes[Math.floor(Math.random() * clashes.length)];
         }
         
-        // 生成结尾段落
+        // 生成结尾段落（去AI味版：意象收尾+悬念钩子）
         function generateEnding(plotDescription, trope, parts, style) {
-            const endingBase = parts.ending || '';
-            
-            let ending = '';
-            if (endingBase) {
-                ending = `${endingBase}\n\n`;
-            }
-            
-            ending += `当一切归于平静，主角站在原地，回想着刚才发生的一切。这只是开始，真正的挑战还在后面。他握紧拳头，眼中闪烁着坚定的光芒。无论前方有什么在等待着，他都已经做好了准备。\n\n故事，才刚刚开始。`;
-            
-            return ending;
+            const endings = [
+                `地上只剩半盏残茶，水渍正在慢慢收干。他低头看了眼掌心，那里多了一道红痕。`,
+                `天边泛起蟹壳青，一夜未眠。他推开窗，晨风带着潮气扑进来，却吹不散屋里那股铁锈味。`,
+                `门外传来三长两短的叩门声。他没有动，只是将那枚令牌缓缓收进袖口。`,
+                `烛火终于燃尽，黑暗吞没了最后一寸光亮。他坐在原地，听见自己的心跳声格外清晰。`,
+                `马蹄声再次响起，这次渐行渐远。他低头看着地上那道裂痕，知道有些东西再也拼不回去了。`
+            ];
+            return endings[Math.floor(Math.random() * endings.length)];
         }
         
-        // 生成过渡段落
+        // 生成过渡段落（去AI味版：侧面描写+环境变化）
         function generateTransitionParagraph(plotDescription, trope, index, style) {
             const transitions = [
-                `与此同时，在另一个地方，相关的人也在行动着。${trope.usage || ''}`,
-                `事情并没有那么简单。${trope.title}的背后，隐藏着更深的秘密。`,
-                `主角的盟友也没有闲着。他们正在为了共同的目标而努力着。`,
-                `时间在流逝，而局势也在悄然改变。没有人知道下一秒会发生什么。`
+                `街角的茶摊换了第三壶水，说书人的惊堂木还没落下。`,
+                `一只黑猫从墙头跃过，尾巴扫落了一片瓦。`,
+                `更夫敲过三更，声音在空荡荡的巷道里撞出回响。`,
+                `药铺的学徒打着哈欠卸下门板，浓郁的药香漫过整条街。`,
+                `远处传来马蹄和车轮碾压碎石的声音，越来越近，又拐了个弯，消失了。`
             ];
-            
             return transitions[index % transitions.length];
         }
         
-        // 生成扩充段落
+        // 生成扩充段落（去AI味版：细节特写填充）
         function generateExpansionParagraph(plotDescription, trope, index, style) {
             const expansions = [
-                `${trope.title}的细节逐渐浮出水面。主角仔细观察着周围的一切，试图找出更多的线索。每一个细节都可能是关键，他不敢有丝毫的疏忽。`,
-                `回想起${trope.category || '之前'}的经历，主角心中五味杂陈。那些教训让他明白，在这个世界里，只有强者才能生存。`,
-                `旁人的反应也值得关注。有人露出惊讶的表情，有人则在暗中观察。每个人都有自己的打算，而主角必须小心应对。`
+                `他注意到对方右手小指缺了一截，断口平整，是旧伤。这个发现让他后背微微一紧。`,
+                `桌上摆着三只茶杯，两只满了，一只底朝天。没人动过那第三只。`,
+                `风从门缝钻进来，吹得烛焰东倒西歪。墙上的影子也跟着晃，像一群无声的看客。`,
+                `门外传来压低嗓子的交谈，断断续续，只能捕捉到"今晚"、"码头"、"一个人"几个词。`,
+                `他的靴底粘着一片枯叶，叶脉的形状很特别，只有城北那片老林子才有。`
             ];
-            
             return expansions[index % expansions.length];
         }
         
         // 通用开篇（无桥段匹配时备用）
         function generateGenericOpening(plotDescription, style) {
-            return `${plotDescription.substring(0, 50)}...的故事，就从这里开始。\n\n主角站在命运的十字路口，即将踏上一段未知的旅程。周围的空气仿佛凝固了，每一秒都变得无比漫长。他深吸一口气，努力让自己保持冷静。`;
+            const seeds = [
+                `屋檐上的雨水连成线，砸在阶前发出规律的声响。`,
+                `酒楼的喧嚣被门板隔在外面，屋内只剩一壶已经凉透的茶。`,
+                `暮色从窗缝一寸一寸挤进来，吞没了地上的最后一方光亮。`
+            ];
+            const seed = seeds[Math.floor(Math.random() * seeds.length)];
+            return `${seed}\n\n${plotDescription.substring(0, 40)}——一切就从这里开始。`;
         }
         
         // 通用结尾（无桥段匹配时备用）
         function generateGenericEnding(style) {
-            return `当一切归于平静，主角站在原地，回想着刚才发生的一切。这只是开始，真正的挑战还在后面。他握紧拳头，眼中闪烁着坚定的光芒。\n\n故事，才刚刚开始。`;
+            const endings = [
+                `窗外传来第一声鸡鸣，他站起身，拍了拍衣摆上并不存在的灰。`,
+                `烛芯最后跳了一下，灭了。黑暗里，他听见自己的呼吸声格外重。`,
+                `门轴发出一声干涩的呻吟，冷风灌进来，卷走了桌上那张纸条。`
+            ];
+            return endings[Math.floor(Math.random() * endings.length)];
         }
         
         // 备用内容生成（无桥段匹配时使用）
