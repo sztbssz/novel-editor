@@ -8943,9 +8943,12 @@
                 console.error('清理 volumes 重复卷失败:', e);
             }
             
-            // 同样清理 outline_volumes
+            // 同样清理 outline_volumes（表内去重 + 跨表去重：如果 volumes 里已存在同名同号卷，删除 outline 里的副本）
             try {
                 const allOutlineVolumes = await db.getAll('outline_volumes');
+                const allVolumes = await db.getAll('volumes');
+                const volumeKeys = new Set(allVolumes.map(v => `${Number(v.workId)}|${v.volumeNumber || 0}|${(v.title || '').trim()}`));
+                
                 const groups = new Map();
                 for (const v of allOutlineVolumes) {
                     const key = `${Number(v.workId)}|${v.volumeNumber || 0}|${(v.title || '').trim()}`;
@@ -8954,12 +8957,16 @@
                 }
                 let removed = 0;
                 for (const [key, list] of groups) {
-                    if (list.length > 1) {
+                    const hasVolumeMatch = volumeKeys.has(key);
+                    if (hasVolumeMatch || list.length > 1) {
                         list.sort((a, b) => a.id - b.id);
-                        for (let i = 1; i < list.length; i++) {
+                        // 如果是跨表重复（volumes里已存在），把 outline_volumes 里的全部删掉
+                        // 如果是仅表内重复，保留 id 最小的一个
+                        const startIndex = hasVolumeMatch ? 0 : 1;
+                        for (let i = startIndex; i < list.length; i++) {
                             await db.delete('outline_volumes', list[i].id);
                             removed++;
-                            console.warn('🧹 删除重复 outline_volume:', list[i].id, list[i].title, 'key=', key);
+                            console.warn('🧹 删除重复 outline_volume:', list[i].id, list[i].title, 'key=', key, hasVolumeMatch ? '(volumes已存在)' : '(表内重复)');
                         }
                     }
                 }
